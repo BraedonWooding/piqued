@@ -6,7 +6,7 @@
     - run `npm install` to install all the required packages.
     - run `npm run dev` to run client app
 - cd into `server`
-    - make sure `python3.9` is installed
+    - install `python3.9`, UNIX (`sudo apt install python3.9 python3.9-venv`)
     - create venv; `python3.9 -m venv venv`
     - active venv: Windows (`venv\Scripts\activate.bat`) and UNIX (`source venv/bin/activate`)
     - then install requirements `pip3.9 install -r requirements.txt`
