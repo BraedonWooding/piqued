@@ -1,6 +1,6 @@
 # Piqued - Making YourUNSW a little less lonely
 
-## Installation / Running
+## Help! How do I run this?
 
 - cd into `client`
     - run `npm install` to install all the required packages.
