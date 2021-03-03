@@ -1,14 +1,15 @@
 import { Avatar, Box, Button, Container, Grid, Typography } from "@material-ui/core";
 import { LockOutlined } from "@material-ui/icons";
+import { KeyboardDatePicker } from "@material-ui/pickers";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { Layout } from "components/Layout/Layout";
-import { Form, Formik } from "formik";
+import { Field, Form, Formik } from "formik";
 import { LOGIN_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
-  email: yup.string().email(),
+  UNSWEmail: yup.string().email(),
   username: yup
     .string()
     .matches(
@@ -30,15 +31,17 @@ const Register = () => {
     <Layout>
       <Formik
         initialValues={{
-          email: "",
-          username: "",
+          firstName: "",
+          lastName: "",
+          dateOfBirth: new Date(),
+          UNSWEmail: "",
           password: "",
           confirmPassword: "",
         }}
         validationSchema={validationSchema}
-        onSubmit={async ({ email, username, password }, { setErrors }) => {}}
+        onSubmit={async ({ firstName, lastName, password }, { setErrors }) => {}}
       >
-        {({ isSubmitting }) => (
+        {({ values, isSubmitting, setFieldValue }) => (
           <Form>
             <Container component="main" maxWidth="sm">
               <Box className={classes.card}>
@@ -46,8 +49,24 @@ const Register = () => {
                   <LockOutlined color="secondary" />
                 </Avatar>
                 <Typography variant="h5">Register</Typography>
-                <MyTextField placeholder="Email" label="Email" name="email" autoFocus />
-                <MyTextField placeholder="Username" label="Username" name="username" />
+                <Grid container spacing={3}>
+                  <Grid item xs={6}>
+                    <MyTextField placeholder="First Name" label="First Name" name="firstName" autoFocus />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <MyTextField placeholder="Last Name" label="Last Name" name="lastName" />
+                  </Grid>
+                </Grid>
+                <Field
+                  component={KeyboardDatePicker}
+                  placeholder="Date of Birth"
+                  label="Date of Birth"
+                  name="dateOfBirth"
+                  format="dd/MM/yyyy"
+                  value={values.dateOfBirth}
+                  onChange={(value: Date) => setFieldValue("dateOfBirth", value)}
+                />
+                <MyTextField placeholder="UNSW Email" label="UNSW Email" name="UNSWEmail" />
                 <MyTextField placeholder="Password" label="Password" name="password" type="password" />
                 <MyTextField
                   placeholder="Confirm Password"
@@ -60,13 +79,9 @@ const Register = () => {
                   Sign up
                 </Button>
                 &nbsp;
-                <Grid container>
-                  <Grid item>
-                    <Typography variant="subtitle1">
-                      <MyLink href={LOGIN_PATH}>Already have an account? Login</MyLink>
-                    </Typography>
-                  </Grid>
-                </Grid>
+                <Typography variant="subtitle1">
+                  <MyLink href={LOGIN_PATH}>Already have an account? Login</MyLink>
+                </Typography>
               </Box>
             </Container>
           </Form>
