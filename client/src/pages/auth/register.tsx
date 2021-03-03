@@ -9,13 +9,20 @@ import { LOGIN_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
-  UNSWEmail: yup.string().email(),
-  username: yup
+  firstName: yup
     .string()
     .matches(
       /^(?=[a-zA-Z0-9._]{1,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/,
       "Input Username and Submit [Max 20 characters that can contain alphanumeric, underscore and dot]"
     ),
+  lastName: yup
+    .string()
+    .matches(
+      /^(?=[a-zA-Z0-9._]{1,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/,
+      "Input Username and Submit [Max 20 characters that can contain alphanumeric, underscore and dot]"
+    ),
+  dateOfBirth: yup.date(),
+  UNSWEmail: yup.string().email(),
   password: yup
     .string()
     .matches(
