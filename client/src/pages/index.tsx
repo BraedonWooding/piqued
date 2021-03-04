@@ -5,7 +5,7 @@ import { LOGIN_PATH, REGISTER_PATH } from "util/constants";
 
 const Index = () => (
   <Layout>
-    <img src="/favicon.ico" alt="logo" width={200} height={200} />
+    <img src="/favicon.ico" alt="logo" width={250} height={200} />
     <Typography>Making YourUNSW a little bit less lonely~</Typography>
     &nbsp;
     <NavButtonLink href={LOGIN_PATH} color="primary" variant="contained">
