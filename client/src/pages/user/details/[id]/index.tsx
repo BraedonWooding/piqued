@@ -1,4 +1,4 @@
-import { Box, Container, Grid } from "@material-ui/core";
+import { Box, Container, Grid, Typography } from "@material-ui/core";
 import { KeyboardDatePicker } from "@material-ui/pickers";
 import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
@@ -6,76 +6,72 @@ import { AvatarPicker } from "components/Elements/AvatarPicker";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { User } from "types";
 
-const fetchUser = async (id: string): Promise<any | undefined> => {
+const fetchUser = async (id: string) => {
   try {
-    return (await axios.get('/api/users/' + id + '/')).data;
+    return (await axios.get(`/api/users/${id}`)).data;
   } catch {
     return null;
   }
-}
+};
 
 const UserDetails = () => {
   const classes = useStyles();
   const router = useRouter();
   const { id } = router.query;
-  let [user, setUser]: [any, any] = useState();
-  let [loading, setLoading] = useState(true);
-  let [img, setImg] = useState(null);
+  const [user, setUser] = useState<User>();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id && !user) {
-      fetchUser(id as string).then((u: any) => {u && setUser(u); u && setImg(u.profile_picture); setLoading(false);});
-    }
+    if (typeof id === "string" && !user)
+      fetchUser(id).then((u: User) => {
+        if (u) setUser(u);
+        setLoading(false);
+      });
   }, [id]);
 
   if (loading) return null;
+  else if (!user)
+    return (
+      <HorizontallyCenteredLayout>
+        <Typography variant="h2"> Error: 404 </Typography>
+        <Typography variant="h6">No user found</Typography>
+      </HorizontallyCenteredLayout>
+    );
 
-  if (!user) return (
-    <HorizontallyCenteredLayout>
-      <h1> Error: 404 </h1>
-      <p>No user found</p>
-    </HorizontallyCenteredLayout>
-  );
-
-  const handleSave = async (img: any) => {
+  const handleSave = async (img: string) => {
     user.profile_picture = await (await (await fetch(img)).blob()).text();
-    setImg(img);
-    // ew?
-    setLoading(true);
-    setLoading(false);
+    setUser({ ...user });
     return img;
-  }
+  };
 
   return (
     <HorizontallyCenteredLayout>
-      <Formik
-        initialValues={user}
-        onSubmit={async ({ ...other }) => {
-        }}
-      >
+      <Formik initialValues={user} onSubmit={async ({ ...other }) => {}}>
         <Form>
           <Container component="main" maxWidth="sm">
             <Box className={classes.card}>
-              <h2 className={classes.profileName}>{user.first_name} {user.last_name} ({user.username})</h2>
-              <AvatarPicker baseUrl={img} onSaveAvatar={handleSave} />
+              <Typography className={classes.profileName} variant="h3">
+                {user.first_name} {user.last_name} ({user.username})
+              </Typography>
+              <AvatarPicker baseUrl={user.profile_picture} onSaveAvatar={handleSave} />
               <Grid container spacing={3}>
                 <Grid item xs={6}>
-                  <MyTextField value={user.first_name} placeholder="First Name" label="First Name" name="first_name" autoFocus />
+                  <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />
                 </Grid>
                 <Grid item xs={6}>
-                  <MyTextField value={user.last_name} placeholder="Last Name" label="Last Name" name="last_name" />
+                  <MyTextField placeholder="Last Name" label="Last Name" name="last_name" />
                 </Grid>
               </Grid>
               <Field
-                  component={KeyboardDatePicker}
-                  placeholder="Date of Birth"
-                  label="Date of Birth"
-                  name="date_of_birth"
-                  format="dd/MM/yyyy"
-                  value={user.date_of_birth}
-                />
+                component={KeyboardDatePicker}
+                placeholder="Date of Birth"
+                label="Date of Birth"
+                name="date_of_birth"
+                format="dd/MM/yyyy"
+              />
             </Box>
           </Container>
         </Form>
