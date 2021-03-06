@@ -66,7 +66,7 @@ def refresh_token(request):
             refresh_token, settings.REFRESH_TOKEN_SECRET, algorithms=['HS256'])
     except jwt.ExpiredSignatureError:
         raise exceptions.AuthenticationFailed(
-            'expired refresh token, please login again.')
+            'Expired refresh token, please login again.')
 
     user = User.objects.filter(id=payload.get('user_id')).first()
     if user is None:
