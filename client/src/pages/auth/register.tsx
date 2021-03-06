@@ -7,7 +7,6 @@ import { MyLink } from "components/Common/Link";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
-import React from "react";
 import { LOGIN_PATH } from "util/constants";
 import * as yup from "yup";
 
