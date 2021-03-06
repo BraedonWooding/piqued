@@ -60,18 +60,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'user.authentication.SafeJWTAuthentication'
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
-
-JWT_AUTH = {
-    'JWT_RESPONSE_PAYLOAD_HANDLER': 'src.utils.my_jwt_response_handler'
-}
-
-AUTH_USER_MODEL = "user.User"
 
 ROOT_URLCONF = 'src.urls'
 
