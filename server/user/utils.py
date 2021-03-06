@@ -12,7 +12,7 @@ def generate_access_token(user):
         'iat': datetime.datetime.utcnow(),
     }
     access_token = jwt.encode(access_token_payload,
-                              settings.SECRET_KEY, algorithm='HS256').decode('utf-8')
+                              settings.ACCESS_TOKEN_SECRET, algorithm='HS256').decode('utf-8')
     return access_token
 
 
