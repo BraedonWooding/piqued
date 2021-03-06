@@ -20,14 +20,14 @@ from .serializers import UserSerializer
 @ensure_csrf_cookie
 def login(request):
     User = get_user_model()
-    username = request.data.get('username')
+    email = request.data.get('email')
     password = request.data.get('password')
     response = Response()
-    if (username is None) or (password is None):
+    if (email is None) or (password is None):
         raise exceptions.AuthenticationFailed(
-            'username and password required')
+            'email and password required')
 
-    user = User.objects.filter(username=username).first()
+    user = User.objects.filter(email=email).first()
     if(user is None):
         raise exceptions.AuthenticationFailed('user not found')
     if (not user.check_password(password)):
