@@ -1,5 +1,6 @@
 import { Avatar, Box, Button, Container, Grid, Typography } from "@material-ui/core";
 import { LockOutlined } from "@material-ui/icons";
+import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { Layout } from "components/Layout/Layout";
@@ -10,7 +11,12 @@ const Login = () => {
   const classes = useStyles();
   return (
     <Layout>
-      <Formik initialValues={{ username: "", password: "" }} onSubmit={async (values, { setErrors }) => {}}>
+      <Formik
+        initialValues={{ username: "", password: "" }}
+        onSubmit={async (values) => {
+          await axios.post("/api/users", values);
+        }}
+      >
         {({ isSubmitting }) => (
           <Form>
             <Container component="main" maxWidth="sm">
