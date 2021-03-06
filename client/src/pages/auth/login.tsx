@@ -3,14 +3,14 @@ import { LockOutlined } from "@material-ui/icons";
 import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
-import { Layout } from "components/Layout/Layout";
+import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { FORGOT_PASSWORD_PATH, REGISTER_PATH } from "util/constants";
 
 const Login = () => {
   const classes = useStyles();
   return (
-    <Layout>
+    <FullyCenteredLayout>
       <Formik
         initialValues={{ username: "", password: "" }}
         onSubmit={async (values) => {
@@ -49,7 +49,7 @@ const Login = () => {
           </Form>
         )}
       </Formik>
-    </Layout>
+    </FullyCenteredLayout>
   );
 };
 

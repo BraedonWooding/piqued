@@ -4,9 +4,10 @@ import { KeyboardDatePicker } from "@material-ui/pickers";
 import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
-import { Layout } from "components/Layout/Layout";
+import { FullyCenteredLayout } from "components/Layout/Layout";
 import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
+import React from "react";
 import { LOGIN_PATH } from "util/constants";
 import * as yup from "yup";
 
@@ -37,7 +38,7 @@ const validationSchema = yup.object({
 const Register = () => {
   const classes = useStyles();
   return (
-    <Layout>
+    <FullyCenteredLayout>
       <Formik
         initialValues={{
           first_name: "",
@@ -100,7 +101,7 @@ const Register = () => {
           </Form>
         )}
       </Formik>
-    </Layout>
+    </FullyCenteredLayout>
   );
 };
 
