@@ -1,14 +1,34 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 
-from .models import User
-
-# Register your models here.
-
-
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'email', 'date_of_birth')
-
-# Register your models here.
+from .models import PiquedUser
 
 
-admin.site.register(User, UserAdmin)
+# Define an inline admin descriptor for User model
+# which acts a bit like a singleton
+class PiquedUserInline(admin.StackedInline):
+    model = PiquedUser
+    can_delete = False
+    verbose_name_plural = 'Extra Data' 
+
+# Define a new User admin
+class PiquedUserAdmin(BaseUserAdmin):
+    inlines = (PiquedUserInline,)
+    readonly_fields = ('id',)
+    fieldsets = (
+        (None, {'fields': ('id', 'email', 'password',)}),
+        ('Personal Info', {'fields': ('first_name', 'last_name',)}),
+        ('Permissions', {'fields': ('is_active', 'is_superuser')})
+    )
+    list_display = ('email', 'id', 'first_name', 'last_name')
+
+# Re-register UserAdmin
+admin.site.unregister(User)
+
+# Re-register admin + user correctly
+admin.site.register(User, PiquedUserAdmin)
+
+admin.site.site_header = "Piqued Admin"
+admin.site.site_title = "Piqued Admin Portal"
+admin.site.index_title = "Welcome to Piqued Admin Portal"

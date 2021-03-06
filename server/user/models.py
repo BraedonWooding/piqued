@@ -1,14 +1,9 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.fields import AutoField, DateField
+from django.db.models.fields.related import OneToOneField
 
-# Create your models here.
 
-
-class User(AbstractUser):
-    first_name = models.TextField(max_length=20)
-    last_name = models.TextField(max_length=20)
-    email = models.EmailField()
-    date_of_birth = models.DateField()
-
-    def _str_(self):
-        return self.email
+class PiquedUser(models.Model):
+    user: OneToOneField = models.OneToOneField(User, on_delete=models.CASCADE)
+    date_of_birth: DateField = models.DateField("Date of Birth")
