@@ -73,7 +73,7 @@ const Register = () => {
                   value={values.dateOfBirth}
                   onChange={(value: Date) => setFieldValue("dateOfBirth", value)}
                 />
-                <MyTextField placeholder="UNSW Email" label="UNSW Email" name="UNSWEmail" />
+                <MyTextField placeholder="UNSW Email" label="UNSW Email" name="email" />
                 <MyTextField placeholder="Password" label="Password" name="password" type="password" />
                 <MyTextField
                   placeholder="Confirm Password"
@@ -82,7 +82,7 @@ const Register = () => {
                   type="password"
                 />
                 &nbsp;
-                <Button color="primary" variant="contained" disabled={isSubmitting}>
+                <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
                   Sign up
                 </Button>
                 &nbsp;
