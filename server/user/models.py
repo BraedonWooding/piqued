@@ -11,4 +11,4 @@ class User(AbstractUser):
     date_of_birth = models.DateField()
 
     def _str_(self):
-        return self.title
+        return self.email
