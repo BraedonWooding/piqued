@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.fields import AutoField, DateField
+from django.db.models.fields import DateField
 from django.db.models.fields.related import OneToOneField
 
 
