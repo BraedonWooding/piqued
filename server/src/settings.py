@@ -100,6 +100,15 @@ DATABASES = {
     }
 }
 
+# Azure
+
+# AzureStorage Settings
+
+# Dev: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;
+AZURE_STORAGE_ACCOUNT_URL = "DOMAIN"
+# Dev: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+AZURE_STORAGE_KEY = "TODO: ACCOUNT_KEY"
+AZURE_STORAGE_DEFAULT_CONTAINER = "statics" # statics will use this container
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
