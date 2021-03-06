@@ -1,8 +1,8 @@
 from django.urls import path
 
-from .views import UserList, current_user
+from .views import login, refresh_token
 
 urlpatterns = [
-    path('current_user/', current_user),
-    path('users/', UserList.as_view())
+    path('login/', login),
+    path('refresh_token/', refresh_token)
 ]

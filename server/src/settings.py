@@ -21,6 +21,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'SECRET_KEY'
+REFRESH_TOKEN_SECRET = 'SECRET_KEY'
+ACCESS_TOKEN_SECRET = 'SECRET_KEY'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -61,12 +63,15 @@ REST_FRAMEWORK = {
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+        'user.authentication.SafeJWTAuthentication'
     ),
 }
 
 JWT_AUTH = {
     'JWT_RESPONSE_PAYLOAD_HANDLER': 'src.utils.my_jwt_response_handler'
 }
+
+AUTH_USER_MODEL = "user.User"
 
 ROOT_URLCONF = 'src.urls'
 
