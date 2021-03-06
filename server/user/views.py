@@ -1,35 +1,79 @@
 
-from rest_framework import permissions, status
-from rest_framework.decorators import api_view
+import jwt
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from rest_framework import exceptions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from .serializers import UserSerializer, UserSerializerWithToken
+from user.utils import generate_access_token, generate_refresh_token
+
+from .serializers import UserSerializer
 
 # Create your views here.
 
 
-@api_view(['GET'])
-def current_user(request):
-    """
-    Determine the current user by their token, and return their data
-    """
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@ensure_csrf_cookie
+def login(request):
+    User = get_user_model()
+    username = request.data.get('username')
+    password = request.data.get('password')
+    response = Response()
+    if (username is None) or (password is None):
+        raise exceptions.AuthenticationFailed(
+            'username and password required')
 
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data)
+    user = User.objects.filter(username=username).first()
+    if(user is None):
+        raise exceptions.AuthenticationFailed('user not found')
+    if (not user.check_password(password)):
+        raise exceptions.AuthenticationFailed('wrong password')
+
+    serialized_user = UserSerializer(user).data
+
+    access_token = generate_access_token(user)
+    refresh_token = generate_refresh_token(user)
+
+    response.set_cookie(key='refreshtoken', value=refresh_token, httponly=True)
+    response.data = {
+        'access_token': access_token,
+        'user': serialized_user,
+    }
+
+    return response
 
 
-class UserList(APIView):
-    """
-    Create a new user. It's called 'UserList' because normally we'd have a get
-    method here too, for retrieving a list of all User objects.
-    """
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_protect
+def refresh_token(request):
+    '''
+    To obtain a new access_token this view expects 2 important things:
+        1. a cookie that contains a valid refresh_token
+        2. a header 'X-CSRFTOKEN' with a valid csrf token, client app can get it from cookies "csrftoken"
+    '''
+    User = get_user_model()
+    refresh_token = request.COOKIES.get('refreshtoken')
+    if refresh_token is None:
+        raise exceptions.AuthenticationFailed(
+            'Authentication credentials were not provided.')
+    try:
+        payload = jwt.decode(
+            refresh_token, settings.REFRESH_TOKEN_SECRET, algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        raise exceptions.AuthenticationFailed(
+            'expired refresh token, please login again.')
 
-    permission_classes = (permissions.AllowAny,)
+    user = User.objects.filter(id=payload.get('user_id')).first()
+    if user is None:
+        raise exceptions.AuthenticationFailed('User not found')
 
-    def post(request):
-        serializer = UserSerializerWithToken(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not user.is_active:
+        raise exceptions.AuthenticationFailed('user is inactive')
+
+    access_token = generate_access_token(user)
+    return Response({'access_token': access_token})
