@@ -5,7 +5,6 @@ from django.conf import settings
 
 
 def generate_access_token(user):
-
     access_token_payload = {
         'user_id': user.id,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=5),
