@@ -100,9 +100,6 @@ export const useStyles = makeStyles((theme) => ({
   avatar_root: {
     position: "relative",
     cursor: "pointer",
-    width: 200,
-    height: 200,
-    margin: "auto",
   },
   avatar_overlay: {
     position: "absolute",
