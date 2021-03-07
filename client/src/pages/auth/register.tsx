@@ -48,7 +48,6 @@ const Register = () => {
           password: "",
           confirmPassword: "",
         }}
-        validationSchema={validationSchema}
         onSubmit={async ({ confirmPassword, ...other }) => {
           const { date_of_birth, email: username } = other;
           await axios.post("/api/users", { ...other, date_of_birth: format(date_of_birth, "yyyy-MM-dd"), username });

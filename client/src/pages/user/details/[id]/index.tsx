@@ -1,6 +1,6 @@
 import { Box, Button, Container, Grid, Typography } from "@material-ui/core";
 import { KeyboardDatePicker } from "@material-ui/pickers";
-import axios from "axios";
+import { default as axios } from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { AvatarPicker } from "components/Elements/AvatarPicker";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
@@ -27,15 +27,16 @@ const UserDetails = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof id === "string" && !user)
-      fetchUser(id).then((u: User) => {
+    if (Number.isInteger(Number(id)) && !user)
+      fetchUser(id as string).then((u: User) => {
         if (u) setUser(u);
         setLoading(false);
       });
   }, [id]);
 
   if (loading) return null;
-  else if (!user)
+
+  if (!user)
     return (
       <HorizontallyCenteredLayout>
         <Typography variant="h2"> Error: 404 </Typography>
@@ -43,8 +44,9 @@ const UserDetails = () => {
       </HorizontallyCenteredLayout>
     );
 
-  const handleSave = async (img: string) => {
-    user.profile_picture = await (await (await fetch(img)).blob()).text();
+  const handleSave = async (new_img: File) => {
+    user.profile_picture = new_img.name;
+    setImg((window.URL || window.webkitURL).createObjectURL(new_img));
     setUser({ ...user });
     return img;
   };
@@ -53,49 +55,72 @@ const UserDetails = () => {
     <HorizontallyCenteredLayout>
       <Formik initialValues={user} onSubmit={async ({ ...other }) => {
         const formData = new FormData();
-        formData.append('profile_picture', await (await fetch(img)).blob());
-        formData.append('first_name', user.first_name);
-        formData.append('last_name', user.last_name);
-        formData.append('date_of_birth', format(user.date_of_birth, "yyyy-MM-dd"));
-        formData.append('id', String(user.id));
-        // partial update for user
-        axios.patch('/api/users', formData, {
+
+        let blob: File | null;
+        if (user.profile_picture) {
+          const ext = user.profile_picture.substring(user.profile_picture.lastIndexOf('.') + 1)
+          blob = new File([(await (await (await fetch(img)).blob()).arrayBuffer())],
+            `profile-${user.id}.${ext}`, {
+            type: 'image/' + ext,
+          });
+        } else {
+          blob = null;
+        }
+        if (blob) formData.append('profile_picture', blob);
+        formData.append('first_name', other.first_name);
+        formData.append('last_name', other.last_name);
+        // if it's a string then just write the string
+        formData.append('date_of_birth', other.date_of_birth instanceof Date ? format(other.date_of_birth, "yyyy-MM-dd") : other.date_of_birth);
+        formData.append('id', String(id));
+        formData.append('email', user.username);
+
+        axios.patch('/api/users/' + id, formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+            'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjE1MDg3NTc1LCJqdGkiOiIzZDcyMmE0MTBmY2Q0YzVmOWE3ODRkMmFiYjNiZmFlMiIsInVzZXJfaWQiOjF9.9YjKjah-rVGqPhpaBM52jBOX4GleLYkSub2MlWR6KOQ'
+          },
+        }).then(resp => {
+          const user = resp.data as User
+          if (user) setUser(user);
         });
       }}>
-        <Form>
-          <Container component="main" maxWidth="sm">
-            <Box className={classes.card}>
-              <Typography className={classes.profileName} variant="h5">
-                {user.first_name} {user.last_name} ({user.username})
+        {({ values, isSubmitting, setFieldValue }) => (
+          <Form>
+            <Container component="main" maxWidth="sm">
+              <Box className={classes.card}>
+                <Typography className={classes.profileName} variant="h5">
+                  {user.first_name} {user.last_name} ({user.username})
               </Typography>
-              <AvatarPicker baseUrl={img} setBaseUrl={setImg} onSaveAvatar={handleSave} />
-              <Grid container spacing={3}>
-                <Grid item xs={6}>
-                  <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />
+                <AvatarPicker initialUrl={img} onSaveAvatar={handleSave} />
+                <Grid container spacing={3}>
+                  <Grid item xs={6}>
+                    <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <MyTextField placeholder="Last Name" label="Last Name" name="last_name" />
+                  </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                  <MyTextField placeholder="Last Name" label="Last Name" name="last_name" />
-                </Grid>
-              </Grid>
-              <Field
-                component={KeyboardDatePicker}
-                placeholder="Date of Birth"
-                label="Date of Birth"
-                name="date_of_birth"
-                format="dd/MM/yyyy"
-              />
+                <Field
+                  component={KeyboardDatePicker}
+                  placeholder="Date of Birth"
+                  validate={false}
+                  required={false}
+
+                  label="Date of Birth"
+                  name="date_of_birth"
+                  format="dd/MM/yyyy"
+                  value={values.date_of_birth}
+                  onChange={(value: Date) => setFieldValue("date_of_birth", value)}
+                />
               &nbsp;
-              <Button type="submit" color="primary" variant="contained">
-                Save
+              <Button type="submit" color="primary" variant="contained" disabled={isSubmitting} >
+                  Save
               </Button>
-            </Box>
-          </Container>
-        </Form>
+              </Box>
+            </Container>
+          </Form>
+        )}
       </Formik>
-    </HorizontallyCenteredLayout>
+    </HorizontallyCenteredLayout >
   );
 };
 
