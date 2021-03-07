@@ -51,31 +51,34 @@ const UserDetails = () => {
   return (
     <HorizontallyCenteredLayout>
       <Formik initialValues={user} onSubmit={async ({ ...other }) => {}}>
-        <Form>
-          <Container component="main" maxWidth="sm">
-            <Box className={classes.card}>
-              <Typography className={classes.profileName} variant="h5">
-                {user.first_name} {user.last_name} ({user.username})
-              </Typography>
-              <AvatarPicker baseUrl={img} setBaseUrl={setImg} onSaveAvatar={handleSave} />
-              <Grid container spacing={3}>
-                <Grid item xs={6}>
-                  <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />
+        {({ setFieldValue }) => (
+          <Form>
+            <Container component="main" maxWidth="sm">
+              <Box className={classes.card}>
+                <Typography className={classes.profileName} variant="h5">
+                  {user.first_name} {user.last_name} ({user.username})
+                </Typography>
+                <AvatarPicker baseUrl={img} setBaseUrl={setImg} onSaveAvatar={handleSave} />
+                <Grid container spacing={3}>
+                  <Grid item xs={6}>
+                    <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <MyTextField placeholder="Last Name" label="Last Name" name="last_name" />
+                  </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                  <MyTextField placeholder="Last Name" label="Last Name" name="last_name" />
-                </Grid>
-              </Grid>
-              <Field
-                component={KeyboardDatePicker}
-                placeholder="Date of Birth"
-                label="Date of Birth"
-                name="date_of_birth"
-                format="dd/MM/yyyy"
-              />
-            </Box>
-          </Container>
-        </Form>
+                <Field
+                  component={KeyboardDatePicker}
+                  placeholder="Date of Birth"
+                  label="Date of Birth"
+                  name="date_of_birth"
+                  format="dd/MM/yyyy"
+                  onChange={(value: Date) => setFieldValue("date_of_birth", value)}
+                />
+              </Box>
+            </Container>
+          </Form>
+        )}
       </Formik>
     </HorizontallyCenteredLayout>
   );
