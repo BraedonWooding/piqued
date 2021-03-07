@@ -1,9 +1,10 @@
-import { Box, Container, Grid, Typography } from "@material-ui/core";
+import { Box, Button, Container, Grid, Typography } from "@material-ui/core";
 import { KeyboardDatePicker } from "@material-ui/pickers";
 import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { AvatarPicker } from "components/Elements/AvatarPicker";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
+import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -50,7 +51,20 @@ const UserDetails = () => {
 
   return (
     <HorizontallyCenteredLayout>
-      <Formik initialValues={user} onSubmit={async ({ ...other }) => {}}>
+      <Formik initialValues={user} onSubmit={async ({ ...other }) => {
+        const formData = new FormData();
+        formData.append('profile_picture', await (await fetch(img)).blob());
+        formData.append('first_name', user.first_name);
+        formData.append('last_name', user.last_name);
+        formData.append('date_of_birth', format(user.date_of_birth, "yyyy-MM-dd"));
+        formData.append('id', String(user.id));
+        // partial update for user
+        axios.patch('/api/users', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }}>
         <Form>
           <Container component="main" maxWidth="sm">
             <Box className={classes.card}>
@@ -73,6 +87,10 @@ const UserDetails = () => {
                 name="date_of_birth"
                 format="dd/MM/yyyy"
               />
+              &nbsp;
+              <Button type="submit" color="primary" variant="contained">
+                Save
+              </Button>
             </Box>
           </Container>
         </Form>
