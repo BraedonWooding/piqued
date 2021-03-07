@@ -10,3 +10,4 @@ class UserViewSet(ModelViewSet):
     serializer_class = PiquedUserSerializer
     queryset = PiquedUser.objects.all()
     permission_classes = [IsCreatable]
+    lookup_field = 'user_id'
