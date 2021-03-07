@@ -20,8 +20,7 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, setBaseUrl, onSav
   const editorRef = useRef<AvatarEditor>(null);
 
   const newImage = (e: ChangeEvent<HTMLInputElement>) => {
-    window.URL = window.URL || window.webkitURL;
-    const url = window.URL.createObjectURL(e.target.files[0]);
+    const url = (window.URL || window.webkitURL).createObjectURL(e.target.files[0]);
     setBaseUrl(url);
     openCropper(true);
   };
@@ -29,17 +28,17 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, setBaseUrl, onSav
   return (
     <div>
       <Input type="file" onChange={newImage} id="file" ref={inputFile} />
-      <div
+      <Box
         className={classes.avatar_root}
         onClick={() => {
           inputFile.current.click();
         }}
       >
         <Avatar className={classes.avatar} src={baseUrl} />
-        <div className={classes.avatar_overlay}>
-          <div>Edit </div>
-        </div>
-      </div>
+        <Box className={classes.avatar_overlay}>
+          <Box>Edit</Box>
+        </Box>
+      </Box>
       {cropperOpened && (
         <div
           className={classes.avatar_overaly_wrapper}
