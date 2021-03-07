@@ -21,6 +21,7 @@ const UserDetails = () => {
   const classes = useStyles();
   const router = useRouter();
   const { id } = router.query;
+  const [img, setImg] = useState<string>();
   const [user, setUser] = useState<User>();
   const [loading, setLoading] = useState(true);
 
@@ -53,10 +54,10 @@ const UserDetails = () => {
         <Form>
           <Container component="main" maxWidth="sm">
             <Box className={classes.card}>
-              <Typography className={classes.profileName} variant="h3">
+              <Typography className={classes.profileName} variant="h5">
                 {user.first_name} {user.last_name} ({user.username})
               </Typography>
-              <AvatarPicker baseUrl={user.profile_picture} onSaveAvatar={handleSave} />
+              <AvatarPicker baseUrl={img} setBaseUrl={setImg} onSaveAvatar={handleSave} />
               <Grid container spacing={3}>
                 <Grid item xs={6}>
                   <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />

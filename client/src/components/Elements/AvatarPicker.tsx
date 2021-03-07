@@ -3,17 +3,17 @@ import Avatar from "@material-ui/core/Avatar";
 import CancelIcon from "@material-ui/icons/Cancel";
 import SaveIcon from "@material-ui/icons/Save";
 import { useStyles } from "components/Common/FormikUI";
-import { ChangeEvent, FC, useRef, useState } from "react";
+import { ChangeEvent, Dispatch, FC, SetStateAction, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
 
 interface AvatarPickerProps {
   baseUrl: string;
+  setBaseUrl: Dispatch<SetStateAction<string>>;
   onSaveAvatar: (imageData: string) => Promise<string>;
 }
 
-export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, onSaveAvatar }) => {
+export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, setBaseUrl, onSaveAvatar }) => {
   const classes = useStyles();
-  const [img, setImage] = useState(baseUrl);
   const [cropperOpened, openCropper] = useState(false);
   const [scale, setScale] = useState(2);
   const inputFile = useRef<HTMLInputElement>(null);
@@ -22,20 +22,20 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, onSaveAvatar }) =
   const newImage = (e: ChangeEvent<HTMLInputElement>) => {
     window.URL = window.URL || window.webkitURL;
     const url = window.URL.createObjectURL(e.target.files[0]);
-    setImage(url);
+    setBaseUrl(url);
     openCropper(true);
   };
 
   return (
     <div>
-      <Input type="file" onChange={newImage} id="file" ref={inputFile} style={{ display: "none" }} />
+      <Input type="file" onChange={newImage} id="file" ref={inputFile} />
       <div
         className={classes.avatar_root}
         onClick={() => {
           inputFile.current.click();
         }}
       >
-        <Avatar className={classes.avatar} src={img} />
+        <Avatar className={classes.avatar} src={baseUrl} />
         <div className={classes.avatar_overlay}>
           <div>Edit </div>
         </div>
@@ -51,7 +51,7 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, onSaveAvatar }) =
         >
           <AvatarEditor
             ref={editorRef}
-            image={img}
+            image={baseUrl}
             width={200}
             height={200}
             border={50}
@@ -84,7 +84,6 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, onSaveAvatar }) =
               variant="contained"
               color="secondary"
               onClick={() => {
-                setImage(baseUrl);
                 setScale(2);
                 openCropper(false);
               }}
@@ -97,10 +96,9 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, onSaveAvatar }) =
               color="primary"
               variant="contained"
               onClick={() => {
-                setImage(baseUrl);
                 setScale(2);
                 openCropper(false);
-                onSaveAvatar(img);
+                onSaveAvatar(baseUrl);
               }}
               startIcon={<SaveIcon />}
             >
