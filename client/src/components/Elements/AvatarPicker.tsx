@@ -1,4 +1,4 @@
-import { Box, Button, Input, Slider } from "@material-ui/core";
+import { Box, Button, Slider } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import CancelIcon from "@material-ui/icons/Cancel";
 import SaveIcon from "@material-ui/icons/Save";
@@ -27,7 +27,7 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ baseUrl, setBaseUrl, onSav
 
   return (
     <div>
-      <Input type="file" onChange={newImage} id="file" ref={inputFile} />
+      <input type="file" onChange={newImage} id="file" ref={inputFile} style={{ display: "none" }} />
       <Box
         className={classes.avatar_root}
         onClick={() => {
