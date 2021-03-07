@@ -4,7 +4,7 @@ import {
   FormHelperText,
   makeStyles,
   OutlinedInputProps,
-  TextField
+  TextField,
 } from "@material-ui/core";
 import { FieldHookConfig, useField } from "formik";
 import { FC, ReactNode } from "react";
@@ -75,17 +75,17 @@ export const useStyles = makeStyles((theme) => ({
     boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
     [theme.breakpoints.down("md")]: {
       width: "100%",
-    }
+    },
   },
   avatar: {
     width: "200px",
     height: "200px",
-    '&:hover': {
-      background: "black"
-    }
+    "&:hover": {
+      background: "black",
+    },
   },
   avatar_overaly_wrapper: {
-    "z-index": 10,
+    zIndex: 10,
     position: "absolute",
     top: 0,
     left: 0,
@@ -95,11 +95,11 @@ export const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   avatar_root: {
-    "position": "relative",
-    cursor: "pointer"
+    position: "relative",
+    cursor: "pointer",
   },
   avatar_overlay: {
     position: "absolute",
@@ -112,19 +112,19 @@ export const useStyles = makeStyles((theme) => ({
     width: "100%",
     opacity: 0,
     transition: ".2s ease",
-    "background-color": "rgba(0, 0, 0, 0.6)",
-    '& div': {
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    "& div": {
       color: "white",
-      'font-size': "20px",
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      'text-align': 'center',
+      fontSize: "20px",
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      textAlign: "center",
     },
-    '&:hover': {
+    "&:hover": {
       opacity: 1,
-    }
+    },
   },
   profileName: {
     textAlign: "center",
