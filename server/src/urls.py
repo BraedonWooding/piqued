@@ -26,4 +26,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('', include('user.urls')),
+    path('groups/', include('groups.urls')),
 ]
