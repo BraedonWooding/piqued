@@ -1,7 +1,7 @@
 import { Typography } from "@material-ui/core";
 import { NavButtonLink } from "components/Common/Link";
 import { Layout } from "components/Layout/Layout";
-import { LOGIN_PATH, REGISTER_PATH } from "util/constants";
+import { HOME_PATH, LOGIN_PATH, REGISTER_PATH } from "util/constants";
 
 const Index = () => (
   <Layout>
@@ -14,6 +14,10 @@ const Index = () => (
     &nbsp;
     <NavButtonLink href={REGISTER_PATH} color="primary" variant="contained">
       Sign up
+    </NavButtonLink>
+    &nbsp;
+    <NavButtonLink href={HOME_PATH} color="primary" variant="contained">
+      Chat (-REMOVE FROM PRODUCTION)
     </NavButtonLink>
   </Layout>
 );
