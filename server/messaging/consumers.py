@@ -46,16 +46,18 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
+        print(text_data)
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        message = text_data_json['Message']
+        user = text_data_json['UserId']
 
         msg = {
             #TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is 
             'PartitionKey': str(self.group_name), 
             'RowKey': str(int(datetime.utcnow().timestamp()*10000000)),
-            'MessageContents': message,
+            'Message': message,
             'Deleted': 0,
-            'UserId': 0,
+            'UserId': int(user),
             'Assets': "",
             'ModifiedAt': datetime.utcnow()}
         self.table_service.insert_entity('Messages', msg)
@@ -65,16 +67,19 @@ class GroupConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'MessageContents': message
+                'Message': message,
+                'UserId': user
             }
         )
 
     # Receive message from room group
     async def chat_message(self, event):
-        message = event['MessageContents']
+        message = event['Message']
+        user = event['UserId']
         print(message)
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'MessageContents': message
+            'Message': message,
+            'UserId': user
         }))
