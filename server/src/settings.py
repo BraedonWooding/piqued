@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'user.apps.UserConfig'
+    'channels',
+    'user.apps.UserConfig',
+    'groups.apps.GroupsConfig'
 ]
 
 MIDDLEWARE = [
@@ -138,6 +140,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Adding Channels
+ASGI_APPLICATION = 'src.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+} 
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000'
