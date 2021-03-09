@@ -1,0 +1,35 @@
+<!-- messaging/templates/messaging/room.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Test Group</title>
+</head>
+<body>
+    <input id="group-name-input" type="text" size="100"><br>
+    <input id="group-create-submit" type="button" value="Create group">
+
+    <script>
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/create_group/'
+        );
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#group-create-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#group-name-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+
+</body>
+</html>
