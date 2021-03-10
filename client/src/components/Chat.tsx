@@ -10,7 +10,7 @@ type ChatProps = {
 // Chat message object type
 type ChatMsg = {
     Message: string;
-    UsderId: number;
+    UserId: number;
     Timestamp: string
 }
 
