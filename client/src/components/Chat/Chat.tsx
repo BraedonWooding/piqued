@@ -15,7 +15,7 @@ import {
 import { Send } from "@material-ui/icons";
 import clsx from "clsx";
 import { format } from "date-fns";
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 interface ChatProps {
   activeUser: number;
@@ -31,7 +31,7 @@ interface ChatMsg {
 export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
   const classes = useStyles();
   const [chatMsges, setChatMsges] = useState<ChatMsg[]>([]);
-  const messageRef = useRef<HTMLDivElement>(null);
+  const [message, setMessage] = useState("");
   let chatSocket: WebSocket;
 
   // Connects to the websocket and refreshes content on first render only
@@ -52,11 +52,11 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
       <Grid container component={Paper} className={classes.chatSection}>
         <Grid item xs={3} className={classes.borderRight500}>
           <List>
-            <ListItem button key="RemySharp">
+            <ListItem button>
               <ListItemIcon>
                 <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
               </ListItemIcon>
-              <ListItemText primary="John Wick"></ListItemText>
+              <ListItemText primary="John Wick" />
             </ListItem>
           </List>
           <Divider />
@@ -69,20 +69,20 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
               <ListItemIcon>
                 <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
               </ListItemIcon>
-              <ListItemText primary="Remy Sharp">Remy Sharp</ListItemText>
-              <ListItemText secondary="online"></ListItemText>
+              <ListItemText primary="Remy Sharp" />
+              <ListItemText secondary="online" />
             </ListItem>
             <ListItem button key="Alice">
               <ListItemIcon>
                 <Avatar alt="Alice" src="https://material-ui.com/static/images/avatar/3.jpg" />
               </ListItemIcon>
-              <ListItemText primary="Alice">Alice</ListItemText>
+              <ListItemText primary="Alice" />
             </ListItem>
             <ListItem button key="CindyBaker">
               <ListItemIcon>
                 <Avatar alt="Cindy Baker" src="https://material-ui.com/static/images/avatar/2.jpg" />
               </ListItemIcon>
-              <ListItemText primary="Cindy Baker">Cindy Baker</ListItemText>
+              <ListItemText primary="Cindy Baker" />
             </ListItem>
           </List>
         </Grid>
@@ -113,14 +113,25 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  // if (message !== "")
-                  //   chatSocket.send(JSON.stringify({ userId: activeUser, message, timestamp: new Date() }));
+                  if (message !== "")
+                    chatSocket.send(
+                      JSON.stringify({
+                        userId: activeUser,
+                        message,
+                        timestamp: Date.now(),
+                      })
+                    );
                 }}
               >
-                <TextField ref={messageRef} placeholder="Type something" fullWidth required />
+                <TextField
+                  placeholder="Type something"
+                  fullWidth
+                  required
+                  onChange={(e) => setMessage(e.target.value)}
+                />
               </form>
             </Grid>
-            <Grid xs={1}>
+            <Grid item xs={1}>
               <Fab color="primary" aria-label="add">
                 <Send />
               </Fab>
