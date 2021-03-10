@@ -1,8 +1,9 @@
 import {
   Avatar,
   Divider,
-  Fab,
   Grid,
+  IconButton,
+  InputAdornment,
   List,
   ListItem,
   ListItemIcon,
@@ -115,13 +116,21 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
           }}
         >
           <Grid container className={classes.chatBox}>
-            <Grid item xs={11}>
-              <TextField placeholder="Type something" fullWidth required onChange={(e) => setMessage(e.target.value)} />
-            </Grid>
-            <Grid item xs={1}>
-              <Fab type="submit" color="primary" aria-label="send">
-                <Send />
-              </Fab>
+            <Grid item xs={12}>
+              <TextField
+                placeholder="Type something"
+                fullWidth
+                onChange={(e) => setMessage(e.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton type="submit" color="inherit">
+                        <Send />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Grid>
           </Grid>
         </form>
@@ -132,10 +141,10 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
 
 const useStyles = makeStyles(() => ({
   table: { minWidth: 650 },
-  chatSection: { width: "100%", height: "80vh" },
+  chatSection: { width: "100%", height: "100vh" },
   headBG: { backgroundColor: "#e0e0e0" },
   borderRight500: { borderRight: "1px solid #e0e0e0" },
-  messageArea: { height: "70vh", overflowY: "auto" },
+  messageArea: { height: "90vh", overflowY: "auto" },
   alignSelfRight: { alignSelf: "right" },
   searchBox: { padding: 10 },
   chatBox: { padding: 20 },
