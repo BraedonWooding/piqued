@@ -1,5 +1,4 @@
 import Chat from "components/Chat/Chat";
-import { Layout } from "components/Layout/Layout";
 import { useRouter } from "next/router";
 
 const Home = () => {
@@ -9,11 +8,7 @@ const Home = () => {
 
   if (!groupId) return null;
 
-  return (
-    <Layout>
-      <Chat activeUser={0} groupId={groupId} />
-    </Layout>
-  );
+  return <Chat activeUser={0} groupId={groupId} />;
 };
 
 export default Home;
