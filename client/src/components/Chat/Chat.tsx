@@ -108,35 +108,35 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
             ))}
           </List>
           <Divider />
-          <Grid container className={classes.chatBox}>
-            <Grid item xs={11}>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (message !== "")
-                    chatSocket.send(
-                      JSON.stringify({
-                        userId: activeUser,
-                        message,
-                        timestamp: Date.now(),
-                      })
-                    );
-                }}
-              >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (message !== "")
+                chatSocket.send(
+                  JSON.stringify({
+                    userId: activeUser,
+                    message,
+                    timestamp: Date.now(),
+                  })
+                );
+            }}
+          >
+            <Grid container className={classes.chatBox}>
+              <Grid item xs={11}>
                 <TextField
                   placeholder="Type something"
                   fullWidth
                   required
                   onChange={(e) => setMessage(e.target.value)}
                 />
-              </form>
+              </Grid>
+              <Grid item xs={1}>
+                <Fab type="submit" color="primary" aria-label="send">
+                  <Send />
+                </Fab>
+              </Grid>
             </Grid>
-            <Grid item xs={1}>
-              <Fab color="primary" aria-label="add">
-                <Send />
-              </Fab>
-            </Grid>
-          </Grid>
+          </form>
         </Grid>
       </Grid>
     </>
