@@ -14,7 +14,10 @@ class PiquedGroup(models.Model):
 
         users: ManyToManyField = models.ManyToManyField(PiquedUser)
         
+        #remove perhaps
         is_course: BooleanField =  models.BooleanField(default = False)
+
+        #perhaps remove -> probs in model
         DeletedAt: DateTimeField = models.DateTimeField(default = None, blank = True, null = True)
         ModifiedAt: DateTimeField = models.DateTimeField(auto_now = True)        # update on modification
         CreatedAt: DateTimeField = models.DateTimeField(auto_now_add = True)    # update on creation
