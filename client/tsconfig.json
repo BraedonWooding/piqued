@@ -17,6 +17,6 @@
     "isolatedModules": true,
     "jsx": "preserve"
   },
-  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", "src/pages/main/Chat.tsx", "src/pages/main/ChatMessage.js"],
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules"]
 }

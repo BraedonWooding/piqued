@@ -9,7 +9,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 account_name = "devstoreaccount1"
 account_key = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-tab_name = "Messages"
+
 
 class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -22,8 +22,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        self.table_service = TableService(account_name=account_name, account_key=account_key, is_emulated=True)
-        
+        self.table_service = TableService(
+            account_name=account_name, account_key=account_key, is_emulated=True)
+
         # This is the only synchronous call made in this consumer, and it runs upon connection request
         # Performance should not suffer as a result
         self.msgs = await sync_to_async(self.get_history)()
@@ -33,8 +34,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
         for msg in self.msgs:
             await self.chat_message(msg)
 
-    def get_history(self, msgs_since = datetime.utcnow() - timedelta(days=30)):
-        msgs = self.table_service.query_entities(tab_name, filter="PartitionKey eq '" + str(self.group_name) + "'")
+    def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
+        msgs = self.table_service.query_entities(
+            'Messages', filter="PartitionKey eq '" + str(self.group_name) + "'")
         return msgs
 
     async def disconnect(self, close_code):
@@ -48,16 +50,16 @@ class GroupConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         print(text_data)
         text_data_json = json.loads(text_data)
-        message = text_data_json['Message']
-        user = text_data_json['UserId']
+        message = text_data_json['message']
+        userId = text_data_json['userId']
 
         msg = {
-            #TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is 
-            'PartitionKey': str(self.group_name), 
-            'RowKey': str(int(datetime.utcnow().timestamp()*10000000)),
+            # TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is
+            'PartitionKey': str(self.group_name),
+            'RowKey': str(int(datetime.utcnow().timestamp() * 10000000)),
             'Message': message,
             'Deleted': 0,
-            'UserId': int(user),
+            'UserId': int(userId),
             'Assets': "",
             'ModifiedAt': datetime.utcnow()}
         self.table_service.insert_entity('Messages', msg)
@@ -67,19 +69,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'Message': message,
-                'UserId': user
+                'message': message,
+                'userId': userId
             }
         )
 
     # Receive message from room group
     async def chat_message(self, event):
-        message = event['Message']
-        user = event['UserId']
-        print(message)
-
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'Message': message,
-            'UserId': user
+            'message': event['message'],
+            'userId': event['userId']
         }))
