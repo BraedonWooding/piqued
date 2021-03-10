@@ -1,5 +1,4 @@
 import time
-from azure.cosmosdb.table.models import Entity
 from azure.cosmosdb.table.tableservice import TableService
 
 # Print progress
@@ -15,10 +14,8 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 try:
     account_name = "devstoreaccount1"
     account_key = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-    tab_name = "Messages"
-
     table_service = TableService(account_name=account_name, account_key=account_key, is_emulated=True)
-    table_service.create_table('Messages2')
+    table_service.create_table('Messages')
 
     # A List of Items
     items = list(range(0, 57))
