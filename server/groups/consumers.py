@@ -3,21 +3,30 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 import json
 from .models import PiquedGroup, PiquedUser
+from .serializers import PiquedGroupSerializer
 
 User = get_user_model()
 
 class GroupConsumer(WebsocketConsumer):
     
-    def createGroup(self, group_name):
-        # group = models.Group.objects.create(name = group_name)
+    def createGroup(self, group_name):     
+
+        tempgroup = models.Group.objects.create(name=group_name)
+        tempgroup.permissions.set([])
+        tempgroup.save()
+
+        newPiquedGroup = PiquedGroup.objects.create(is_course=False, group=tempgroup)
+        # newPiquedGroup.group.set(tempgroup)
+        newPiquedGroup.users.add(0)
+        newPiquedGroup.save()
+
         #TODO change perms
-        # group.permissions.set([])
-        createdGroup = PiquedGroup.objects.create( )
+        # tempgroup.permissions.set([])
+        # createdGroup = PiquedGroup.objects.create(group=tempgroup, is_course=False)
             # group = group,          
             # is_course = False,
         #TODO: figure out how to add list of things for interests and users
-        createdGroup.users.set(User)
-        createdGroup.save()
+        # createdGroup.users.set(PiquedUserSerializer.create())
 
     def connect(self):
         self.accept()
