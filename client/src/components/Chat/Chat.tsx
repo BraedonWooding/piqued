@@ -13,6 +13,7 @@ import {
   TextField,
 } from "@material-ui/core";
 import { Send } from "@material-ui/icons";
+import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { FC, useEffect, useState } from "react";
@@ -22,7 +23,7 @@ interface ChatProps {
   groupId: number;
 }
 
-interface ChatMsg {
+interface IChatMsg {
   message: string;
   userId: number;
   timestamp: Date;
@@ -30,7 +31,7 @@ interface ChatMsg {
 
 export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
   const classes = useStyles();
-  const [chatMsges, setChatMsges] = useState<ChatMsg[]>([]);
+  const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
   let chatSocket: WebSocket;
 
@@ -58,7 +59,8 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
           <TextField id="outlined-basic-email" label="Search" variant="outlined" fullWidth />
         </Grid>
         <Divider />
-        <List>
+        <List className={classes.userList}>
+          {/* placeholders */}
           <ListItem button key="RemySharp">
             <ListItemIcon>
               <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
@@ -85,16 +87,11 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
           {chatMsges.map((chatMsg, index) => (
             <ListItem key={index}>
               <Grid container>
-                <Grid item xs={6}>
+                <Grid item xs={12}>
+                  <ChatMsg side={chatMsg.userId === activeUser ? "right" : "left"} messages={[chatMsg.message]} />
                   <ListItemText
                     className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser })}
-                    primary={chatMsg.message}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <ListItemText
-                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser })}
-                    secondary={format(chatMsg.timestamp, "hh:mm a..aa")}
+                    secondary={format(chatMsg.timestamp, "h:mm aa")}
                   />
                 </Grid>
               </Grid>
@@ -110,7 +107,7 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
                 JSON.stringify({
                   userId: activeUser,
                   message,
-                  timestamp: Date.now(),
+                  timestamp: new Date(),
                 })
               );
           }}
@@ -140,12 +137,12 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
 };
 
 const useStyles = makeStyles(() => ({
-  table: { minWidth: 650 },
   chatSection: { width: "100%", height: "100vh" },
   headBG: { backgroundColor: "#e0e0e0" },
   borderRight500: { borderRight: "1px solid #e0e0e0" },
+  userList: { height: "80vh", overflowY: "auto" },
   messageArea: { height: "90vh", overflowY: "auto" },
-  alignSelfRight: { alignSelf: "right" },
+  alignSelfRight: { textAlign: "right" },
   searchBox: { padding: 10 },
   chatBox: { padding: 20 },
 }));
