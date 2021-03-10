@@ -36,7 +36,7 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
 
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
-    chatSocket = new WebSocket(`ws://localhost:8000/ws/messaging/${groupId}`);
+    chatSocket = new WebSocket(`ws://localhost:8000/ws/messaging/${groupId}/`);
     chatSocket.onmessage = (e) => setChatMsges([...chatMsges, JSON.parse(e.data)]);
     chatSocket.onclose = (e) => console.error("Chat socket closed unexpectedly");
     return chatSocket.close;
