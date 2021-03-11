@@ -16,7 +16,7 @@ import { Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import clsx from "clsx";
 import { format } from "date-fns";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 
 interface ChatProps {
   activeUser: number;
@@ -33,14 +33,19 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
   const classes = useStyles();
   const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
-  let chatSocket: WebSocket;
-
+  const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
+  const chatMsgesRef = useRef(chatMsges);
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
-    chatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/messaging/${groupId}/`);
-    chatSocket.onmessage = (e) => setChatMsges([...chatMsges, JSON.parse(e.data)]);
-    chatSocket.onclose = (e) => console.error("Chat socket closed unexpectedly");
-    return chatSocket.close;
+    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/messaging/${groupId}/`);
+    newChatSocket.onmessage = (e) => {
+      const { message, userId, timestamp } = JSON.parse(e.data);
+      chatMsgesRef.current.push({ message, userId, timestamp: new Date(timestamp) });
+      setChatMsges([...chatMsgesRef.current]);
+    };
+    newChatSocket.onclose = (e) => console.error("Chat socket closed unexpectedly");
+    setChatSocket(newChatSocket);
+    return newChatSocket.close;
   }, []);
 
   return (
@@ -102,7 +107,7 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (message !== "")
+            if (message !== "") {
               chatSocket.send(
                 JSON.stringify({
                   userId: activeUser,
@@ -110,6 +115,8 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
                   timestamp: new Date(),
                 })
               );
+              setMessage("");
+            }
           }}
         >
           <Grid container className={classes.chatBox}>
@@ -117,6 +124,7 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
               <TextField
                 placeholder="Type something"
                 fullWidth
+                value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 InputProps={{
                   endAdornment: (

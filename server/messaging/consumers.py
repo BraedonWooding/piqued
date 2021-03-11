@@ -9,6 +9,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 account_name = "devstoreaccount1"
 account_key = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+connection_string = "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10003/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10004/devstoreaccount1;TableEndpoint=http://127.0.0.1:10005/devstoreaccount1;"
 
 
 class GroupConsumer(AsyncWebsocketConsumer):
@@ -23,7 +24,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
         )
 
         self.table_service = TableService(
-            account_name=account_name, account_key=account_key, is_emulated=True)
+            account_name=account_name, account_key=account_key, is_emulated=True
+        )
 
         # This is the only synchronous call made in this consumer, and it runs upon connection request
         # Performance should not suffer as a result
@@ -32,7 +34,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         for msg in self.msgs:
-            await self.chat_message(msg)
+            await self.chat_history(msg)
 
     def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
         msgs = self.table_service.query_entities(
@@ -52,6 +54,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         userId = text_data_json['userId']
+        timestamp = text_data_json['timestamp']
 
         msg = {
             # TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is
@@ -70,7 +73,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'chat_message',
                 'message': message,
-                'userId': userId
+                'userId': userId,
+                'timestamp': timestamp
             }
         )
 
@@ -79,5 +83,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': event['message'],
-            'userId': event['userId']
+            'userId': event['userId'],
+            'timestamp': str(event["timestamp"])
+        }))
+
+    # Receive message history from server
+    async def chat_history(self, event):
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': event['Message'],
+            'userId': event['UserId'],
+            'timestamp': str(event["Timestamp"])
         }))
