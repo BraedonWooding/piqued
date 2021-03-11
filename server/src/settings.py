@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'channels',
+    # 'channels',
     'user.apps.UserConfig',
     'groups.apps.GroupsConfig'
 ]
@@ -141,13 +141,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# Adding Channels
 ASGI_APPLICATION = 'src.asgi.application'
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    }
-} 
+
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000'

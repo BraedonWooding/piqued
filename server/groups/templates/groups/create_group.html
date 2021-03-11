@@ -6,12 +6,17 @@
     <title>Test Group</title>
 </head>
 <body>
-    <input id="group-name-input" type="text" size="100"><br>
-    <input id="group-create-submit" type="button" value="Create group">
+    {% comment %} <input id="group-create-submit" type="button" value="Create group"> {% endcomment %}
+
+    <form action="localhost:8000/groups" method = "post">
+        <input id="group_name" type="text" size="100"><br>
+
+        <input type="submit" value="Create group"/>
+    </form>
 
     <script>
 
-        const chatSocket = new WebSocket(
+        {% comment %} const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
             + '/ws/create_group/'
@@ -28,7 +33,7 @@
                 'message': message
             }));
             messageInputDom.value = '';
-        };
+        }; {% endcomment %}
     </script>
 
 </body>
