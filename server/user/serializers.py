@@ -4,7 +4,16 @@ from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import PiquedUser
+from .models import PiquedGroup, PiquedUser
+
+
+class PiquedGroupSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='group.name')
+    id = serializers.IntegerField(source='group.id', read_only=True)
+
+    class Meta:
+        model = PiquedGroup
+        fields = ('name', 'id', 'interests')
 
 
 class PiquedUserSerializer(serializers.ModelSerializer):
@@ -23,7 +32,6 @@ class PiquedUserSerializer(serializers.ModelSerializer):
             setattr(instance.user, key, value)
         instance.user.save()
         instance.save()
-        # User.objects.filter(id=instance.user_id).update(user)
         return instance
 
     def create(self, validated_data):
@@ -34,4 +42,4 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedUser
         fields = ('date_of_birth', 'profile_picture', 'username', 'id',
-                  'email', 'first_name', 'last_name')
+                  'email', 'first_name', 'last_name', 'interests')

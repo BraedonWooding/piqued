@@ -1,8 +1,11 @@
 from django.contrib import admin
+from django.contrib.admin.options import BaseModelAdmin, ModelAdmin
+from django.contrib.admin.views.main import ChangeList
+from django.contrib.auth.admin import GroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 
-from .models import PiquedUser
+from .models import PiquedGroup, PiquedUser
 
 
 # Define an inline admin descriptor for User model
@@ -11,6 +14,16 @@ class PiquedUserInline(admin.StackedInline):
     model = PiquedUser
     can_delete = False
     verbose_name_plural = 'Extra Data' 
+    filter_horizontal = ('interests',)
+
+class PiquedGroupInline(admin.StackedInline):
+    model = PiquedGroup
+    can_delete = False
+    verbose_name_plural = 'Extra Data'
+
+class PiquedGroupAdmin(GroupAdmin):
+    inlines = (PiquedGroupInline,)
+    readonly_fields = ('id',)
 
 # Define a new User admin
 class PiquedUserAdmin(BaseUserAdmin):
@@ -23,10 +36,11 @@ class PiquedUserAdmin(BaseUserAdmin):
     )
     list_display = ('email', 'id', 'first_name', 'last_name')
 
+admin.site.unregister(Group)
+admin.site.register(Group, PiquedGroupAdmin)
+
 # Re-register UserAdmin
 admin.site.unregister(User)
-
-# Re-register admin + user correctly
 admin.site.register(User, PiquedUserAdmin)
 
 admin.site.site_header = "Piqued Admin"
