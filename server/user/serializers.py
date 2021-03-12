@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user, get_user_model
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from rest_framework import serializers
@@ -17,10 +18,16 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
 
 
 class PiquedUserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', validators=[UniqueValidator(queryset=get_user_model().objects.all(), message="This username is taken")])
+    username = serializers.CharField(source='user.username', validators=[UniqueValidator(
+        queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
+    username = serializers.CharField(source='user.username')
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+    )
     id = serializers.IntegerField(source='user.id', read_only=True)
 
     def update(self, instance: PiquedUser, validated_data):
@@ -36,10 +43,12 @@ class PiquedUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = validated_data['user']
+        password = make_password(user['password'])
         del validated_data['user']
-        return PiquedUser.objects.create(**validated_data, user=get_user_model().objects.create(**user))
+        del user['password']
+        return PiquedUser.objects.create(**validated_data, user=get_user_model().objects.create(**user, password=password))
 
     class Meta:
         model = PiquedUser
-        fields = ('date_of_birth', 'profile_picture', 'username', 'id',
+        fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id',
                   'email', 'first_name', 'last_name', 'interests')

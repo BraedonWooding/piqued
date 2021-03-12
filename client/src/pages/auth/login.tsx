@@ -14,7 +14,8 @@ const Login = () => {
       <Formik
         initialValues={{ username: "", password: "" }}
         onSubmit={async (values) => {
-          await axios.post("/api/users", values);
+          const response = await axios.post("/api/token", values);
+          console.log(response);
         }}
       >
         {({ isSubmitting }) => (
