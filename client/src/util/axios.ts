@@ -4,6 +4,7 @@ import { LOGIN_PATH } from "./constants";
 
 axios.interceptors.request.use(async (ctx) => {
   const accessToken = getAccessToken();
+  console.log(accessToken);
   if (accessToken) ctx.headers.Authorization = `Bearer ${accessToken}`;
   return ctx;
 });

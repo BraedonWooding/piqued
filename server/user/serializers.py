@@ -52,4 +52,4 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedUser
         fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id',
-                  'email', 'first_name', 'last_name', 'interests')
+                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses')

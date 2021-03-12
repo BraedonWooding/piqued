@@ -14,7 +14,7 @@ class PiquedUserInline(admin.StackedInline):
     model = PiquedUser
     can_delete = False
     verbose_name_plural = 'Extra Data' 
-    filter_horizontal = ('interests',)
+    filter_horizontal = ('interests', 'courses')
 
 class PiquedGroupInline(admin.StackedInline):
     model = PiquedGroup

@@ -5,6 +5,7 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
+import { setAccessToken, setRefreshToken } from "util/auth/token";
 import { FORGOT_PASSWORD_PATH, REGISTER_PATH } from "util/constants";
 
 const Login = () => {
@@ -14,8 +15,14 @@ const Login = () => {
       <Formik
         initialValues={{ username: "", password: "" }}
         onSubmit={async (values) => {
-          const response = await axios.post("/api/token", values);
-          console.log(response);
+          try {
+            const response = await axios.post("/api/token", values);
+            const { access, refresh } = response.data;
+            setAccessToken(access);
+            setRefreshToken(refresh);
+          } catch (e) {
+            console.log(e);
+          }
         }}
       >
         {({ isSubmitting }) => (
