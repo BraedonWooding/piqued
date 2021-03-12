@@ -2,9 +2,7 @@ import time
 
 from azure.cosmosdb.table.tableservice import TableService
 
-account_name = "devstoreaccount1"
-account_key = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-connection_string = "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10003/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10004/devstoreaccount1;TableEndpoint=http://127.0.0.1:10005/devstoreaccount1;"
+connection_string = 'DefaultEndpointsProtocol=https;AccountName=piqued;AccountKey=TODO: ACCOUNT_KEY;EndpointSuffix=core.windows.net;'
 
 # Print progress
 
@@ -20,9 +18,7 @@ def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=
         print()
 
 
-table_service = TableService(
-    account_name=account_name, account_key=account_key, is_emulated=True
-)
+table_service = TableService(connection_string)
 table_service.create_table('Messages')
 
 # A List of Items
