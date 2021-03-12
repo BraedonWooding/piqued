@@ -10,9 +10,5 @@
   "typescript.updateImportsOnFileMove.enabled": "always",
   "eslint.alwaysShowStatus": true,
   "files.autoSave": "onFocusChange",
-<<<<<<< HEAD
-  "python.pythonPath": "server\\venv\\Scripts\\python.exe"
-=======
   "python.pythonPath": "server/.venv/bin/python"
->>>>>>> main
 }

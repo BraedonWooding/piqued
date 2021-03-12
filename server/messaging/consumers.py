@@ -27,7 +27,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             # Get group_ID from the db (Db not implemented yet by Adam)
 
             self.username = self.scope["user"]
-            #TODO somehow get userID
+            #TODO somehow get user
             self.channelGroupName = 'chat_%s' % self.groupId
 
             # Join channel group

@@ -48,7 +48,6 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
     };
     newChatSocket.onclose = (e) => console.error("Chat socket closed unexpectedly");
     setChatSocket(newChatSocket);
-    return newChatSocket.close;
   }, []);
 
   return (
