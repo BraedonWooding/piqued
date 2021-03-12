@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from dateutil import tz, parser
 import sys
 import traceback
-
+from django.conf import settings
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
 from azure.cosmosdb.table.tableservice import TableService
@@ -36,6 +36,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
 
+            #TODO self.table_service = TableService(connection_string = settings.TABLE_STORAGE_CON_STRING)
             self.table_service = TableService(
                 account_name=account_name, account_key=account_key, is_emulated=True
             )
@@ -71,7 +72,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
             timestamp = datetime.utcnow()
 
             msg = {
-                # TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is
                 'PartitionKey': str(self.groupId),
                 'RowKey': str(int(timestamp.timestamp() * 10000000)),
                 'message': message,

@@ -25,6 +25,8 @@ SECRET_KEY = 'SECRET_KEY'
 REFRESH_TOKEN_SECRET = 'SECRET_KEY'
 ACCESS_TOKEN_SECRET = 'SECRET_KEY'
 
+TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;AccountKey=TODO: ACCOUNT_KEY;EndpointSuffix=core.windows.net'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
