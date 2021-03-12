@@ -19,6 +19,6 @@ axios.interceptors.response.use(undefined, async (err) => {
       removeRefreshToken();
       return axios.post(originalRequest);
     } else window.location.href = LOGIN_PATH;
-  } else window.location.href = LOGIN_PATH;
+  }
   return Promise.reject(err);
 });
