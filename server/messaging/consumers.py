@@ -41,6 +41,11 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 account_name=account_name, account_key=account_key, is_emulated=True
             )
 
+            try:
+                self.table_service.create_table('Messages')
+            except:
+                print("Failed to create Messages Table")
+
             self.msgs = await sync_to_async(self.get_history)()
 
             await self.accept()
