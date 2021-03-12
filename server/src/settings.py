@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'user.apps.UserConfig',
-    'interests.apps.InterestsConfig'
+    'interests.apps.InterestsConfig',
+    'info.apps.InfoConfig'
 ]
 
 MIDDLEWARE = [
@@ -96,9 +97,17 @@ WSGI_APPLICATION = 'src.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'sql_server.pyodbc',
+        'NAME': 'piqued',
+        'USER': 'superadmin',
+        'PASSWORD': 'PWD',
+        'HOST': 'HOST',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'FreeTDS',
+            'host_is_server': True,
+        },
+    },
 }
 
 # Azure
