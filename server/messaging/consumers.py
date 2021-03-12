@@ -1,6 +1,9 @@
 # messaging/consumers.py
 import json
 from datetime import datetime, timedelta
+from dateutil import tz, parser
+import sys
+import traceback
 
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
@@ -11,87 +14,101 @@ account_name = "devstoreaccount1"
 account_key = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 connection_string = "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10003/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10004/devstoreaccount1;TableEndpoint=http://127.0.0.1:10005/devstoreaccount1;"
 
+def handleException(e, loc):
+    exc_type = e[0]
+    exc_value = e[1]
+    exc_tb = e[2]
+    print("\n\n--------\nError in " + loc + "\n" + str(exc_value) + "\nTraceback: " + str(traceback.format_exception(exc_type, exc_value, exc_tb)))
 
 class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.group_name = self.scope['url_route']['kwargs']['group_name']
-        self.room_group_name = 'chat_%s' % self.group_name
+        try:
+            self.groupId = self.scope['url_route']['kwargs']['groupId']
+            # Get group_ID from the db (Db not implemented yet by Adam)
 
-        # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+            self.username = self.scope["user"]
+            #TODO somehow get userID
+            self.channelGroupName = 'chat_%s' % self.groupId
 
-        self.table_service = TableService(
-            account_name=account_name, account_key=account_key, is_emulated=True
-        )
+            # Join channel group
+            await self.channel_layer.group_add(
+                self.channelGroupName,
+                self.channel_name
+            )
 
-        # This is the only synchronous call made in this consumer, and it runs upon connection request
-        # Performance should not suffer as a result
-        self.msgs = await sync_to_async(self.get_history)()
+            self.table_service = TableService(
+                account_name=account_name, account_key=account_key, is_emulated=True
+            )
 
-        await self.accept()
+            self.msgs = await sync_to_async(self.get_history)()
 
-        for msg in self.msgs:
-            await self.chat_history(msg)
+            await self.accept()
+
+            for msg in self.msgs:
+                await self.chat_message(msg)
+        except Exception:
+            handleException(sys.exc_info(),"connecting to socket.")
+
 
     def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
         msgs = self.table_service.query_entities(
-            'Messages', filter="PartitionKey eq '" + str(self.group_name) + "'")
+            'Messages', filter="PartitionKey eq '" + str(self.groupId) + "'")
         return msgs
 
     async def disconnect(self, close_code):
         # Leave room group
         await self.channel_layer.group_discard(
-            self.room_group_name,
+            self.channelGroupName,
             self.channel_name
         )
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        print(text_data)
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        userId = text_data_json['userId']
-        timestamp = text_data_json['timestamp']
+        try:
+            text_data_json = json.loads(text_data)
+            message = text_data_json['message']
+            userId = text_data_json['userId']
+            timestamp = datetime.utcnow()
 
-        msg = {
-            # TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is
-            'PartitionKey': str(self.group_name),
-            'RowKey': str(int(datetime.utcnow().timestamp() * 10000000)),
-            'Message': message,
-            'Deleted': 0,
-            'UserId': int(userId),
-            'Assets': "",
-            'ModifiedAt': datetime.utcnow()}
-        self.table_service.insert_entity('Messages', msg)
-
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
+            msg = {
+                # TODO: change the partition key to be the group ID. For now, i'm leaving it as whatever the string in the URI is
+                'PartitionKey': str(self.groupId),
+                'RowKey': str(int(timestamp.timestamp() * 10000000)),
                 'message': message,
-                'userId': userId,
-                'timestamp': timestamp
-            }
-        )
+                'deleted': 0,
+                'userId': int(userId),
+                'assets': "",
+                'modifiedAt': timestamp}
+            print(msg)
+            self.table_service.insert_entity('Messages', msg)
+
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.channelGroupName,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'userId': userId,
+                    'modifiedAt': timestamp
+                }
+            )
+        
+        except Exception:
+            handleException(sys.exc_info(),"socket recieving data from client.")
 
     # Receive message from room group
     async def chat_message(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': event['message'],
-            'userId': event['userId'],
-            'timestamp': str(event["timestamp"])
-        }))
+        try:
+            # Send message to WebSocket
+            timestamp = event["modifiedAt"]
+            from_zone = tz.gettz('UTC')
+            to_zone = tz.gettz('Australia/ACT')
+            timestamp.replace(tzinfo=from_zone)
 
-    # Receive message history from server
-    async def chat_history(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': event['Message'],
-            'userId': event['UserId'],
-            'timestamp': str(event["Timestamp"])
-        }))
+            await self.send(text_data=json.dumps({
+                'message': event['message'],
+                'userId': event['userId'],
+                'timestamp': str(timestamp)
+            }))
+        except Exception:
+            handleException(sys.exc_info(),"socket recieving message from socket_group (channel layer).")

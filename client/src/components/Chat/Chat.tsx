@@ -10,7 +10,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
@@ -19,8 +19,10 @@ import { format } from "date-fns";
 import { FC, useEffect, useRef, useState } from "react";
 
 interface ChatProps {
-  activeUser: number;
+  activeUserId: number;
+  activeUsername: string;
   groupId: number;
+  groupName: string
 }
 
 interface IChatMsg {
@@ -29,15 +31,16 @@ interface IChatMsg {
   timestamp: Date;
 }
 
-export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
+export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, groupName }) => {
   const classes = useStyles();
   const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
   const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
   const chatMsgesRef = useRef(chatMsges);
+
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
-    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_BASE_URL}/ws/messaging/${groupId}/`);
+    const newChatSocket = new WebSocket(`ws://127.0.0.1:8000/ws/messaging/${groupId}/`);
     newChatSocket.onmessage = (e) => {
       const { message, userId, timestamp } = JSON.parse(e.data);
       chatMsgesRef.current.push({ message, userId, timestamp: new Date(timestamp) });
@@ -56,7 +59,7 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
             <ListItemIcon>
               <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
             </ListItemIcon>
-            <ListItemText primary="John Wick" />
+            <ListItemText primary={activeUsername} />
           </ListItem>
         </List>
         <Divider />
@@ -93,9 +96,9 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
             <ListItem key={index}>
               <Grid container>
                 <Grid item xs={12}>
-                  <ChatMsg side={chatMsg.userId === activeUser ? "right" : "left"} messages={[chatMsg.message]} />
+                  <ChatMsg side={chatMsg.userId === activeUserId ? "right" : "left"} messages={[chatMsg.message]} />
                   <ListItemText
-                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser })}
+                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUserId })}
                     secondary={format(chatMsg.timestamp, "h:mm aa")}
                   />
                 </Grid>
@@ -110,7 +113,7 @@ export const Chat: FC<ChatProps> = ({ activeUser, groupId = 0 }) => {
             if (message !== "") {
               chatSocket.send(
                 JSON.stringify({
-                  userId: activeUser,
+                  userId: activeUserId,
                   message,
                   timestamp: new Date(),
                 })
