@@ -1,7 +1,5 @@
-from django.contrib.auth import get_user, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
-from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -31,8 +29,11 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='user.id', read_only=True)
 
     def update(self, instance: PiquedUser, validated_data):
-        user = validated_data['user']
-        del validated_data['user']
+        if 'user' in validated_data:
+            user = validated_data['user']
+            del validated_data['user']
+        else:
+            user = {}
         for key, value in validated_data.items():
             setattr(instance, key, value)
         for key, value in user.items():
