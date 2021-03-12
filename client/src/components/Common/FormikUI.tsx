@@ -2,9 +2,11 @@ import {
   Checkbox,
   FormControlLabel,
   FormHelperText,
+
   makeStyles,
   OutlinedInputProps,
-  TextField,
+
+  TextField
 } from "@material-ui/core";
 import { FieldHookConfig, useField } from "formik";
 import { FC, ReactNode } from "react";
@@ -15,6 +17,7 @@ type MyTextFieldProps = {
   placeholder?: string;
   label?: string;
   type?: string;
+  id?: string;
   autoFocus?: boolean;
   multiline?: boolean;
   InputProps?: Partial<OutlinedInputProps>;
@@ -34,6 +37,7 @@ export const MyCheckbox: FC<MyCheckboxProps> = ({ label, ...props }) => {
 export const MyTextField: FC<MyTextFieldProps> = ({
   placeholder,
   label,
+  id,
   type,
   autoFocus,
   multiline,
@@ -48,7 +52,7 @@ export const MyTextField: FC<MyTextFieldProps> = ({
       margin="normal"
       required
       fullWidth
-      id={label}
+      id={id}
       placeholder={placeholder}
       label={label}
       type={type}
@@ -58,6 +62,7 @@ export const MyTextField: FC<MyTextFieldProps> = ({
       error={!!errorText}
       InputProps={InputProps}
       {...field}
+      {...props as any}
     />
   );
 };

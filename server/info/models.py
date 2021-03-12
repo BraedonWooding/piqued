@@ -11,9 +11,15 @@ class Course(models.Model):
     terms = models.CharField(max_length=255, blank=True, null=True, default=None)
     desc = models.TextField(blank=True, null=True, default=None)
 
+    def __str__(self):
+        return self.course_name
+
 class Program(models.Model):
     program_code = models.CharField(max_length=255, null=False, db_index=True)
     name = models.CharField(max_length=255, null=False, db_index=True)
     faculty = models.CharField(max_length=255, null=True, blank=True, default=None)
     duration_years = models.CharField(max_length=10, null=True, blank=True, default=None)
     desc = models.TextField(null=True, blank=True, default=None)
+    
+    def __str__(self):
+        return self.name
