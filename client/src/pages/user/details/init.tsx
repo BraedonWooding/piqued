@@ -1,9 +1,8 @@
 import { Box, Button, Container, Grid, Typography } from "@material-ui/core";
-import { Autocomplete } from "@material-ui/lab";
 import axios from "axios";
-import { MyTextField, useStyles } from "components/Common/FormikUI";
+import { FormikAutocomplete, MyTextField, useStyles } from "components/Common/FormikUI";
 import { FullyCenteredLayout } from "components/Layout/Layout";
-import { Form, Formik } from "formik";
+import { Field, Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import * as yup from "yup";
 
@@ -51,18 +50,10 @@ const InitDetails = () => {
                                 <Typography variant="h5">Manually Enter Details</Typography>
                                 <Grid container spacing={3}>
                                     <Grid item xs={12}>
-                                        <Autocomplete
-                                            id="degree"
+                                        <Field name="programs" component={FormikAutocomplete} label="Degree"
                                             options={degrees}
                                             getOptionLabel={(option) => option.name ?? ""}
-                                            renderInput={(params) => (
-                                                <MyTextField
-                                                    {...params}
-                                                    name="degree"
-                                                    label="Select Degree"
-                                                    placeholder="Degree"
-                                                />
-                                            )}
+                                            textFieldProps={{ fullWidth: true, margin: 'normal', variant: 'outlined' }}
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
@@ -80,19 +71,12 @@ const InitDetails = () => {
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Autocomplete
+                                        <FormikAutocomplete
                                             multiple
                                             id="courses"
                                             options={courses}
+                                            textFieldProps={{}}
                                             getOptionLabel={(option) => option.course_name ?? ""}
-                                            renderInput={(params) => (
-                                                <MyTextField
-                                                    {...params}
-                                                    name="courses"
-                                                    label="Can select multiple"
-                                                    placeholder="Courses"
-                                                />
-                                            )}
                                         />
                                     </Grid>
                                 </Grid>

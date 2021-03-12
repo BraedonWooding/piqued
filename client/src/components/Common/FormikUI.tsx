@@ -8,8 +8,11 @@ import {
 
   TextField
 } from "@material-ui/core";
+import { Autocomplete } from "@material-ui/lab";
 import { FieldHookConfig, useField } from "formik";
+import { fieldToTextField } from 'formik-material-ui';
 import { FC, ReactNode } from "react";
+
 
 type MyCheckboxProps = { label: ReactNode } & FieldHookConfig<string>;
 
@@ -66,6 +69,26 @@ export const MyTextField: FC<MyTextFieldProps> = ({
     />
   );
 };
+
+export const FormikAutocomplete = ({ textFieldProps, options, ...props }) => {
+  const { form: { setTouched, setFieldValue } } = props;
+  const { error, helperText, ...field } = fieldToTextField(props as any);
+  const { name } = field;
+
+  return (
+    //@ts-ignore
+    <Autocomplete
+      options={options}
+      {...props}
+      {...field}
+      onChange={(_, value) => setFieldValue(name, value)}
+      onBlur={() => setTouched({ [name]: true })}
+      renderInput={props => (
+        <TextField {...props} {...textFieldProps} helperText={helperText} error={error} />
+      )}
+    />
+  );
+}
 
 export const useStyles = makeStyles((theme) => ({
   card: {
@@ -138,3 +161,4 @@ export const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(1),
   },
 }));
+
