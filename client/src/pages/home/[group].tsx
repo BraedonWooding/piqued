@@ -8,7 +8,7 @@ const Home = () => {
 
   if (!groupId) return null;
 
-  return <Chat activeUser={0} groupId={groupId} />;
+  return <Chat activeUserId={0} activeUsername={"God"} groupId={groupId} groupName={"Hell"} />;
 };
 
 export default Home;
