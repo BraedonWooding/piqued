@@ -27,12 +27,14 @@ const UserDetails = () => {
   const [user, setUser] = useState<User>();
   const [loading, setLoading] = useState(true);
   const [activeUser, setActiveUser] = useState<User | null>();
+  const [isActiveUser, setIsActiveUser] = useState<boolean>(false);
 
   useEffect(() => {
     if (Number.isInteger(Number(id)) && !user) {
       const user = getUser();
       setActiveUser(user);
       setImg(user.profile_picture);
+      setIsActiveUser(user.id == id);
       fetchUser(id as string).then((u: User) => {
         if (u) setUser(u);
         setLoading(false);
@@ -101,11 +103,12 @@ const UserDetails = () => {
                 <Typography className={classes.profileName} variant="h5">
                   {user.first_name} {user.last_name} ({user.username})
                 </Typography>
-                <AvatarPicker initialUrl={img} onSaveAvatar={handleSave} />
+                <AvatarPicker disabled={!isActiveUser} initialUrl={img} onSaveAvatar={handleSave} />
                 <Grid container spacing={3}>
                   <Grid item xs={6}>
                     <MyTextField
-                      readOnly={activeUser.id !== Number(id)}
+                      disabled={!isActiveUser}
+                      readOnly={!isActiveUser}
                       placeholder="First Name"
                       label="First Name"
                       name="first_name"
@@ -114,7 +117,8 @@ const UserDetails = () => {
                   </Grid>
                   <Grid item xs={6}>
                     <MyTextField
-                      readOnly={activeUser.id !== Number(id)}
+                      disabled={!isActiveUser}
+                      readOnly={!isActiveUser}
                       placeholder="Last Name"
                       label="Last Name"
                       name="last_name"
@@ -126,7 +130,8 @@ const UserDetails = () => {
                   placeholder="Date of Birth"
                   validate={false}
                   required={false}
-                  readOnly={activeUser.id !== Number(id)}
+                  disabled={!isActiveUser}
+                  readOnly={!isActiveUser}
                   label="Date of Birth"
                   name="date_of_birth"
                   format="dd/MM/yyyy"
@@ -134,7 +139,7 @@ const UserDetails = () => {
                   onChange={(value: Date) => setFieldValue("date_of_birth", value)}
                 />
                 &nbsp;
-                {activeUser.id === Number(id) ? (
+                {isActiveUser ? (
                   <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
                     Save
                   </Button>

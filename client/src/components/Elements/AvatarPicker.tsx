@@ -2,6 +2,7 @@ import { Box, Button, Slider } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import CancelIcon from "@material-ui/icons/Cancel";
 import SaveIcon from "@material-ui/icons/Save";
+import clsx from "clsx";
 import { useStyles } from "components/Common/FormikUI";
 import { ChangeEvent, FC, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
@@ -9,12 +10,13 @@ import AvatarEditor from "react-avatar-editor";
 interface AvatarPickerProps {
   initialUrl: string;
   onSaveAvatar: (imageData: File) => Promise<string>;
+  disabled: boolean;
 }
 
-export const AvatarPicker: FC<AvatarPickerProps> = ({ initialUrl, onSaveAvatar }) => {
+export const AvatarPicker: FC<AvatarPickerProps> = ({ initialUrl, onSaveAvatar, disabled }) => {
   const classes = useStyles();
   const [cropperOpened, openCropper] = useState(false);
-  const [scale, setScale] = useState(2);
+  const [scale, setScale] = useState(1);
   const [baseUrl, setBaseUrl] = useState(initialUrl);
   const [blob, setBlob] = useState(null);
   const inputFile = useRef<HTMLInputElement>(null);
@@ -34,16 +36,14 @@ export const AvatarPicker: FC<AvatarPickerProps> = ({ initialUrl, onSaveAvatar }
       <input type="file" onChange={newImage} id="file" ref={inputFile} style={{ display: "none" }} />
       <Box
         className={classes.avatar_root}
-        onClick={() => {
-          inputFile.current.click();
-        }}
+        onClick={() => !disabled && inputFile.current.click()}
       >
         <Avatar className={classes.avatar} src={baseUrl} />
-        <Box className={classes.avatar_overlay}>
+        {(!disabled && <Box className={classes.avatar_overlay}>
           <Box>Edit</Box>
-        </Box>
+        </Box>)}
       </Box>
-      {cropperOpened && (
+      {cropperOpened && !disabled && (
         <div
           className={classes.avatar_overaly_wrapper}
           onClick={(ev) => {
