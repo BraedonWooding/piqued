@@ -73,6 +73,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             message = text_data_json['message']
+            files = text_data_json['files'] # Files are urls
             userId = text_data_json['userId']
             timestamp = datetime.utcnow()
 
@@ -93,6 +94,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': message,
+                    'files': files,
                     'userId': userId,
                     'modifiedAt': timestamp
                 }
@@ -112,6 +114,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
             await self.send(text_data=json.dumps({
                 'message': event['message'],
+                'files': event['files'],
                 'userId': event['userId'],
                 'timestamp': str(timestamp)
             }))
