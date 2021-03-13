@@ -8,12 +8,8 @@ from .serializers import PiquedGroup, PiquedGroupSerializer
 
 # Create your views here.\
 
-def index(request):
-    return render(request,'groups/create_group.html')
-
 class PiquedGroupViewSet(ModelViewSet):
     serializer_class = PiquedGroupSerializer
     queryset = PiquedGroup.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'group_id'
-
