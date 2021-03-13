@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 import datetime
 import mimetypes
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -110,7 +111,7 @@ DATABASES = {
         'HOST': 'HOST',
         'PORT': '1433',
         'OPTIONS': {
-            'driver': 'FreeTDS',
+            'driver': 'FreeTDS' if os.name == 'posix' else 'ODBC Driver 17 for SQL Server',
             'host_is_server': True,
         },
     },
