@@ -3,20 +3,16 @@ import { FC } from "react";
 
 export const FullyCenteredLayout: FC = ({ children }) => {
   const classes = useStyles();
-<<<<<<< HEAD
   return <div className={classes.fullyCenteredContent}>{children}</div>;
 };
 
 export const HorizontallyCenteredLayout: FC = ({ children }) => {
   const classes = useStyles();
-  return <div className={classes.horizontallyCenteredContent}>{children}</div>;
-=======
   return (
-    <div className={classes.content}>
+    <div className={classes.horizontallyCenteredContent}>
       {children}
     </div>
   );
->>>>>>> origin/main
 };
 
 const useStyles = makeStyles((theme) => ({

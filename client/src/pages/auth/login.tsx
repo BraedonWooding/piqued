@@ -1,31 +1,37 @@
 import { Avatar, Box, Button, Container, Grid, Typography } from "@material-ui/core";
 import { LockOutlined } from "@material-ui/icons";
-import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
-import { setAccessToken, setRefreshToken } from "util/auth/token";
+import { useRouter } from "next/router";
+import { authenticateToken } from "util/auth/token";
 import { FORGOT_PASSWORD_PATH, REGISTER_PATH } from "util/constants";
+import { FormikHelpers as FormikActions } from 'formik';
+import { getUser, lookupCurrentUser, setUser } from "util/auth/user";
 
 const Login = () => {
   const classes = useStyles();
+  const router = useRouter();
   return (
     <FullyCenteredLayout>
       <Formik
         initialValues={{ username: "", password: "" }}
-        onSubmit={async (values) => {
+        onSubmit={async (values, { setSubmitting, setErrors }) => {
           try {
-            const response = await axios.post("/api/token", values);
-            const { access, refresh } = response.data;
-            setAccessToken(access);
-            setRefreshToken(refresh);
+            await authenticateToken(values);
+            await lookupCurrentUser();
+            router.push("/home");
           } catch (e) {
-            console.log(e);
+            setSubmitting(false);
+            setErrors({
+              username: "Invalid Username or Password",
+              password: "Invalid Username or Password"
+            });
           }
         }}
       >
-        {({ isSubmitting }) => (
+        {({ isValid, submitCount, isSubmitting }) => (
           <Form>
             <Container component="main" maxWidth="sm">
               <Box className={classes.card}>

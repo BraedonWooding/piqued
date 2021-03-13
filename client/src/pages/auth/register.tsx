@@ -7,6 +7,9 @@ import { MyLink } from "components/Common/Link";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
+import { useRouter } from "next/router";
+import { authenticateToken } from "util/auth/token";
+import { lookupCurrentUser } from "util/auth/user";
 import { LOGIN_PATH } from "util/constants";
 import * as yup from "yup";
 
@@ -36,6 +39,8 @@ const validationSchema = yup.object({
 
 const Register = () => {
   const classes = useStyles();
+  const router = useRouter();
+
   return (
     <FullyCenteredLayout>
       <Formik
@@ -51,6 +56,9 @@ const Register = () => {
         onSubmit={async ({ confirmPassword, ...other }) => {
           const { date_of_birth, email: username } = other;
           await axios.post("/api/users", { ...other, date_of_birth: format(date_of_birth, "yyyy-MM-dd"), username });
+          await authenticateToken({ password: other.password, username });
+          await lookupCurrentUser();
+          router.push("/user/details/init");
         }}
       >
         {({ values, isSubmitting, setFieldValue }) => (

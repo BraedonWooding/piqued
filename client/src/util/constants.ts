@@ -5,5 +5,5 @@ export const HOME_PATH = "/home/1";
 export const FORGOT_PASSWORD_PATH = "/auth/forgot-password";
 
 /* local storage item names */
-export const ACCESS_TOKEN = "access-token";
-export const REFRESH_TOKEN = "refresh-token";
+export const TOKEN = "auth-token";
+export const USER = "user";

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import datetime
+import mimetypes
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -30,8 +31,9 @@ TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;Ac
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ***REMOVED*** "localhost", "127.0.0.1"]
 
+mimetypes.add_type("text/css", ".css", True)
 
 # Application definition
 
@@ -122,7 +124,7 @@ DATABASES = {
 AZURE_STORAGE_ACCOUNT_URL = "DOMAIN"
 AZURE_STORAGE_ACCOUNT_NAME = "piqued"
 # Dev: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-AZURE_STORAGE_KEY = "TODO: ACCOUNT_KEY"
+AZURE_STORAGE_ACCOUNT_KEY = "TODO: ACCOUNT_KEY"
 AZURE_STORAGE_DEFAULT_CONTAINER = "statics"  # statics will use this container
 
 # Password validation

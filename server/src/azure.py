@@ -25,7 +25,7 @@ class AzureStorage(Storage):
     def blob_service(self):
         if self._blob_service != None: return self._blob_service
 
-        self._blob_service = BlobServiceClient(account_url=settings.AZURE_STORAGE_ACCOUNT_URL, credential=settings.AZURE_STORAGE_KEY).get_container_client(self.container)
+        self._blob_service = BlobServiceClient(account_url=settings.AZURE_STORAGE_ACCOUNT_URL, credential=settings.AZURE_STORAGE_ACCOUNT_KEY).get_container_client(self.container)
         try:
             # Attempt to create container
             self._blob_service.create_container(public_access='blob')
@@ -40,7 +40,7 @@ class AzureStorage(Storage):
         content.open(mode="rb")
         data = content.read()
         content_type = mimetypes.guess_type(name)[0]
-        self.blob_service.upload_blob(name, data, blob_type='BlockBlob', content_settings=ContentSettings(content_type=content_type))
+        self.blob_service.upload_blob(name, data, overwrite=True, blob_type='BlockBlob', content_settings=ContentSettings(content_type=content_type))
         return name
     
     def upload_content(self, name, content):

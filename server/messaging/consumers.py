@@ -94,7 +94,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'type': 'chat_message',
                     'message': message,
                     'userId': userId,
-                    'modifiedAt': timestamp
+                    'modifiedAt': timestamp.astimezone()
                 }
             )
         except Exception:
@@ -103,16 +103,12 @@ class GroupConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def chat_message(self, event):
         try:
+            print(event["modifiedAt"])
             # Send message to WebSocket
-            timestamp = event["modifiedAt"]
-            from_zone = tz.gettz('UTC')
-            to_zone = tz.gettz('Australia/ACT')
-            timestamp.replace(tzinfo=from_zone)
-
             await self.send(text_data=json.dumps({
                 'message': event['message'],
                 'userId': event['userId'],
-                'timestamp': str(timestamp)
+                'timestamp': str(event["modifiedAt"])
             }))
         except Exception:
             handleException(sys.exc_info(),"socket recieving message from socket_group (channel layer).")
