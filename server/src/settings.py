@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'interests.apps.InterestsConfig',
     'info.apps.InfoConfig'
+    'groups.apps.GroupsConfig'
 ]
 
 MIDDLEWARE = [
@@ -166,6 +167,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+<<<<<<< HEAD
 # Adding Channels
 ASGI_APPLICATION = 'src.asgi.application'
 CHANNEL_LAYERS = {
@@ -173,6 +175,10 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
+=======
+ASGI_APPLICATION = 'src.asgi.application'
+
+>>>>>>> group-creation
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000'
