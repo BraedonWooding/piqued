@@ -59,8 +59,7 @@ class AzureStorage(Storage):
 
     def exists(self, name):
         try:
-            self.blob_service.get_blob_client(name).exists()
-            return True
+            return self.blob_service.get_blob_client(name).exists()
         except:
             return False
 
