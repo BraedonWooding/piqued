@@ -34,7 +34,7 @@ const UserDetails = () => {
       const user = getUser();
       setActiveUser(user);
       setImg(user.profile_picture);
-      setIsActiveUser(user.id == id);
+      setIsActiveUser(user.id == Number(id));
       fetchUser(id as string).then((u: User) => {
         if (u) setUser(u);
         setLoading(false);
