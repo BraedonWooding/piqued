@@ -3,7 +3,11 @@ import { FC } from "react";
 
 export const Layout: FC = ({ children }) => {
   const classes = useStyles();
-  return <div className={classes.content}>{children}</div>;
+  return (
+    <div className={classes.content}>
+      {children}
+    </div>
+  );
 };
 
 const useStyles = makeStyles((theme) => ({
