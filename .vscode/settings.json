@@ -10,5 +10,8 @@
   "typescript.updateImportsOnFileMove.enabled": "always",
   "eslint.alwaysShowStatus": true,
   "files.autoSave": "onFocusChange",
-  "python.pythonPath": "server/.venv/bin/python"
+  "python.pythonPath": "server/.venv/bin/python",
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

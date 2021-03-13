@@ -10,3 +10,4 @@ channels
 wheel
 azure-cosmosdb-table
 Pillow
+pyodbc

@@ -15,6 +15,7 @@ type MyTextFieldProps = {
   placeholder?: string;
   label?: string;
   type?: string;
+  id?: string;
   autoFocus?: boolean;
   multiline?: boolean;
   InputProps?: Partial<OutlinedInputProps>;
@@ -34,6 +35,7 @@ export const MyCheckbox: FC<MyCheckboxProps> = ({ label, ...props }) => {
 export const MyTextField: FC<MyTextFieldProps> = ({
   placeholder,
   label,
+  id,
   type,
   autoFocus,
   multiline,
@@ -46,9 +48,9 @@ export const MyTextField: FC<MyTextFieldProps> = ({
     <TextField
       variant="outlined"
       margin="normal"
-      required
       fullWidth
-      id={label}
+      required
+      id={id}
       placeholder={placeholder}
       label={label}
       type={type}
@@ -58,6 +60,7 @@ export const MyTextField: FC<MyTextFieldProps> = ({
       error={!!errorText}
       InputProps={InputProps}
       {...field}
+      {...(props as any)}
     />
   );
 };
@@ -77,4 +80,59 @@ export const useStyles = makeStyles((theme) => ({
       width: "100%",
     },
   },
+  avatar: {
+    width: "200px",
+    height: "200px",
+    "&:hover": {
+      background: "black",
+    },
+  },
+  avatar_overaly_wrapper: {
+    zIndex: 10,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(200,200,200,.9)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatar_root: {
+    position: "relative",
+    cursor: "pointer",
+  },
+  avatar_overlay: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderRadius: "100px",
+    height: "100%",
+    width: "100%",
+    opacity: 0,
+    transition: ".2s ease",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    "& div": {
+      color: "white",
+      fontSize: "20px",
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      textAlign: "center",
+    },
+    "&:hover": {
+      opacity: 1,
+    },
+  },
+  profileName: {
+    textAlign: "center",
+  },
+  margin: {
+    margin: theme.spacing(1),
+  }
 }));
