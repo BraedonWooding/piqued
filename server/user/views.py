@@ -15,6 +15,9 @@ class UserViewSet(ModelViewSet):
     permission_classes = (IsCreatable,)
     lookup_field = 'user_id'
 
+    def check_permissions(self, req):
+        return super().check_permissions(req)
+
     def retrieve(self, request, *args, **kwargs):
         """
         If provided 'user_id' is "self" then return the current user.
