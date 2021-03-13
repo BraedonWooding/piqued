@@ -1,17 +1,27 @@
 import axios from "axios";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "util/constants";
+import { TOKEN } from "util/constants";
 
-export const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN);
+export interface Token {
+  access: string;
+  refresh: string;
+}
 
-export const setAccessToken = (value: string) => localStorage.setItem(ACCESS_TOKEN, value);
+export const getToken = () => JSON.parse(localStorage.getItem(TOKEN)) as Token
 
-export const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN);
+export const popToken = () => {
+  var tmp = getToken();
+  localStorage.removeItem(TOKEN);
+  return tmp;
+}
 
-export const setRefreshToken = (value: string) => localStorage.setItem(REFRESH_TOKEN, value);
+export const setToken = (tok: Token) => localStorage.setItem(TOKEN, JSON.stringify(tok));
 
-export const removeRefreshToken = () => localStorage.removeItem(REFRESH_TOKEN);
+export const refreshAccessToken = async () => {
+  const res = await axios.post("/api/token/refresh", { refresh_token: popToken().refresh });
+  setToken(res.data);
+};
 
-export const refreshAccessToken: () => Promise<string | null> = async () => {
-  const res = await axios.post("/api/token/refresh", { refresh_token: getRefreshToken() });
-  return res.data.access_token;
+export const authenticateToken = async(details: {username: string, password: string}) => {
+  const res = await axios.post("/api/token", details);
+  setToken(res.data);
 };

@@ -32,6 +32,7 @@ class PiquedUserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('id', 'email', 'password',)}),
         ('Personal Info', {'fields': ('first_name', 'last_name',)}),
+        ('Groups', {'fields': ('groups',)}),
         ('Permissions', {'fields': ('is_active', 'is_superuser')})
     )
     list_display = ('email', 'id', 'first_name', 'last_name')

@@ -1,24 +1,26 @@
 import axios from "axios";
-import { getAccessToken, getRefreshToken, refreshAccessToken, removeRefreshToken, setAccessToken } from "./auth/token";
+import { getToken, setToken, popToken, refreshAccessToken } from "./auth/token";
 import { LOGIN_PATH } from "./constants";
+import { useRouter } from "next/router";
 
 axios.interceptors.request.use(async (ctx) => {
-  const accessToken = getAccessToken();
-  console.log(accessToken);
-  if (accessToken) ctx.headers.Authorization = `Bearer ${accessToken}`;
+  const tok = getToken();
+  if (tok && tok.access) ctx.headers.Authorization = `Bearer ${tok.access}`;
   return ctx;
-});
+}, (err) => Promise.reject(err));
 
-axios.interceptors.response.use(undefined, async (err) => {
+axios.interceptors.response.use((resp) => resp, async (err) => {
   const originalRequest = err.config;
-  if (err.response?.status === 401 && getRefreshToken()) {
-    const accessToken = await refreshAccessToken();
-    if (accessToken) {
-      setAccessToken(accessToken);
-      axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-      removeRefreshToken();
-      return axios.post(originalRequest);
-    } else window.location.href = LOGIN_PATH;
+  if (err.response?.status in [401, 403]) {
+    try {
+      await refreshAccessToken();
+      return axios(originalRequest);
+    } catch {
+      // any failure we go back to login
+      const router = useRouter();
+      router.push(LOGIN_PATH);
+    }
+  } else {
+    throw err;
   }
-  return Promise.reject(err);
 });
