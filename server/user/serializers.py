@@ -1,24 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group
+from groups.models import PiquedGroup
+from groups.serializers import GroupSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import PiquedGroup, PiquedUser
-
-
-class GroupSerializer(serializers.ModelSerializer):    
-    class Meta:
-        model = Group
-        fields = ('name', 'id')
-
-class PiquedGroupSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='group.name')
-    id = serializers.IntegerField(source='group.id', read_only=True)
-
-    class Meta:
-        model = PiquedGroup
-        fields = ('name', 'id', 'interests')
+from .models import PiquedUser
 
 
 class PiquedUserSerializer(serializers.ModelSerializer):

@@ -16,15 +16,6 @@ class PiquedUserInline(admin.StackedInline):
     verbose_name_plural = 'Extra Data' 
     filter_horizontal = ('interests', 'courses')
 
-class PiquedGroupInline(admin.StackedInline):
-    model = PiquedGroup
-    can_delete = False
-    verbose_name_plural = 'Extra Data'
-
-class PiquedGroupAdmin(GroupAdmin):
-    inlines = (PiquedGroupInline,)
-    readonly_fields = ('id',)
-
 # Define a new User admin
 class PiquedUserAdmin(BaseUserAdmin):
     inlines = (PiquedUserInline,)

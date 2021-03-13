@@ -9,10 +9,6 @@ from interests.models import Interest
 from src.azure import AzureStorage
 
 
-class PiquedGroup(models.Model):
-    group: OneToOneField = models.OneToOneField(Group, on_delete=models.CASCADE)
-    interests: ManyToManyField = models.ManyToManyField(Interest, related_name="groups", blank=True)
-
 class PiquedUser(models.Model):
     user: OneToOneField = models.OneToOneField(User, on_delete=models.CASCADE)
     date_of_birth: DateField = models.DateField("Date of Birth")
