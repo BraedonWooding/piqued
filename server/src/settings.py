@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'filesend',
     'messaging',
     'django.contrib.admin',
     'django.contrib.auth',
