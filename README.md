@@ -11,8 +11,5 @@
     - create venv; `python3.9 -m venv venv`
     - active venv: Windows (`venv\Scripts\activate.bat`) and UNIX (`source venv/bin/activate`)
     - then install requirements `pip3.9 install -r requirements.txt`
-    - cd up into the main folder
-    - run the emulator setup file `python setupDB`
-    - cd into `server`
     - then run `python3 manage.py runserver` to run the server!
     

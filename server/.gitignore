@@ -1,9 +1,9 @@
-.venv/
-venv/
-db.sqlite3
-
 /.vs
 
 /.vscode
+
+venv/
+
+db.sqlite3
 
 **/__pycache__
