@@ -1,11 +1,12 @@
 from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
-from . import views
-from .routing import router
+from .views import PiquedGroupViewSet
+
+# Create a router and register our viewsets with it.
+router = DefaultRouter()
+router.register(r'groups', PiquedGroupViewSet)
 
 urlpatterns = [
-    path('create_group/', views.index),
+    path('', include(router.urls))
 ]
-
-urlpatterns += router.urls
-
