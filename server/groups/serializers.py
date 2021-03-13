@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from user.models import PiquedUser
-from user.serializers import PiquedUserSerializer
 
 from .models import Group, PiquedGroup
 

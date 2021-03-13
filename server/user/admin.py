@@ -5,7 +5,7 @@ from django.contrib.auth.admin import GroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
 
-from .models import PiquedGroup, PiquedUser
+from .models import PiquedUser
 
 
 # Define an inline admin descriptor for User model
@@ -27,9 +27,6 @@ class PiquedUserAdmin(BaseUserAdmin):
         ('Permissions', {'fields': ('is_active', 'is_superuser')})
     )
     list_display = ('email', 'id', 'first_name', 'last_name')
-
-admin.site.unregister(Group)
-admin.site.register(Group, PiquedGroupAdmin)
 
 # Re-register UserAdmin
 admin.site.unregister(User)

@@ -1,5 +1,6 @@
 
 from django.http import HttpResponseForbidden
+from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -11,7 +12,7 @@ from .serializers import PiquedUserSerializer
 class UserViewSet(ModelViewSet):
     serializer_class = PiquedUserSerializer
     queryset = PiquedUser.objects.all()
-    permission_classes = [IsCreatable]
+    permission_classes = (IsCreatable,)
     lookup_field = 'user_id'
 
     def retrieve(self, request, *args, **kwargs):

@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.admin import GroupAdmin
+from django.contrib.auth.models import Group
 
 from .models import PiquedGroup
 
@@ -12,8 +14,7 @@ class PiquedGroupInline(admin.StackedInline):
 
 class PiquedGroupAdmin(GroupAdmin):
     inlines = (PiquedGroupInline,)
-    readonly_fields = ('id', 'users')
-    filter_horizontal = ('users',)
+    readonly_fields = ('id',)
 
 admin.site.unregister(Group)
 admin.site.register(Group, PiquedGroupAdmin)
