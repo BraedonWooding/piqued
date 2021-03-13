@@ -15,7 +15,7 @@ const Index = () => (
     <NavButtonLink href={REGISTER_PATH} color="primary" variant="contained">
       Sign up
     </NavButtonLink>
-  </FullyCenteredLayout>
+  </FullyCenteredLayout >
 );
 
 export default Index;
