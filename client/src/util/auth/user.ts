@@ -2,8 +2,6 @@ import axios from "axios";
 import { USER } from "util/constants"
 import { User } from "../../types";
 
-
-
 export const getUser = () => JSON.parse(localStorage.getItem(USER)) as User
 
 export const popUser = () => {
