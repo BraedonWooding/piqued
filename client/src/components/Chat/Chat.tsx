@@ -116,7 +116,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             </List>
           </Grid>
           <Grid container xs={6} justify="center" >
-            <Button onClick={() => { popUser(); popToken(); router.push("/auth/register") }} color="primary" variant="contained">
+            <Button onClick={() => { popUser(); popToken(); router.push("/auth/login") }} color="primary" variant="contained">
               Logout
             </Button>
           </Grid>
