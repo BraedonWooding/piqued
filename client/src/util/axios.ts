@@ -4,8 +4,8 @@ import { LOGIN_PATH } from "./constants";
 import { useRouter } from "next/router";
 
 axios.interceptors.request.use(async (ctx) => {
-  const tok = getToken();
-  if (tok && tok.access) ctx.headers.Authorization = `Bearer ${tok.access}`;
+  const token = getToken();
+  if (token && token.access) ctx.headers.Authorization = `Bearer ${token.access}`;
   return ctx;
 }, (err) => Promise.reject(err));
 
