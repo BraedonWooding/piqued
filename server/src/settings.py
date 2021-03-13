@@ -25,6 +25,8 @@ SECRET_KEY = 'SECRET_KEY'
 REFRESH_TOKEN_SECRET = 'SECRET_KEY'
 ACCESS_TOKEN_SECRET = 'SECRET_KEY'
 
+TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;AccountKey=TODO: ACCOUNT_KEY;EndpointSuffix=core.windows.net'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -34,12 +36,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'messaging',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'corsheaders',
     'rest_framework',
     'user.apps.UserConfig',
@@ -116,6 +120,7 @@ DATABASES = {
 
 # Dev: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;
 AZURE_STORAGE_ACCOUNT_URL = "DOMAIN"
+AZURE_STORAGE_ACCOUNT_NAME = "piqued"
 # Dev: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
 AZURE_STORAGE_KEY = "TODO: ACCOUNT_KEY"
 AZURE_STORAGE_DEFAULT_CONTAINER = "statics"  # statics will use this container
@@ -157,6 +162,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Adding Channels
+ASGI_APPLICATION = 'src.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000'
