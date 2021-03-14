@@ -4,5 +4,6 @@ from rest_framework.views import APIView
 from . import views
 
 urlpatterns = [
-    path('delete/', views.delete)
+    path('delete/', views.delete),
+    path('edit/', views.edit)
 ]

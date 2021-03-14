@@ -1,7 +1,11 @@
 import {
   Avatar,
   Button,
-  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle, Divider,
   Grid,
   IconButton,
   InputAdornment,
@@ -117,17 +121,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
 
+  // Handle 'chat options' click
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
+  // Handle 'chat options' close
   const handleClose = () => {
     setAnchorEl(null);
   };
 
+  // Function to delete a selected message
   const deleteMsg = async (rowKey, partitionKey) => {
     const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/delete/`;
-    console.log("Deleting")
     await axios.post(endpoint, {
       rowKey: rowKey,
       partitionKey: partitionKey
@@ -137,11 +143,44 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       })
   }
 
+  // Binding for opening the edit message screen
+  const [editMsgBit, setEditMsg] = React.useState(false);
+  const [rk, setrk] = React.useState("");
+  const [pk, setpk] = React.useState("");
+  const [changedMessage, setChangedMessage] = React.useState("");
+  const [currentMessage, setCurrentMessage] = React.useState("");
+
+  // Close the message box UI
+  const handleEditMsgClose = () => {
+    setEditMsg(false);
+    setChangedMessage("");
+    setCurrentMessage("");
+    setrk("")
+    setpk("")
+  };
+
+  // Execute the edit message request
+  const editMsg = async () => {
+    const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/edit/`;
+    await axios.post(endpoint, {
+      rowKey: rk,
+      partitionKey: pk,
+      message: changedMessage
+    })
+      .then((response) => {
+        console.log(response.data)
+      })
+    handleEditMsgClose();
+    handleClose();
+  }
+
   const selectOption = (o, rowKey, partitionKey) => {
     if (o === 'Delete') {
       deleteMsg(rowKey, partitionKey);
     } else if (o === 'Edit') {
-
+      setEditMsg(true);
+      setpk(partitionKey);
+      setrk(rowKey);
     }
     handleClose();
   };
@@ -224,7 +263,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                         }}
                       >
                         {options.map((option) => (
-                          <MenuItem key={option} onClick={() => selectOption(option, chatMsg.rowKey, chatMsg.partitionKey)}>
+                          <MenuItem key={option} onClick={() => {
+                            setCurrentMessage(chatMsg.message);
+                            selectOption(option, chatMsg.rowKey, chatMsg.partitionKey)
+                          }}>
                             {option}
                           </MenuItem>
                         ))}
@@ -278,7 +320,32 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
         </form>
       </Grid>
+      <Dialog open={editMsgBit} onClose={handleEditMsgClose} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title">Edit Message</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Edit your message below:
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="New Message"
+            fullWidth
+            onChange={(e) => setChangedMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditMsgClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={editMsg} color="primary">
+            Send
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Grid>
+
   );
 };
 
