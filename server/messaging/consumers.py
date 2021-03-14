@@ -59,8 +59,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
     def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
         msgs = self.table_service.query_entities(
             'Messages', filter="PartitionKey eq '" + str(self.groupId) + "'")
-        for msg in msgs:
-            print(msg)
         return msgs
 
     async def disconnect(self, close_code):
