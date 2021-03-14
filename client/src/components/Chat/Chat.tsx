@@ -9,20 +9,29 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  makeStyles,
+  makeStyles, Menu,
+  MenuItem,
   Paper,
   TextField,
-  Typography,
+  Typography
 } from "@material-ui/core";
 import { Send } from "@material-ui/icons";
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
 import React, { FC, useEffect, useRef, useState } from "react";
-import { User, Group } from "types";
+import { Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
+
+const options = [
+  'Delete',
+  'Edit'
+];
+
+const ITEM_HEIGHT = 20;
 
 interface ChatProps {
   activeUser: User;
@@ -55,10 +64,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroup) return;
 
     if (chatSocket) {
-      chatSocket.onclose = () => {};
+      chatSocket.onclose = () => { };
       chatSocket.close();
     }
-    
+
     setRetry(false);
     const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/`);
 
@@ -98,6 +107,30 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       newChatSocket.close();
     };
   }, [currentGroup, retry]);
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const deleteMsg = async () => {
+    console.log("Deleting")
+  }
+
+  const selectOption = (o) => {
+    if (o === 'Delete') {
+      deleteMsg();
+    } else if (o === 'Edit') {
+
+    }
+    handleClose();
+  };
 
   const username = activeUser.first_name + " " + activeUser.last_name;
 
@@ -145,10 +178,45 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               <Grid container>
                 <Grid item xs={12}>
                   <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]} />
-                  <ListItemText
-                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
-                    secondary={format(chatMsg.timestamp, "h:mm aa")}
-                  />
+
+                  <Grid container>
+                    <Grid item xs={11}>
+                      <ListItemText
+                        className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
+                        secondary={format(chatMsg.timestamp, "h:mm aa")}
+                      />
+                    </Grid>
+                    <Grid item xs={1} alignItems='flex-end'>
+                      <IconButton
+                        aria-label="more"
+                        aria-controls="long-menu"
+                        aria-haspopup="true"
+                        style={{ width: '20px', height: '20px' }}
+                        onClick={handleClick}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                      <Menu
+                        id="long-menu"
+                        anchorEl={anchorEl}
+                        keepMounted
+                        open={open}
+                        onClose={handleClose}
+                        PaperProps={{
+                          style: {
+                            maxHeight: ITEM_HEIGHT * 4.5,
+                            width: '20ch',
+                          },
+                        }}
+                      >
+                        {options.map((option) => (
+                          <MenuItem key={option} onClick={() => selectOption(option, chatMsg.timestamp)}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Menu>
+                    </Grid>
+                  </Grid>
                 </Grid>
               </Grid>
             </ListItem>
