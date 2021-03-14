@@ -18,6 +18,8 @@ import clsx from "clsx";
 import { format } from "date-fns";
 import { FC, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import MediaRender from "./MediaRender"
+import ChatMessage from "./ChatMessage";
 
 interface ChatProps {
   activeUserId: number;
@@ -28,13 +30,13 @@ interface ChatProps {
 
 interface IChatMsg {
   message: string;
-  files: string[];
+  files: string;
   userId: number;
   timestamp: Date;
 }
 
 // Just a localhost endpoint
-let upload_endpoint = "http://127.0.0.1:8000/upload"
+let upload_endpoint = "http://127.0.0.1:8000/upload/"
 
 export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, groupName }) => {
   const classes = useStyles();
@@ -63,7 +65,6 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
       e.preventDefault();
       const files = e.dataTransfer.files;
       if (files.length) {
-          console.log("yeet")
           console.log(files)
           console.log(selectedFiles)
           handleFiles(files);
@@ -100,29 +101,35 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
   }
 
   const clearFiles = () => {
+    console.log(selectedFiles)
     setSelectedFiles([]);
   }
 
-  const uploadFiles = () => {
-    let urls:String[] = [];
+  const uploadFiles = async () => {
+    var urls:String[] = [];
       for (let i = 0; i < selectedFiles.length; i++) {
           const formData = new FormData();
-          formData.append('image', selectedFiles[i]);
-          console.log("DO UPLOAD")
-          axios.post(upload_endpoint, formData)
+          formData.append('file', selectedFiles[i]);
+          await axios.post(upload_endpoint, formData)
             .then((response) => {
-              urls.push(response["url"]);
+              console.log(response.data)
+              urls.push(response.data["url"]);
             })
       }
-      return urls;
+      // Only handle single files for now
+      if (urls.length === 1) {
+        return urls[0];
+      }
+      return "";
   }
 
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
     const newChatSocket = new WebSocket(`ws://127.0.0.1:8000/ws/messaging/${groupId}/`);
     newChatSocket.onmessage = (e) => {
-      const { message, userId, timestamp } = JSON.parse(e.data);
-      chatMsgesRef.current.push({ message, files: [], userId, timestamp: new Date(timestamp) });
+      const { message, files, userId, timestamp } = JSON.parse(e.data);
+      chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp) });
+      console.log(files)
       setChatMsges([...chatMsgesRef.current]);
     };
     newChatSocket.onclose = (e) => console.error("Chat socket closed unexpectedly");
@@ -174,15 +181,15 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
             <ListItem key={index}>
               <Grid container>
                 <Grid item xs={12}>
-                  <ChatMsg side={chatMsg.userId === activeUserId ? "right" : "left"} messages={[chatMsg.message]} />
+                  {chatMsg.message !== "" ? <ChatMsg side={chatMsg.userId === activeUserId ? "right" : "left"} messages={[chatMsg.message]}/> : null}
+                  <MediaRender 
+                    url={chatMsg.files}
+                    isRight={chatMsg.userId === activeUserId ? true : false}
+                  />
                   <ListItemText
                     className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUserId })}
                     secondary={format(chatMsg.timestamp, "h:mm aa")}
                   />
-                  {chatMsg.files.map((file) => 
-                    <img src={file}>
-                    </img>
-                  )}
                 </Grid>
               </Grid>
             </ListItem>
@@ -190,10 +197,10 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
         </List>
         <Divider />
         <form
-          onSubmit={(e) => {
-            let files = uploadFiles();
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (message !== "") {
+            let files = await uploadFiles();
+            if (message !== "" || files !== "") {
               chatSocket.send(
                 JSON.stringify({
                   userId: activeUserId,
@@ -202,6 +209,7 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
                   timestamp: new Date(),
                 })
               );
+              console.log(files)
               setMessage("");
               clearFiles();
             }

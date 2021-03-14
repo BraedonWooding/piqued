@@ -59,6 +59,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
     def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
         msgs = self.table_service.query_entities(
             'Messages', filter="PartitionKey eq '" + str(self.groupId) + "'")
+        for msg in msgs:
+            print(msg)
         return msgs
 
     async def disconnect(self, close_code):
@@ -77,10 +79,14 @@ class GroupConsumer(AsyncWebsocketConsumer):
             userId = text_data_json['userId']
             timestamp = datetime.utcnow()
 
+            print("files are")
+            print(files)
+
             msg = {
                 'PartitionKey': str(self.groupId),
                 'RowKey': str(int(timestamp.timestamp() * 10000000)),
                 'message': message,
+                'files': files,
                 'deleted': 0,
                 'userId': int(userId),
                 'assets': "",

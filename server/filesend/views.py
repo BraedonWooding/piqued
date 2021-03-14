@@ -1,6 +1,8 @@
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .blob import Blob
 
-connect_str = ""
+connect_str = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
 
 # Create your views here.
 @api_view(['POST'])
@@ -11,7 +13,8 @@ def upload(request):
     blob_obj = Blob(connect_str, group_name)
 
     # Create blob client which is associated with the specific file/blob
-    file_to_upload = request.FILES["uploadedfile"]
+    file_to_upload = request.data['file']
+    print(file_to_upload)
     filename = file_to_upload.name
     blob_obj.create_blob_client(filename)
 
