@@ -5,7 +5,7 @@ interface ChatMessageProps {
   message: string;
 }
 
-export const ChatMessage: FC<ChatMessageProps> = ({ position = "left", message }) => {
+export const ChatMessage: FC<ChatMessageProps> = ({ position = "right", message }) => {
   const isRight = position.toLowerCase() === "right";
   const align = isRight ? "text-right" : "text-left";
   const justify = isRight ? "justify-content-end" : "justify-content-start";
