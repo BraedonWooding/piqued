@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Button,
   Divider,
   Grid,
   IconButton,
@@ -10,22 +11,23 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import { Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import clsx from "clsx";
 import { format } from "date-fns";
-import { FC, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import React, { FC, useEffect, useRef, useState } from "react";
+import { User, Group } from "types";
+import { popToken } from "util/auth/token";
+import { popUser } from "util/auth/user";
 import axios from "axios";
 import MediaRender from "./MediaRender"
-import ChatMessage from "./ChatMessage";
 
 interface ChatProps {
-  activeUserId: number;
-  activeUsername: string;
-  groupId: number;
-  groupName: string
+  activeUser: User;
 }
 
 interface IChatMsg {
@@ -38,12 +40,21 @@ interface IChatMsg {
 // Just a localhost endpoint
 let upload_endpoint = "http://127.0.0.1:8000/upload/"
 
-export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, groupName }) => {
+export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
+  const router = useRouter();
+
   const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
   const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
+  const [currentGroup, setCurrentGroup] = useState<Group | null>(
+    activeUser.groups.length > 0 ? activeUser.groups[0] : null
+  );
   const chatMsgesRef = useRef(chatMsges);
+  const [deactive, setDeactive] = useState(false);
+  const [retry, setRetry] = useState(false);
+  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  const lastMessageRef = useRef(null);
 
   // File handling
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -125,54 +136,90 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
 
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
-    const newChatSocket = new WebSocket(`ws://127.0.0.1:8000/ws/messaging/${groupId}/`);
+    if (!currentGroup) return;
+
+    if (chatSocket) {
+      chatSocket.onclose = () => {};
+      chatSocket.close();
+    }
+    
+    setRetry(false);
+    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/`);
+
+    newChatSocket.onopen = () => {
+      setDeactive(false);
+      if (timer) clearInterval(timer);
+      setTimer(null);
+      chatMsgesRef.current = [];
+      setChatMsges([]);
+    };
+
+    newChatSocket.onclose = () => {
+      // the websocket was closed this was probably due to a dropped internet connection
+      // we should do a retry loop!
+      setDeactive(true);
+      if (timer) clearInterval(timer);
+      setTimer(
+        setInterval(() => {
+          setRetry(true);
+        }, 2000)
+      );
+    };
+
     newChatSocket.onmessage = (e) => {
       const { message, files, userId, timestamp } = JSON.parse(e.data);
       chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp) });
-      console.log(files)
+      // fix the cases when we get them out of time
+      chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       setChatMsges([...chatMsgesRef.current]);
+      lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
     };
-    newChatSocket.onclose = (e) => console.error("Chat socket closed unexpectedly");
     setChatSocket(newChatSocket);
-  }, []);
+
+    // when the component drops close the socket
+    return () => {
+      newChatSocket.onclose = undefined;
+      newChatSocket.close();
+    };
+  }, [currentGroup, retry]);
+
+  const username = activeUser.first_name + " " + activeUser.last_name;
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
       <Grid item xs={3} className={classes.borderRight500}>
-        <List>
-          <ListItem button>
-            <ListItemIcon>
-              <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
-            </ListItemIcon>
-            <ListItemText primary={activeUsername} />
-          </ListItem>
-        </List>
-        <Divider />
-        <Grid item xs={12} className={classes.searchBox}>
-          <TextField id="outlined-basic-email" label="Search" variant="outlined" fullWidth />
+        <Grid container alignItems="center">
+          <Grid item xs={6}>
+            <List>
+              <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
+                <ListItemIcon>
+                  <Avatar alt={username} src={activeUser.profile_picture} />
+                </ListItemIcon>
+                <ListItemText primary={username} />
+              </ListItem>
+            </List>
+          </Grid>
+          <Grid container xs={6} justify="center" >
+            <Button onClick={() => { popUser(); popToken(); router.push("/auth/login") }} color="primary" variant="contained">
+              Logout
+            </Button>
+          </Grid>
         </Grid>
         <Divider />
         <List className={classes.userList}>
-          {/* placeholders */}
-          <ListItem button key="RemySharp">
-            <ListItemIcon>
-              <Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
-            </ListItemIcon>
-            <ListItemText primary="Remy Sharp" />
-            <ListItemText secondary="online" />
-          </ListItem>
-          <ListItem button key="Alice">
-            <ListItemIcon>
-              <Avatar alt="Alice" src="https://material-ui.com/static/images/avatar/3.jpg" />
-            </ListItemIcon>
-            <ListItemText primary="Alice" />
-          </ListItem>
-          <ListItem button key="CindyBaker">
-            <ListItemIcon>
-              <Avatar alt="Cindy Baker" src="https://material-ui.com/static/images/avatar/2.jpg" />
-            </ListItemIcon>
-            <ListItemText primary="Cindy Baker" />
-          </ListItem>
+          {activeUser.groups.map((group) => (
+            <ListItem
+              disabled={deactive}
+              className={clsx({ [classes.currentGroup]: group === currentGroup })}
+              button
+              key={group.id}
+              onClick={() => {
+                setCurrentGroup(group);
+              }}
+            >
+              <ListItemText primary={group.name} />
+            </ListItem>
+          ))}
         </List>
       </Grid>
       <Grid item xs={9}>
@@ -181,19 +228,20 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
             <ListItem key={index}>
               <Grid container>
                 <Grid item xs={12}>
-                  {chatMsg.message !== "" ? <ChatMsg side={chatMsg.userId === activeUserId ? "right" : "left"} messages={[chatMsg.message]}/> : null}
+                  {chatMsg.message !== "" ? <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]}/> : null}
                   <MediaRender 
                     url={chatMsg.files}
-                    isRight={chatMsg.userId === activeUserId ? true : false}
+                    isRight={chatMsg.userId === activeUser.id ? true : false}
                   />
                   <ListItemText
-                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUserId })}
+                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
                     secondary={format(chatMsg.timestamp, "h:mm aa")}
                   />
                 </Grid>
               </Grid>
             </ListItem>
           ))}
+          <ListItem ref={lastMessageRef}></ListItem>
         </List>
         <Divider />
         <form
@@ -203,7 +251,7 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
             if (message !== "" || files !== "") {
               chatSocket.send(
                 JSON.stringify({
-                  userId: activeUserId,
+                  userId: activeUser.id,
                   files: files,
                   message,
                   timestamp: new Date(),
@@ -215,6 +263,7 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
             }
           }}
         >
+        {currentGroup && (
           <Grid container className={classes.chatBox}>
             <Grid item xs={12}>
               <TextField
@@ -229,7 +278,7 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton type="submit" color="inherit">
+                      <IconButton disabled={deactive} type="submit" color="inherit">
                         <Send />
                       </IconButton>
                     </InputAdornment>
@@ -247,6 +296,7 @@ export const Chat: FC<ChatProps> = ({ activeUserId, activeUsername, groupId, gro
             }
             </Grid>
           </Grid>
+        )}
         </form>
       </Grid>
     </Grid>
@@ -262,6 +312,9 @@ const useStyles = makeStyles(() => ({
   alignSelfRight: { textAlign: "right" },
   searchBox: { padding: 10 },
   chatBox: { padding: 20 },
+  currentGroup: {
+    border: "2px solid black",
+  },
 }));
 
 export default Chat;

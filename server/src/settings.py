@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import datetime
+import mimetypes
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -30,8 +32,9 @@ TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;Ac
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ***REMOVED*** "localhost", "127.0.0.1"]
 
+mimetypes.add_type("text/css", ".css", True)
 
 # Application definition
 
@@ -47,7 +50,10 @@ INSTALLED_APPS = [
     'channels',
     'corsheaders',
     'rest_framework',
-    'user.apps.UserConfig'
+    'user.apps.UserConfig',
+    'interests.apps.InterestsConfig',
+    'info.apps.InfoConfig',
+    'groups.apps.GroupsConfig'
 ]
 
 MIDDLEWARE = [
@@ -100,11 +106,29 @@ WSGI_APPLICATION = 'src.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'sql_server.pyodbc',
+        'NAME': 'piqued',
+        'USER': 'superadmin',
+        'PASSWORD': 'PWD',
+        'HOST': 'HOST',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'FreeTDS' if os.name == 'posix' else 'ODBC Driver 17 for SQL Server',
+            'host_is_server': True,
+        },
+    },
 }
 
+# Azure
+
+# AzureStorage Settings
+
+# Dev: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;
+AZURE_STORAGE_ACCOUNT_URL = "DOMAIN"
+AZURE_STORAGE_ACCOUNT_NAME = "piqued"
+# Dev: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+AZURE_STORAGE_ACCOUNT_KEY = "TODO: ACCOUNT_KEY"
+AZURE_STORAGE_DEFAULT_CONTAINER = "statics"  # statics will use this container
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

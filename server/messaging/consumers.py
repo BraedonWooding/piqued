@@ -1,18 +1,16 @@
 # messaging/consumers.py
 import json
-from datetime import datetime, timedelta
-from dateutil import tz, parser
 import sys
 import traceback
-from django.conf import settings
+from datetime import datetime, timedelta
+
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
 from azure.cosmosdb.table.tableservice import TableService
 from channels.generic.websocket import AsyncWebsocketConsumer
+from dateutil import parser, tz
+from django.conf import settings
 
-account_name = "devstoreaccount1"
-account_key = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-connection_string = "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10003/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10004/devstoreaccount1;TableEndpoint=http://127.0.0.1:10005/devstoreaccount1;"
 
 def handleException(e, loc):
     exc_type = e[0]
@@ -36,15 +34,17 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
 
-            #TODO self.table_service = TableService(connection_string = settings.TABLE_STORAGE_CON_STRING)
             self.table_service = TableService(
-                account_name=account_name, account_key=account_key, is_emulated=True
+                account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY
             )
 
             try:
-                self.table_service.create_table('Messages')
+                if not self.table_service.exists('Messages'):
+                    self.table_service.create_table('Messages')
             except:
-                print("Failed to create Messages Table")
+                # ignoring if someone else created it between exists <-> create
+                if not self.table_service.exists('Messages'):
+                    raise
 
             self.msgs = await sync_to_async(self.get_history)()
 
@@ -91,7 +91,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'userId': int(userId),
                 'assets': "",
                 'modifiedAt': timestamp}
-            print(msg)
+            print(f"Received Message for {userId} in group {self.groupId}: {msg}")
             self.table_service.insert_entity('Messages', msg)
 
             # Send message to room group
@@ -102,27 +102,22 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'message': message,
                     'files': files,
                     'userId': userId,
-                    'modifiedAt': timestamp
+                    'modifiedAt': timestamp.astimezone()
                 }
             )
-        
         except Exception:
-            handleException(sys.exc_info(),"socket recieving data from client.")
+            handleException(sys.exc_info(),"socket receiving data from client.")
 
     # Receive message from room group
     async def chat_message(self, event):
         try:
+            print(event["modifiedAt"])
             # Send message to WebSocket
-            timestamp = event["modifiedAt"]
-            from_zone = tz.gettz('UTC')
-            to_zone = tz.gettz('Australia/ACT')
-            timestamp.replace(tzinfo=from_zone)
-
             await self.send(text_data=json.dumps({
                 'message': event['message'],
                 'files': event['files'],
                 'userId': event['userId'],
-                'timestamp': str(timestamp)
+                'timestamp': str(event["modifiedAt"])
             }))
         except Exception:
             handleException(sys.exc_info(),"socket recieving message from socket_group (channel layer).")
