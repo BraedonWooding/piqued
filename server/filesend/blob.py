@@ -7,23 +7,20 @@ from azure.core.exceptions import ResourceExistsError
 # Used extensively by views.py
 
 class Blob:
-    def __init__(self, connect_str, group_name):
+    def __init__(self, connect_str, containername):
         # Create the BlobServiceClient object which will be used to create a container client
         self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
-        # Create or get the container
-        # group_name should be unique and hence appropriate to use for the container name
-        # Each group will have its own container
-        self.container_name = container_name = str(uuid.uuid4()) # Should incorporate group_name if possible
         try:
             # public_access="container" makes this container publicly accessible
-            self.container_client = self.blob_service_client.create_container(self.container_name, public_access="container")
+            self.container_client = self.blob_service_client.create_container(container_name, public_access="container")
         except ResourceExistsError:
-            self.container_client = self.blob_service_client.get_container_client(self.container_name)
+            self.container_client = self.blob_service_client.get_container_client(container_name)
     
-    def create_blob_client(self, filename):
-        unique_filename = filename # do something here to make it unique
-        self.blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=unique_filename)
+    def create_blob_client(self, filename, group_name):
+        unique_filename = filename # do something here to make it unique. Not sure if this is necessary
+        # Group name used to create virtual folder structure in blob storage
+        self.blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=group_name + "/" + unique_filename)
     
     def upload_file(self, file_to_upload):
         self.blob_client.upload_blob(file_to_upload)
