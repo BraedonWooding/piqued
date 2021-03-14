@@ -18,6 +18,7 @@ import {
 import { Send } from "@material-ui/icons";
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
+import axios from "axios";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
@@ -25,6 +26,9 @@ import React, { FC, useEffect, useRef, useState } from "react";
 import { Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
+
+//let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
+//let edit_endpoint = "http://127.0.0.1:8000/delete/";
 
 const options = [
   'Delete',
@@ -41,6 +45,8 @@ interface IChatMsg {
   message: string;
   userId: number;
   timestamp: Date;
+  rowKey: string;
+  partitionKey: string;
 }
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
@@ -92,8 +98,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     };
 
     newChatSocket.onmessage = (e) => {
-      const { message, userId, timestamp } = JSON.parse(e.data);
-      chatMsgesRef.current.push({ message, userId, timestamp: new Date(timestamp) });
+      const { message, userId, timestamp, rowKey, partitionKey } = JSON.parse(e.data);
+      chatMsgesRef.current.push({ message, userId, timestamp: new Date(timestamp), rowKey, partitionKey });
       // fix the cases when we get them out of time
       chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       setChatMsges([...chatMsgesRef.current]);
@@ -119,13 +125,21 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     setAnchorEl(null);
   };
 
-  const deleteMsg = async () => {
+  const deleteMsg = async (rowKey, partitionKey) => {
+    const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/delete/`;
     console.log("Deleting")
+    await axios.post(endpoint, {
+      rowKey: rowKey,
+      partitionKey: partitionKey
+    })
+      .then((response) => {
+        console.log(response.data)
+      })
   }
 
-  const selectOption = (o) => {
+  const selectOption = (o, rowKey, partitionKey) => {
     if (o === 'Delete') {
-      deleteMsg();
+      deleteMsg(rowKey, partitionKey);
     } else if (o === 'Edit') {
 
     }
@@ -186,7 +200,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                         secondary={format(chatMsg.timestamp, "h:mm aa")}
                       />
                     </Grid>
-                    <Grid item xs={1} alignItems='flex-end'>
+                    <Grid item xs={1} className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })} >
                       <IconButton
                         aria-label="more"
                         aria-controls="long-menu"
@@ -210,7 +224,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                         }}
                       >
                         {options.map((option) => (
-                          <MenuItem key={option} onClick={() => selectOption(option, chatMsg.timestamp)}>
+                          <MenuItem key={option} onClick={() => selectOption(option, chatMsg.rowKey, chatMsg.partitionKey)}>
                             {option}
                           </MenuItem>
                         ))}
@@ -280,6 +294,7 @@ const useStyles = makeStyles(() => ({
   currentGroup: {
     border: "2px solid black",
   },
+  hide: { visibility: "hidden" }
 }));
 
 export default Chat;
