@@ -57,8 +57,14 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
 
     def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
-        msgs = self.table_service.query_entities(
-            'Messages', filter="PartitionKey eq '" + str(self.groupId) + "'")
+        parameters = {
+            "pk": str(self.groupId),
+            "del": 0
+        }
+        filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
+        msgs = self.table_service.query_entities('Messages', filter=filter)
+        #msgs = self.table_service.query_entities(
+        #    'Messages', filter="PartitionKey eq '" + str(self.groupId) + "' And deleted eq '" + 0 + "'")
         return msgs
 
     async def disconnect(self, close_code):
@@ -75,10 +81,11 @@ class GroupConsumer(AsyncWebsocketConsumer):
             message = text_data_json['message']
             userId = text_data_json['userId']
             timestamp = datetime.utcnow()
+            rowKey = str(int(timestamp.timestamp() * 10000000))
 
             msg = {
                 'PartitionKey': str(self.groupId),
-                'RowKey': str(int(timestamp.timestamp() * 10000000)),
+                'RowKey': rowKey,
                 'message': message,
                 'deleted': 0,
                 'userId': int(userId),
@@ -94,7 +101,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'type': 'chat_message',
                     'message': message,
                     'userId': userId,
-                    'modifiedAt': timestamp.astimezone()
+                    'modifiedAt': timestamp.astimezone(),
+                    'PartitionKey':  str(self.groupId),
+                    'RowKey': rowKey
                 }
             )
         except Exception:
@@ -103,12 +112,13 @@ class GroupConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def chat_message(self, event):
         try:
-            print(event["modifiedAt"])
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
                 'message': event['message'],
                 'userId': event['userId'],
-                'timestamp': str(event["modifiedAt"])
+                'timestamp': str(event["modifiedAt"]),
+                'partitionKey': event["PartitionKey"],
+                'rowKey': event["RowKey"]
             }))
         except Exception:
             handleException(sys.exc_info(),"socket recieving message from socket_group (channel layer).")
