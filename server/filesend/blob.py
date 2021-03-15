@@ -2,6 +2,7 @@ import os, uuid
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__, AccessPolicy, ContainerSasPermissions
 from datetime import datetime, timedelta
 from azure.core.exceptions import ResourceExistsError
+from django.conf import settings
 
 # Encapsulating the functionality for blob manipulation
 # Used extensively by views.py
@@ -10,7 +11,7 @@ class Blob:
     def __init__(self, container_name):
         self.container_name = container_name
         # Create the BlobServiceClient object which will be used to create a container client
-        self.blob_service_client = BlobServiceClient.from_connection_string(account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY)
+        self.blob_service_client = BlobServiceClient(account_url=settings.AZURE_STORAGE_ACCOUNT_URL, credential=settings.AZURE_STORAGE_ACCOUNT_KEY)
 
         try:
             # public_access="container" makes this container publicly accessible

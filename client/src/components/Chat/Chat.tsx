@@ -25,6 +25,9 @@ import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import axios from "axios";
 import MediaRender from "./MediaRender"
+import { Picker } from 'emoji-mart';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import 'emoji-mart/css/emoji-mart.css';
 
 interface ChatProps {
   activeUser: User;
@@ -38,7 +41,7 @@ interface IChatMsg {
 }
 
 // Just a localhost endpoint
-let upload_endpoint = "http://127.0.0.1:8000/upload/"
+let upload_endpoint = `${process.env.NEXT_PUBLIC_API_URL}/edit/`;
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
@@ -116,12 +119,16 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     setSelectedFiles([]);
   }
 
+  const onEmojiSelect = (emoji) => {
+    setMessage(message + emoji.native)
+  }
+
   const uploadFiles = async () => {
     var urls:String[] = [];
       for (let i = 0; i < selectedFiles.length; i++) {
           const formData = new FormData();
           formData.append('file', selectedFiles[i]);
-          await axios.post(upload_endpoint, formData)
+          await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload/`, formData)
             .then((response) => {
               console.log(response.data)
               urls.push(response.data["url"]);
@@ -184,6 +191,16 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   }, [currentGroup, retry]);
 
   const username = activeUser.first_name + " " + activeUser.last_name;
+
+  // For handling emoji selector
+  const handleClick = () => {
+    setEmojiOpen((prev) => !prev);
+  };
+
+  const handleClickAway = () => {
+    setEmojiOpen(false);
+  }
+  const [emojiOpen, setEmojiOpen] = React.useState(false);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
@@ -278,6 +295,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
+                      <ClickAwayListener onClickAway={handleClickAway}>
+                        <div className={classes.root}>
+                          <button type="button" onClick={handleClick}>
+                            🤨
+                          </button>
+                          {emojiOpen ? (
+                            <div className={classes.dropdown}>
+                              <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Recherche', categories: { search: 'Résultats de recherche', recent: 'Récents' } }} />
+                            </div>
+                          ) : null}
+                        </div>
+                      </ClickAwayListener>
                       <IconButton disabled={deactive} type="submit" color="inherit">
                         <Send />
                       </IconButton>
@@ -314,6 +343,22 @@ const useStyles = makeStyles(() => ({
   chatBox: { padding: 20 },
   currentGroup: {
     border: "2px solid black",
+  },
+  root: {
+    position: 'relative',
+    width: 300,
+    justifyContent: 'flex-end',
+    textAlign: 'right'
+  },
+  dropdown: {
+    position: 'absolute',
+    bottom: 28,
+    right: 0,
+    left: 0,
+    zIndex: 1,
+    border: '1px solid',
+    justifyContent: 'flex-start',
+    textAlign: 'left'
   },
 }));
 
