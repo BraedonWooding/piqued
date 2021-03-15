@@ -2,7 +2,7 @@
 import json
 import sys
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
@@ -10,7 +10,6 @@ from azure.cosmosdb.table.tableservice import TableService
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dateutil import parser, tz
 from django.conf import settings
-
 
 def handleException(e, loc):
     exc_type = e[0]
@@ -56,7 +55,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             handleException(sys.exc_info(),"connecting to socket.")
 
 
-    def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
+    def get_history(self, msgs_since=datetime.now(timezone.utc) - timedelta(days=30)):
         msgs = self.table_service.query_entities(
             'Messages', filter="PartitionKey eq '" + str(self.groupId) + "'")
         return msgs
@@ -75,7 +74,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             message = text_data_json['message']
             files = text_data_json['files'] # Files are urls
             userId = text_data_json['userId']
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
             print("files are")
             print(files)
@@ -90,7 +89,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'assets': "",
                 'modifiedAt': timestamp}
             print(f"Received Message for {userId} in group {self.groupId}: {msg}")
-            self.table_service.insert_entity('MessageFresh', msg)
+            self.table_service.insert_entity('Messages', msg)
 
             # Send message to room group
             await self.channel_layer.group_send(
