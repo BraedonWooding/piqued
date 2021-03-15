@@ -90,7 +90,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'assets': "",
                 'modifiedAt': timestamp}
             print(f"Received Message for {userId} in group {self.groupId}: {msg}")
-            self.table_service.insert_entity('Messages', msg)
+            self.table_service.insert_entity('MessageFresh', msg)
 
             # Send message to room group
             await self.channel_layer.group_send(
