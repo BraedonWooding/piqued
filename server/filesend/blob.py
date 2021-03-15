@@ -7,19 +7,16 @@ from azure.core.exceptions import ResourceExistsError
 # Used extensively by views.py
 
 class Blob:
-    def __init__(self, connect_str, container_name):
+    def __init__(self, container_name):
         self.container_name = container_name
         # Create the BlobServiceClient object which will be used to create a container client
-        self.blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+        self.blob_service_client = BlobServiceClient.from_connection_string(account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY)
 
         try:
             # public_access="container" makes this container publicly accessible
-            print("ISSUE 1")
             self.container_client = self.blob_service_client.create_container(container_name, public_access="container")
         except ResourceExistsError:
-            print("ISSUE 2")
             self.container_client = self.blob_service_client.get_container_client(container_name)
-        print("ISSUE 3")
     
     def create_blob_client(self, filename, group_name):
         unique_filename = str(uuid.uuid4()) + filename # do something here to make it unique. Not sure if this is necessary

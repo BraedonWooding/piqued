@@ -3,8 +3,7 @@ from rest_framework.response import Response
 from .blob import Blob
 import uuid
 
-connect_str = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10001/devstoreaccount1;"
-container_name = "surelyauniquename"
+container_name = "piqued-files-comp3900"
 
 # Create your views here.
 @api_view(['POST'])
@@ -12,7 +11,7 @@ def upload(request):
     # Create our blob_obj for most of the logic
     # Assume we have set the environment variable
     group_name = "Something_hardcoded_for_now"
-    blob_obj = Blob(connect_str, container_name)
+    blob_obj = Blob(container_name)
 
     # Create blob client which is associated with the specific file/blob
     file_to_upload = request.data['file']
