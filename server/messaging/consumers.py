@@ -63,8 +63,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
         }
         filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
         msgs = self.table_service.query_entities('Messages', filter=filter)
-        #msgs = self.table_service.query_entities(
-        #    'Messages', filter="PartitionKey eq '" + str(self.groupId) + "' And deleted eq '" + 0 + "'")
         return msgs
 
     async def disconnect(self, close_code):

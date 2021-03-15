@@ -122,7 +122,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const open = Boolean(anchorEl);
 
   // Handle 'chat options' click
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleOptionClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -141,6 +141,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       .then((response) => {
         console.log(response.data)
       })
+    router.reload();
   }
 
   // Binding for opening the edit message screen
@@ -170,17 +171,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       .then((response) => {
         console.log(response.data)
       })
+
     handleEditMsgClose();
-    handleClose();
+    router.reload();
   }
 
-  const selectOption = (o, rowKey, partitionKey) => {
+  const selectOption = async (o) => {
+    console.log(rk)
     if (o === 'Delete') {
-      deleteMsg(rowKey, partitionKey);
+      deleteMsg(rk, pk);
+      handleEditMsgClose();
     } else if (o === 'Edit') {
       setEditMsg(true);
-      setpk(partitionKey);
-      setrk(rowKey);
     }
     handleClose();
   };
@@ -201,7 +203,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid container xs={6} justify="center" >
+          <Grid container justify="center" >
             <Button onClick={() => { popUser(); popToken(); router.push("/auth/login") }} color="primary" variant="contained">
               Logout
             </Button>
@@ -233,46 +235,55 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]} />
 
                   <Grid container>
-                    <Grid item xs={11}>
-                      <ListItemText
-                        className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
-                        secondary={format(chatMsg.timestamp, "h:mm aa")}
-                      />
-                    </Grid>
-                    <Grid item xs={1} className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })} >
-                      <IconButton
-                        aria-label="more"
-                        aria-controls="long-menu"
-                        aria-haspopup="true"
-                        style={{ width: '20px', height: '20px' }}
-                        onClick={handleClick}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                      <Menu
-                        id="long-menu"
-                        anchorEl={anchorEl}
-                        keepMounted
-                        open={open}
-                        onClose={handleClose}
-                        PaperProps={{
-                          style: {
-                            maxHeight: ITEM_HEIGHT * 4.5,
-                            width: '20ch',
-                          },
-                        }}
-                      >
-                        {options.map((option) => (
-                          <MenuItem key={option} onClick={() => {
-                            setCurrentMessage(chatMsg.message);
-                            selectOption(option, chatMsg.rowKey, chatMsg.partitionKey)
-                          }}>
-                            {option}
-                          </MenuItem>
-                        ))}
-                      </Menu>
+                    <Grid item xs={12} >
+                      <List className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}>
+                        <ListItem className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}>
+                          <ListItemText
+                            className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
+                            style={{ width: '100px' }}
+                            secondary={format(chatMsg.timestamp, "h:mm aa")}
+                          />
+                          <ListItem button
+                            className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })}
+                            aria-label="more"
+                            aria-controls="long-menu"
+                            aria-haspopup="true"
+                            style={{ width: '20px', height: '20px' }}
+                            onClick={(e) => {
+                              handleOptionClick(e);
+                              setpk(chatMsg.partitionKey);
+                              setrk(chatMsg.rowKey);
+                              setCurrentMessage(chatMsg.message);
+                            }}
+                          >
+                            <MoreVertIcon />
+                          </ListItem>
+                          <Menu
+                            id="long-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={open}
+                            onClose={handleClose}
+                            PaperProps={{
+                              style: {
+                                maxHeight: ITEM_HEIGHT * 4.5,
+                                width: '20ch',
+                              },
+                            }}
+                          >
+                            {options.map((option) => (
+                              <MenuItem key={option} onClick={() => {
+                                selectOption(option)
+                              }}>
+                                {option}
+                              </MenuItem>
+                            ))}
+                          </Menu>
+                        </ListItem>
+                      </List>
                     </Grid>
                   </Grid>
+
                 </Grid>
               </Grid>
             </ListItem>
@@ -320,7 +331,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
         </form>
       </Grid>
-      <Dialog open={editMsgBit} onClose={handleEditMsgClose} aria-labelledby="form-dialog-title">
+      <Dialog
+        open={editMsgBit}
+        onClose={handleEditMsgClose}
+        aria-labelledby="form-dialog-title"
+        fullWidth
+        maxWidth="sm">
         <DialogTitle id="form-dialog-title">Edit Message</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -329,9 +345,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           <TextField
             autoFocus
             margin="dense"
-            id="name"
+            id="standard-multiline-flexible"
             label="New Message"
+            multiline
+            rowsMax={10}
             fullWidth
+            defaultValue={currentMessage}
             onChange={(e) => setChangedMessage(e.target.value)}
           />
         </DialogContent>
