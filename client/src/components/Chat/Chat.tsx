@@ -40,9 +40,6 @@ interface IChatMsg {
   timestamp: Date;
 }
 
-// Just a localhost endpoint
-let upload_endpoint = `${process.env.NEXT_PUBLIC_API_URL}/edit/`;
-
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
   const router = useRouter();
@@ -63,24 +60,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const dragOver = (e: React.DragEvent<HTMLInputElement>) => {
-    e.preventDefault();
-  }
-
-  const dragEnter = (e: React.DragEvent<HTMLInputElement>) => {
-      e.preventDefault();
-  }
-
-  const dragLeave = (e: React.DragEvent<HTMLInputElement>) => {
-      e.preventDefault();
-  }
-
   const fileDrop = (e: React.DragEvent<HTMLInputElement>) => {
       e.preventDefault();
       const files = e.dataTransfer.files;
       if (files.length) {
-          console.log(files)
-          console.log(selectedFiles)
           handleFiles(files);
       }
   }
@@ -115,7 +98,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   }
 
   const clearFiles = () => {
-    console.log(selectedFiles)
     setSelectedFiles([]);
   }
 
@@ -128,11 +110,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       for (let i = 0; i < selectedFiles.length; i++) {
           const formData = new FormData();
           formData.append('file', selectedFiles[i]);
-          await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload/`, formData)
-            .then((response) => {
-              console.log(response.data)
-              urls.push(response.data["url"]);
-            })
+          formData.append('group_name', currentGroup.name)
+          const response = await axios.post('/api/upload/', formData);
+          urls.push(response.data["url"]);
       }
       // Only handle single files for now
       if (urls.length === 1) {
@@ -264,17 +244,16 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            let files = await uploadFiles();
+            const files = await uploadFiles();
             if (message !== "" || files !== "") {
               chatSocket.send(
                 JSON.stringify({
                   userId: activeUser.id,
-                  files: files,
+                  files,
                   message,
                   timestamp: new Date(),
                 })
               );
-              console.log(files)
               setMessage("");
               clearFiles();
             }
@@ -288,9 +267,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 fullWidth
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                onDragOver={dragOver}
-                onDragEnter={dragEnter}
-                onDragLeave={dragLeave}
+                onDragOver={ (e: React.DragEvent<HTMLInputElement>) => {e.preventDefault()}}
+                onDragEnter={(e: React.DragEvent<HTMLInputElement>) => {e.preventDefault()}}
+                onDragLeave={(e: React.DragEvent<HTMLInputElement>) => {e.preventDefault()}}
                 onDrop={fileDrop}
                 InputProps={{
                   endAdornment: (

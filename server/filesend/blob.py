@@ -20,7 +20,7 @@ class Blob:
             self.container_client = self.blob_service_client.get_container_client(container_name)
     
     def create_blob_client(self, filename, group_name):
-        unique_filename = str(uuid.uuid4()) + filename # do something here to make it unique. Not sure if this is necessary
+        unique_filename = str(uuid.uuid4()) + ":" + filename
         # Group name used to create virtual folder structure in blob storage
         self.blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=group_name + "/" + unique_filename)
     
