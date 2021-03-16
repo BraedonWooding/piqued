@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Container, Grid, List, ListItem, ListItemText, makeStyles, Typography } from "@material-ui/core";
+import { Avatar, Box, Button, Container, Grid, makeStyles, Typography } from "@material-ui/core";
 import { Add, CloseOutlined, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
@@ -70,36 +70,33 @@ const SearchGroup = () => {
                       </Button>
                     </Grid>
                   </Grid>
-                  <Grid container spacing={1}>
 
-                    <List className={searchClasses.resultsArea}>
-                      {searchResults.map((result, index) => (
-                        <ListItem key={index}>
-                          {/* <Grid container> */}
-                          {/* <Grid item xs={12}> */}
-                          {/* <ChatMsg side={result. === activeUser.id ? "right" : "left"} messages={[chatMsg.message]} /> */}
-                          <ListItemText>
-                            {result.group_name}
-                          </ListItemText>
-                          <Button
-                            onClick={async () => {
-                              await axios.put("/api/groups/" + result.id + "/add_user");
-                              searchResults.splice(index, 1);
-                              console.log(searchResults);
-                              setGroupResults(searchResults);
-                              forceUpdate();
-                            }}>
-                            < Add />
-                                Join Group
-                            </Button>
-
-                          {/* </Grid> */}
-                          {/* </Grid> */}
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Grid>
+                  {searchResults.map((result, index) => (
+                    <Grid container spacing={1} key={index} >
+                      <Grid item xs={6} className={searchClasses.resultsArea}>
+                        <Typography>
+                          {result.name}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6} className={searchClasses.joinGroupArea}>
+                        < Button
+                          onClick={async () => {
+                            await axios.put("/api/groups/" + result.id + "/add_user");
+                            searchResults.splice(index, 1);
+                            console.log(searchResults);
+                            setGroupResults(searchResults);
+                            forceUpdate();
+                          }}>
+                          < Add />
+                          {/* <Typography> */}
+                            Join
+                          {/* </Typography> */}
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  ))}
                 </Grid>
+                &nbsp;
                 <Typography>
                   <MyLink href={CREATE_GROUP_PATH}>
                     Can't find what you're after? Create Group
@@ -121,7 +118,8 @@ const searchStyles = makeStyles(() => ({
   searchButton: { display: "flex", alignItems: "center", justifyContent: "center" },
   searchAvatar: { display: "flex", justifyContent: "center" },
   closeButton: { display: "flex", justifyContent: "flex-end" },
-  resultsArea: {},
+  resultsArea: { display: "flex", alignItems: "center" },
+  joinGroupArea: { display: "flex", justifyContent: "flex-end" },
 }));
 
 export default SearchGroup;
