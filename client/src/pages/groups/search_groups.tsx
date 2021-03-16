@@ -29,10 +29,8 @@ const SearchGroup = () => {
           <Form>
             <Container component="main" maxWidth="sm">
               <Box className={formikClasses.card}>
-                {/* <Grid container > */}
                 <Grid container spacing={5} className={searchClasses.closeButton}>
                   <Grid>
-
                     <MyLink href={HOME_PATH}>
                       <CloseOutlined />
                     </MyLink>
@@ -43,18 +41,8 @@ const SearchGroup = () => {
                     <Avatar>
                       <SearchRounded />
                     </Avatar>
-
                   </Grid>
                 </Grid>
-                {/* </Grid> */}
-                {/* <Avatar className={searchClasses.searchAvatar}>
-                  <SearchRounded />
-                </Avatar>
-                <MyLink href={HOME_PATH} className={searchClasses.c}>
-                  <CloseOutlined />
-                </MyLink> */}
-                {/* <Avatar> */}
-                {/* </Avatar> */}
                 <Typography variant="h5">
                   Recommended Groups/Group Search
                 </Typography>
@@ -70,7 +58,6 @@ const SearchGroup = () => {
                       </Button>
                     </Grid>
                   </Grid>
-
                   {searchResults.map((result, index) => (
                     <Grid container spacing={1} key={index} >
                       <Grid item xs={6} className={searchClasses.resultsArea}>
@@ -88,9 +75,7 @@ const SearchGroup = () => {
                             forceUpdate();
                           }}>
                           < Add />
-                          {/* <Typography> */}
                             Join
-                          {/* </Typography> */}
                         </Button>
                       </Grid>
                     </Grid>
@@ -102,9 +87,6 @@ const SearchGroup = () => {
                     Can't find what you're after? Create Group
                   </MyLink>
                 </Typography>
-                {/* <NavButtonLink href={CREATE_GROUP_PATH} color="primary" variant="contained">
-                  Create Group
-                </NavButtonLink> */}
               </Box>
             </Container>
           </Form>
