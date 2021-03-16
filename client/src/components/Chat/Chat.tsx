@@ -14,7 +14,7 @@ import {
   TextField,
   Typography
 } from "@material-ui/core";
-import { ExitToAppSharp, Send } from "@material-ui/icons";
+import { ExitToAppSharp, SearchRounded, Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
@@ -117,14 +117,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid container xs={6} justify="center" >
-            <Button onClick={() => { popUser(); popToken(); router.push("/auth/login") }} color="primary" variant="contained">
-              Logout
-            </Button>
-            &nbsp;
-            <Button onClick={() => { router.push("/groups/search_groups") }} color="primary" variant="contained">
-              Search Groups
-            </Button>
+          <Grid container xs={6} spacing={1}>
+            <Grid item xs={12} className={classes.actionButtonArea}>
+              <Button onClick={() => { popUser(); popToken(); router.push("/auth/login") }} color="primary" variant="contained">
+                Logout
+              </Button>
+            </Grid>
+            <Grid item xs={12} className={classes.actionButtonArea}>
+              <Button onClick={() => { router.push("/groups/search_groups") }} color="primary" variant="contained">
+                <SearchRounded />
+                Search
+              </Button>
+            </Grid>
           </Grid>
         </Grid>
         <Divider />
@@ -141,14 +145,21 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             >
               <ListItemText primary={group.name} />
               {group === currentGroup ?
-                <Button className={classes.LeaveAvatar} onClick={async () => { await axios.delete("/api/groups/" + group.id + "/remove_user"); router.reload() }}>
+                <Button
+                  className={classes.slimButton}
+                  onClick={async () => {
+                    await axios.delete("/api/groups/" + group.id + "/remove_user");
+                    router.reload(); // remove me and do reducer state update
+                  }}>
                   <ExitToAppSharp />
+                  Leave
                 </Button> : null
               }
             </ListItem>
           ))}
         </List>
       </Grid>
+
       <Grid item xs={9}>
         <List className={classes.messageArea}>
           {chatMsges.map((chatMsg, index) => (
@@ -223,7 +234,8 @@ const useStyles = makeStyles(() => ({
   currentGroup: {
     border: "2px solid black",
   },
-  LeaveAvatar: { padding: 0 },
+  slimButton: { padding: 5 },
+  actionButtonArea: { display: "flex", justifyContent: "flex-end" },
 }));
 
 export default Chat;
