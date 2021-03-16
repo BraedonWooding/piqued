@@ -76,9 +76,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
             userId = text_data_json['userId']
             timestamp = datetime.now(timezone.utc)
 
-            print("files are")
-            print(files)
-
             msg = {
                 'PartitionKey': str(self.groupId),
                 'RowKey': str(int(timestamp.timestamp() * 10000000)),

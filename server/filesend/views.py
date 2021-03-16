@@ -10,7 +10,7 @@ container_name = "piqued-files-comp3900"
 def upload(request):
     # Create our blob_obj for most of the logic
     # Assume we have set the environment variable
-    group_name = "Something_hardcoded_for_now"
+    group_name = request.data['group_name']
     blob_obj = Blob(container_name)
 
     # Create blob client which is associated with the specific file/blob
