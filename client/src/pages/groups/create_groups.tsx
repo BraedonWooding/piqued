@@ -8,40 +8,39 @@ import { Form, Formik } from "formik";
 import { SEARCH_GROUPS_PATH } from "util/constants";
 
 const CreateGroup = () => {
-    const classes = useStyles();
-    return (
-      <HorizontallyCenteredLayout>
-        <Formik
-          initialValues={{ group_name: "", users: []}}
-          onSubmit={async (values) => {
-            await axios.post("/api/groups", values);
-          }}
-        >
-          {({ isSubmitting }) => (
-            <Form>
-              <Container component="main" maxWidth="sm">
-                <Box className={classes.card}>
-                  <Avatar>
-                    <ChatBubbleOutline />
-                  </Avatar>
-                  <Typography variant="h5">Create a new group</Typography>
-                  <MyTextField placeholder="Group Name" label="Group Name" name="group_name" autoFocus />
+  const classes = useStyles();
+  return (
+    <HorizontallyCenteredLayout>
+      <Formik
+        initialValues={{ group_name: "", users: [] }}
+        onSubmit={async (values) => {
+          await axios.post("/api/groups", values);
+        }}
+      >
+        {({ isSubmitting }) => (
+          <Form>
+            <Container component="main" maxWidth="sm">
+              <Box className={classes.card}>
+                <Avatar>
+                  <ChatBubbleOutline />
+                </Avatar>
+                <Typography variant="h5">Create a new group</Typography>
+                <MyTextField placeholder="Group Name" label="Group Name" name="group_name" autoFocus />
                   &nbsp;
                   <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
-                    Create Group
+                  Create Group
                   </Button>
                   &nbsp;
                   <NavButtonLink href={SEARCH_GROUPS_PATH} color="primary" variant="contained">
-                    Cancel
+                  Cancel
                   </NavButtonLink>
-                </Box>
-              </Container>
-            </Form>
-          )}
-        </Formik>
-      </HorizontallyCenteredLayout>
-    );
-  };
-  
-  export default CreateGroup;
-  
+              </Box>
+            </Container>
+          </Form>
+        )}
+      </Formik>
+    </HorizontallyCenteredLayout>
+  );
+};
+
+export default CreateGroup;

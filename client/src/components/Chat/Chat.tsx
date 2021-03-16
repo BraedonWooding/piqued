@@ -7,17 +7,14 @@ import {
   InputAdornment,
   List,
   ListItem,
-
   ListItemIcon,
   ListItemText,
-
   makeStyles,
-
   Paper,
   TextField,
   Typography
 } from "@material-ui/core";
-import { ExitToAppOutlined, Send } from "@material-ui/icons";
+import { ExitToAppSharp, Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
@@ -124,6 +121,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <Button onClick={() => { popUser(); popToken(); router.push("/auth/login") }} color="primary" variant="contained">
               Logout
             </Button>
+            &nbsp;
+            <Button onClick={() => { router.push("/groups/search_groups") }} color="primary" variant="contained">
+              Search Groups
+            </Button>
           </Grid>
         </Grid>
         <Divider />
@@ -140,10 +141,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             >
               <ListItemText primary={group.name} />
               {group === currentGroup ?
-                <Button onClick={async () => { await axios.delete("/api/groups/" + group.id + "/remove_user"); router.reload() }}>
-                  <Avatar>
-                    <ExitToAppOutlined />
-                  </Avatar>
+                <Button className={classes.LeaveAvatar} onClick={async () => { await axios.delete("/api/groups/" + group.id + "/remove_user"); router.reload() }}>
+                  <ExitToAppSharp />
                 </Button> : null
               }
             </ListItem>
@@ -224,6 +223,7 @@ const useStyles = makeStyles(() => ({
   currentGroup: {
     border: "2px solid black",
   },
+  LeaveAvatar: { padding: 0 },
 }));
 
 export default Chat;
