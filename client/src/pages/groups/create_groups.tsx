@@ -33,7 +33,6 @@ const CreateGroup = () => {
                     <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
                       Create Group
                     </Button>
-
                   </Grid>
                   <Grid item xs={12} className={customClasses.interfaceButtons}>
                     <NavButtonLink href={SEARCH_GROUPS_PATH} color="primary" variant="contained">

@@ -7,7 +7,6 @@ from rest_framework.viewsets import ModelViewSet
 from .permission import IsCreatable
 from .serializers import PiquedGroup, PiquedGroupSerializer
 
-# Create your views here.\
 
 class PiquedGroupViewSet(ModelViewSet):
     serializer_class = PiquedGroupSerializer
@@ -32,8 +31,3 @@ class PiquedGroupViewSet(ModelViewSet):
         userToAdd.groups.add(piquedGroup.group.id)
         userToAdd.save()
         return HttpResponse("{} added to group".format(userToAdd.username))
-
-    # @action(detail=False, methods=['get'])
-    # def query_group_name(self,request,group_name):
-    #     piquedGroups = PiquedGroup.objects.get(name = ^group_name)      
-    #     return HttpResponse("{}".format(piquedGroups))
