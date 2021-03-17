@@ -11,6 +11,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from dateutil import parser, tz
 from django.conf import settings
 
+
 def handleException(e, loc):
     exc_type = e[0]
     exc_value = e[1]
@@ -105,7 +106,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def chat_message(self, event):
         try:
-            print(event["modifiedAt"])
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
                 'message': event['message'],

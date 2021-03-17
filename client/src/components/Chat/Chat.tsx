@@ -12,9 +12,9 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
-import { ExitToAppSharp, SearchRounded, Send } from "@material-ui/icons";
+import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
@@ -22,7 +22,8 @@ import { format } from "date-fns";
 import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { useRouter } from "next/router";
-import { DragEvent, FC, useEffect, useRef, useState } from "react";
+import React, { createRef, DragEvent, FC, useEffect, useRef, useState } from "react";
+import SendLogo from 'react-svg-loader!styles/send.svg';
 import { Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
@@ -50,6 +51,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [currentGroup, setCurrentGroup] = useState<Group | null>(
     activeUser.groups.length > 0 ? activeUser.groups[0] : null
   );
+  const messageIcon = createRef();
   const chatMsgesRef = useRef(chatMsges);
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
@@ -120,7 +122,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroup) return;
 
     if (chatSocket) {
-      chatSocket.onclose = () => {};
+      chatSocket.onclose = () => { };
       chatSocket.close();
     }
 
@@ -168,7 +170,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     <Grid container component={Paper} className={classes.chatSection}>
       <Grid item xs={3} className={classes.borderRight500}>
         <Grid container alignItems="center">
-          <Grid item xs={6}>
+          <Grid item xs={3}>
             <List>
               <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
@@ -178,31 +180,33 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid container xs={6} spacing={1}>
-            <Grid item xs={12} className={classes.actionButtonArea}>
-              <Button
-                onClick={() => {
-                  popUser();
-                  popToken();
-                  router.push("/auth/login");
-                }}
-                color="primary"
-                variant="contained"
-              >
-                Logout
-              </Button>
-            </Grid>
-            <Grid item xs={12} className={classes.actionButtonArea}>
-              <Button
-                onClick={() => {
-                  router.push(SEARCH_GROUPS_PATH);
-                }}
-                color="primary"
-                variant="contained"
-              >
-                <SearchRounded />
-                Search
-              </Button>
+          <Grid item xs={9}>
+            <Grid container spacing={1}>
+              <Grid item xs={6} className={classes.actionButtonArea}>
+                <Button
+                  onClick={() => {
+                    popUser();
+                    popToken();
+                    router.push("/auth/login");
+                  }}
+                  color="primary"
+                  variant="contained"
+                >
+                  Logout
+                </Button>
+              </Grid>
+              <Grid item xs={5} className={classes.actionButtonArea}>
+                <Button
+                  onClick={() => {
+                    router.push(SEARCH_GROUPS_PATH);
+                  }}
+                  color="primary"
+                  variant="contained"
+                >
+                  <SearchRounded />
+                  Search
+                </Button>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
@@ -213,7 +217,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               disabled={deactive}
               className={clsx({ [classes.currentGroup]: group === currentGroup })}
               button
-              key={group.id}
+              key={"Group-" + group.id}
               onClick={() => {
                 setCurrentGroup(group);
               }}
@@ -235,8 +239,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           ))}
         </List>
       </Grid>
-
-      <Grid item xs={9}>
+      <Grid item xs={8}>
         <List className={classes.messageArea}>
           {chatMsges.map((chatMsg, index) => (
             <ListItem key={index}>
@@ -261,7 +264,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           onSubmit={async (e) => {
             e.preventDefault();
             const files = await uploadFiles();
+            const el = document.querySelector("#send-logo") as HTMLElement;
+            el.classList.add(classes.fly);
+            setTimeout(() => el.classList.remove(classes.fly), 2000);
             if (message !== "" || files !== "") {
+              // Idk if there is a better way.
               chatSocket.send(
                 JSON.stringify({
                   userId: activeUser.id,
@@ -303,6 +310,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                         >
                           <div className={classes.root}>
                             <button
+                              style={{
+                                "cursor": "pointer"
+                              }}
                               type="button"
                               onClick={() => {
                                 setEmojiOpen(!emojiOpen);
@@ -326,7 +336,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                           </div>
                         </ClickAwayListener>
                         <IconButton disabled={deactive} type="submit" color="inherit">
-                          <Send />
+                          <SendLogo id="send-logo" width={25} height={25} />
                         </IconButton>
                       </InputAdornment>
                     ),
@@ -347,6 +357,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
         </form>
       </Grid>
+      <Grid item xs={1} className={classes.borderLeft500}>
+        <List className={classes.userList}>
+          {currentGroup.user_set.map((user) => (
+            <ListItem>
+              <ListItemIcon>
+                <Avatar alt={user.first_name} src={user.profile_picture} />
+              </ListItemIcon>
+              <ListItemText primary={user.first_name + " " + user.last_name} />
+            </ListItem>
+          ))}
+        </List>
+      </Grid>
     </Grid>
   );
 };
@@ -355,6 +377,7 @@ const useStyles = makeStyles(() => ({
   chatSection: { width: "100%", height: "100vh" },
   headBG: { backgroundColor: "#e0e0e0" },
   borderRight500: { borderRight: "1px solid #e0e0e0" },
+  borderLeft500: { borderLeft: "1px solid #e0e0e0" },
   userList: { height: "80vh", overflowY: "auto" },
   messageArea: { height: "90vh", overflowY: "auto" },
   alignSelfRight: { textAlign: "right" },
@@ -377,10 +400,20 @@ const useStyles = makeStyles(() => ({
     right: 0,
     left: 0,
     zIndex: 1,
-    border: "1px solid",
     justifyContent: "flex-start",
     textAlign: "left",
   },
+  fly: {
+    "position": "absolute",
+    "animation": "$message-fly 2s ease-in",
+    "animation-delay": "0s",
+    "z-index": 10,
+  },
+  "@keyframes message-fly": {
+    "0%": {},
+    "25%": { "transform": "rotate(-90deg)" },
+    "100%": { transform: "rotate(-120deg) translate(1000px)", display: "none" },
+  }
 }));
 
 export default Chat;

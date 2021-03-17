@@ -25,7 +25,7 @@ class UserViewSet(ModelViewSet):
         if kwargs.get('user_id') == 'self':
             user = self.queryset.filter(user=request.user.id)
             if user:
-                return Response(self.get_serializer(user.first()).data)
+                return Response(PiquedUserSerializer(user.first()).data)
             else:
                 return HttpResponseForbidden("You don't have permission to access this")
         return super().retrieve(request, args, kwargs)

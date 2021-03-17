@@ -7,6 +7,7 @@ import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import React, { useReducer, useState } from "react";
 import { Group } from "types";
+import { getUser } from "util/auth/user";
 import { CREATE_GROUP_PATH, HOME_PATH } from "util/constants";
 
 const SearchGroup = () => {
@@ -20,7 +21,7 @@ const SearchGroup = () => {
         initialValues={{ query_term: "" }}
         onSubmit={async (values) => {
           const resp = await axios.get("/api/groups/?search=" + values.query_term);
-          setGroupResults(resp.data);
+          setGroupResults(resp.data.filter((x: Group) => getUser().groups.filter(y => y.id == x.id).length == 0));
         }}
       >
         {({ isSubmitting }) => (
