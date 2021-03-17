@@ -62,6 +62,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
   const router = useRouter();
 
+  const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
+
   const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
   const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
@@ -309,7 +311,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         </Grid>
         <Divider />
         <List className={classes.userList}>
-          {activeUser.groups.map((group) => (
+          {/* {activeUser.groups.map((group) => ( */}
+          {userGroups.map((group, index) => (
             <ListItem
               disabled={deactive}
               className={clsx({ [classes.currentGroup]: group === currentGroup })}
@@ -325,7 +328,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   className={classes.slimButton}
                   onClick={async () => {
                     await axios.delete("/api/groups/" + group.id + "/remove_user");
-                    router.reload(); // remove me and do reducer state update
+                    userGroups.splice(index,1)
+                    setUserGroups(userGroups);
+                    setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
                   }}>
                   <ExitToAppSharp />
                   Leave
