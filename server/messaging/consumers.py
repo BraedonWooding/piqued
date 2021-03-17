@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
+from azure.cosmosdb.table.tablebatch import TableBatch
 from azure.cosmosdb.table.tableservice import TableService
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dateutil import parser, tz
@@ -22,10 +23,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
             self.groupId = self.scope['url_route']['kwargs']['groupId']
-            # Get group_ID from the db (Db not implemented yet by Adam)
-
-            self.username = self.scope["user"]
-            #TODO somehow get user
+            self.userId = self.scope['url_route']['kwargs']['userId']
             self.channelGroupName = 'chat_%s' % self.groupId
 
             # Join channel group
@@ -57,8 +55,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
 
     def get_history(self, msgs_since=datetime.now(timezone.utc) - timedelta(days=30)):
-        msgs = self.table_service.query_entities(
-            'Messages', filter="PartitionKey eq '" + str(self.groupId) + "'")
+        filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
+        msgs = self.table_service.query_entities('Messages', filter=filter)
         return msgs
 
     async def disconnect(self, close_code):
@@ -76,16 +74,17 @@ class GroupConsumer(AsyncWebsocketConsumer):
             files = text_data_json['files'] # Files are urls
             userId = text_data_json['userId']
             timestamp = datetime.now(timezone.utc)
+            rowKey = str(int(timestamp.timestamp() * 10000000))
 
             msg = {
                 'PartitionKey': str(self.groupId),
-                'RowKey': str(int(timestamp.timestamp() * 10000000)),
+                'RowKey': rowKey,
                 'message': message,
                 'files': files,
                 'deleted': 0,
                 'userId': int(userId),
-                'assets': "",
-                'modifiedAt': timestamp}
+                'seen': str(self.userId) + " ",
+                'createdAt': timestamp}
             print(f"Received Message for {userId} in group {self.groupId}: {msg}")
             self.table_service.insert_entity('Messages', msg)
 
@@ -97,7 +96,10 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'message': message,
                     'files': files,
                     'userId': userId,
-                    'modifiedAt': timestamp.astimezone()
+                    'createdAt': timestamp.astimezone(),
+                    'PartitionKey':  str(self.groupId),
+                    'RowKey': rowKey,
+                    'seen': str(self.userId) + " "
                 }
             )
         except Exception:
@@ -106,12 +108,24 @@ class GroupConsumer(AsyncWebsocketConsumer):
     # Receive message from room group
     async def chat_message(self, event):
         try:
+            seen = event['seen']
+            if str(self.userId) not in seen.split():
+                seen += str(self.userId) + " "
+                msg = {'PartitionKey': event["PartitionKey"], 
+                    'RowKey': event["RowKey"],
+                    'seen': seen
+                }
+                self.table_service.merge_entity('Messages', msg)
+
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
                 'message': event['message'],
                 'files': event['files'],
                 'userId': event['userId'],
-                'timestamp': str(event["modifiedAt"])
+                'timestamp': str(event["createdAt"]),
+                'partitionKey': event["PartitionKey"],
+                'rowKey': event["RowKey"],
+                'seen': seen
             }))
         except Exception:
             handleException(sys.exc_info(),"socket recieving message from socket_group (channel layer).")
