@@ -46,12 +46,12 @@ const Login = () => {
                 </Button>
                 &nbsp;
                 <Grid container spacing={4}>
-                  <Grid item xs>
+                  <Grid item xs={6}>
                     <Typography variant="subtitle1">
                       <MyLink href={FORGOT_PASSWORD_PATH}>Forgot password?</MyLink>
                     </Typography>
                   </Grid>
-                  <Grid item>
+                  <Grid item xs={6}>
                     <Typography variant="subtitle1">
                       <MyLink href={REGISTER_PATH}>Don't have an account? Register</MyLink>
                     </Typography>

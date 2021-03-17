@@ -6,9 +6,11 @@ from .models import Group, PiquedGroup
 
 
 class GroupSerializer(serializers.ModelSerializer):
+    piqued_group = serializers.RelatedField(queryset=PiquedGroup.objects.all())
+
     class Meta:
         model = Group
-        fields = ('name', 'id')
+        fields = ('name', 'id', 'piqued_group')
 
 
 class PiquedGroupSerializer(serializers.ModelSerializer):
@@ -41,4 +43,4 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PiquedGroup
-        fields = ['id', 'name', 'interests', "creator"]
+        fields = ['id', 'name', 'interests', 'creator']
