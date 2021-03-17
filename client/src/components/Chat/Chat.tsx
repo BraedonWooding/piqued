@@ -1,7 +1,11 @@
 import {
   Avatar,
   Button,
-  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle, Divider,
   Grid,
   IconButton,
   InputAdornment,
@@ -9,12 +13,14 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  makeStyles,
+  makeStyles, Menu,
+  MenuItem,
   Paper,
   TextField
 } from "@material-ui/core";
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { ExitToAppSharp, SearchRounded, Send } from "@material-ui/icons";
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
@@ -28,6 +34,16 @@ import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import MediaRender from "./MediaRender";
 
+//let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
+//let edit_endpoint = "http://127.0.0.1:8000/delete/";
+
+const options = [
+  'Delete',
+  'Edit'
+];
+
+const ITEM_HEIGHT = 20;
+
 interface ChatProps {
   activeUser: User;
 }
@@ -37,6 +53,9 @@ interface IChatMsg {
   files: string;
   userId: number;
   timestamp: Date;
+  rowKey: string;
+  partitionKey: string;
+  seen: string;
 }
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
@@ -133,7 +152,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     }
 
     setRetry(false);
-    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/`);
+    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/${activeUser.id}/`);
 
     newChatSocket.onopen = () => {
       setDeactive(false);
@@ -156,8 +175,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     };
 
     newChatSocket.onmessage = (e) => {
-      const { message, files, userId, timestamp } = JSON.parse(e.data);
-      chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp) });
+      const { message, files, userId, timestamp, rowKey, partitionKey, seen } = JSON.parse(e.data);
+      chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp), rowKey, partitionKey, seen });
       // fix the cases when we get them out of time
       chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       setChatMsges([...chatMsgesRef.current]);
@@ -171,6 +190,84 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       newChatSocket.close();
     };
   }, [currentGroup, retry]);
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  // Handle 'chat options' click
+  const handleOptionClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Handle 'chat options' close
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Function to delete a selected message
+  const deleteMsg = async (rowKey, partitionKey) => {
+    const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/delete/`;
+    await axios.post(endpoint, {
+      rowKey: rowKey,
+      partitionKey: partitionKey
+    })
+      .then((response) => {
+        console.log(response.data.status);
+        if (response.data.status === "Deleted") {
+          const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
+          chatMsgesRef.current[i].message = "[MESSAGE DELETED]";
+          chatMsgesRef.current[i].files = "";
+          setChatMsges([...chatMsgesRef.current]);
+        }
+      })
+  }
+
+  // Binding for opening the edit message screen
+  const [editMsgBit, setEditMsg] = React.useState(false);
+  const [rk, setrk] = React.useState("");
+  const [pk, setpk] = React.useState("");
+  const [changedMessage, setChangedMessage] = React.useState("");
+  const [currentMessage, setCurrentMessage] = React.useState("");
+
+  // Close the message box UI
+  const handleEditMsgClose = () => {
+    setEditMsg(false);
+    setChangedMessage("");
+    setCurrentMessage("");
+    setrk("")
+    setpk("")
+  };
+
+  // Execute the edit message request
+  const editMsg = async () => {
+    const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/edit/`;
+    await axios.post(endpoint, {
+      rowKey: rk,
+      partitionKey: pk,
+      message: changedMessage
+    })
+      .then((response) => {
+        console.log(response.data.status);
+        if (response.data.status === "Edited") {
+          const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
+          chatMsgesRef.current[i].message = changedMessage;
+          setChatMsges([...chatMsgesRef.current]);
+        }
+      })
+
+    handleEditMsgClose();
+  }
+
+  const selectOption = async (o) => {
+    console.log(rk)
+    if (o === 'Delete') {
+      deleteMsg(rk, pk);
+      handleEditMsgClose();
+    } else if (o === 'Edit') {
+      setEditMsg(true);
+    }
+    handleClose();
+  };
 
   const username = activeUser.first_name + " " + activeUser.last_name;
 
@@ -255,10 +352,57 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                     url={chatMsg.files}
                     isRight={chatMsg.userId === activeUser.id ? true : false}
                   />
-                  <ListItemText
-                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
-                    secondary={format(chatMsg.timestamp, "h:mm aa")}
-                  />
+                  <Grid container>
+                    <Grid item xs={12} >
+                      <List className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}>
+                        <ListItem className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}>
+                          <ListItemText
+                            className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
+                            style={{ width: '100px' }}
+
+                            secondary={(chatMsg.seen.split(" ").length === 2 ? "✓ " : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")}
+                          />
+                          <ListItem button
+                            className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })}
+                            aria-label="more"
+                            aria-controls="long-menu"
+                            aria-haspopup="true"
+                            style={{ width: '20px', height: '20px' }}
+                            onClick={(e) => {
+                              handleOptionClick(e);
+                              setpk(chatMsg.partitionKey);
+                              setrk(chatMsg.rowKey);
+                              setCurrentMessage(chatMsg.message);
+                            }}
+                          >
+                            <MoreVertIcon />
+                          </ListItem>
+                          <Menu
+                            id="long-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={open}
+                            onClose={handleClose}
+                            PaperProps={{
+                              style: {
+                                maxHeight: ITEM_HEIGHT * 4.5,
+                                width: '20ch',
+                              },
+                            }}
+                          >
+                            {options.map((option) => (
+                              <MenuItem key={option} onClick={() => {
+                                selectOption(option)
+                              }}>
+                                {option}
+                              </MenuItem>
+                            ))}
+                          </Menu>
+                        </ListItem>
+                      </List>
+                    </Grid>
+                  </Grid>
+
                 </Grid>
               </Grid>
             </ListItem>
@@ -306,7 +450,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                           </button>
                             {emojiOpen ? (
                               <div className={classes.dropdown}>
-                                <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Recherche', categories: { search: 'Résultats de recherche', recent: 'Récents' } }} />
+                                <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Search', categories: { search: 'Results of search', recent: 'Recent' } }} />
                               </div>
                             ) : null}
                           </div>
@@ -332,6 +476,38 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
         </form>
       </Grid>
+      <Dialog
+        open={editMsgBit}
+        onClose={handleEditMsgClose}
+        aria-labelledby="form-dialog-title"
+        fullWidth
+        maxWidth="sm">
+        <DialogTitle id="form-dialog-title">Edit Message</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Edit your message below:
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="standard-multiline-flexible"
+            label="New Message"
+            multiline
+            rowsMax={10}
+            fullWidth
+            defaultValue={currentMessage}
+            onChange={(e) => setChangedMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditMsgClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={editMsg} color="primary">
+            Send
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Grid >
   );
 };
@@ -348,6 +524,7 @@ const useStyles = makeStyles(() => ({
   currentGroup: {
     border: "2px solid black",
   },
+  hide: { visibility: "hidden" },
   slimButton: { padding: 5 },
   actionButtonArea: { display: "flex", justifyContent: "flex-end" },
   root: {
