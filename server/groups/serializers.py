@@ -18,17 +18,6 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         user = PiquedUser.objects.get(user_id=user.id)
 
-        # Un commented code below may cause issues in future
-        # as PiquedGroup.Group doesn't point to user list
-
-        # assign on users side
-        # user.groups.add(piquedGroup.group)
-        # user.save()
-        # instance.group.save()
-        # instance.save()
-
-        # Adam's thoughts happy to discuss
-
         instance.group.name = name
         instance.group.users.add(user)
         instance.group.save()
@@ -49,6 +38,3 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedGroup
         fields = ['id', 'name', 'interests']
-            
-
-
