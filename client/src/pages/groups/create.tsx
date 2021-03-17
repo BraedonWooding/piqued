@@ -5,15 +5,16 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { NavButtonLink } from "components/Common/Link";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
-import router from "next/router";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { User } from "types";
 import { getUser, lookupCurrentUser } from "util/auth/user";
-import { SEARCH_GROUPS_PATH } from "util/constants";
+import { HOME_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 
 const CreateGroup = () => {
   const classes = useStyles();
   const customClasses = createStyles();
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ const CreateGroup = () => {
         onSubmit={async (values) => {
           await axios.post("/api/groups", values);
           setUser(await lookupCurrentUser());
+          router.push(HOME_PATH);
         }}
       >
         {({ isSubmitting }) => (
