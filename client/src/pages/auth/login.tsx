@@ -6,9 +6,8 @@ import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { authenticateToken } from "util/auth/token";
+import { lookupCurrentUser } from "util/auth/user";
 import { FORGOT_PASSWORD_PATH, REGISTER_PATH } from "util/constants";
-import { FormikHelpers as FormikActions } from 'formik';
-import { getUser, lookupCurrentUser, setUser } from "util/auth/user";
 
 const Login = () => {
   const classes = useStyles();
@@ -26,7 +25,7 @@ const Login = () => {
             setSubmitting(false);
             setErrors({
               username: "Invalid Username or Password",
-              password: "Invalid Username or Password"
+              password: "Invalid Username or Password",
             });
           }
         }}
