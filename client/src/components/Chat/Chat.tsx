@@ -51,6 +51,7 @@ interface IChatMsg {
   timestamp: Date;
   rowKey: string;
   partitionKey: string;
+  seen: string;
 }
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
@@ -79,7 +80,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     }
 
     setRetry(false);
-    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/`);
+    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/${activeUser.id}/`);
 
     newChatSocket.onopen = () => {
       setDeactive(false);
@@ -102,8 +103,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     };
 
     newChatSocket.onmessage = (e) => {
-      const { message, userId, timestamp, rowKey, partitionKey } = JSON.parse(e.data);
-      chatMsgesRef.current.push({ message, userId, timestamp: new Date(timestamp), rowKey, partitionKey });
+      const { message, userId, timestamp, rowKey, partitionKey, seen } = JSON.parse(e.data);
+      chatMsgesRef.current.push({ message, userId, timestamp: new Date(timestamp), rowKey, partitionKey, seen });
       // fix the cases when we get them out of time
       chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       setChatMsges([...chatMsgesRef.current]);
@@ -139,9 +140,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       partitionKey: partitionKey
     })
       .then((response) => {
-        console.log(response.data)
+        console.log(response.data.status);
+        if (response.data.status === "Deleted") {
+          const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
+          chatMsgesRef.current[i].message = "[MESSAGE DELETED]";
+          setChatMsges([...chatMsgesRef.current]);
+        }
       })
-    router.reload();
   }
 
   // Binding for opening the edit message screen
@@ -169,11 +174,15 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       message: changedMessage
     })
       .then((response) => {
-        console.log(response.data)
+        console.log(response.data.status);
+        if (response.data.status === "Edited") {
+          const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
+          chatMsgesRef.current[i].message = changedMessage;
+          setChatMsges([...chatMsgesRef.current]);
+        }
       })
 
     handleEditMsgClose();
-    router.reload();
   }
 
   const selectOption = async (o) => {
@@ -241,7 +250,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                           <ListItemText
                             className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
                             style={{ width: '100px' }}
-                            secondary={format(chatMsg.timestamp, "h:mm aa")}
+
+                            secondary={(chatMsg.seen.split(" ").length === 2 ? "✓ " : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")}
                           />
                           <ListItem button
                             className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })}

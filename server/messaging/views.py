@@ -28,8 +28,7 @@ def delete(request):
 
     msg = {'PartitionKey': partitionKey, 
         'RowKey': rowKey,
-        'deleted': 1,
-        'modifiedAt': datetime.utcnow()
+        'deleted': 1
     }
     table_service.merge_entity('Messages', msg)
     return Response({"status": "Deleted"})
@@ -45,8 +44,7 @@ def edit(request):
 
     msg = {'PartitionKey': partitionKey, 
         'RowKey': rowKey,
-        'message': message,
-        'modifiedAt': datetime.utcnow()
+        'message': message
     }
     table_service.merge_entity('Messages', msg)
     return Response({"status": "Edited"})
