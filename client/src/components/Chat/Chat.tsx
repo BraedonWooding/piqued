@@ -1,8 +1,24 @@
 import {
   Avatar,
   Button,
+
   ClickAwayListener,
+  Dialog,
+  DialogActions,
+  DialogContent,
+
+  DialogContentText, DialogTitle,
+
+
+
   Divider,
+
+
+
+
+
+
+
   Grid,
   IconButton,
   InputAdornment,
@@ -10,11 +26,13 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  makeStyles,
+  makeStyles, Menu,
+  MenuItem,
   Paper,
   TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
@@ -30,6 +48,16 @@ import { popUser } from "util/auth/user";
 import { SEARCH_GROUPS_PATH } from "util/constants";
 import MediaRender from "./MediaRender";
 
+//let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
+//let edit_endpoint = "http://127.0.0.1:8000/delete/";
+
+const options = [
+  'Delete',
+  'Edit'
+];
+
+const ITEM_HEIGHT = 20;
+
 interface ChatProps {
   activeUser: User;
 }
@@ -39,11 +67,16 @@ interface IChatMsg {
   files: string;
   userId: number;
   timestamp: Date;
+  rowKey: string;
+  partitionKey: string;
+  seen: string;
 }
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
   const router = useRouter();
+
+  const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
 
   const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
@@ -62,7 +95,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const username = activeUser.first_name + " " + activeUser.last_name;
 
   const validateFile = (file: File) => {
     // If we want to do some valid type processing here
@@ -117,6 +149,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     return "";
   };
 
+  const onEmojiSelect = (emoji) => {
+    setMessage(message + emoji.native)
+  }
+
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
     if (!currentGroup) return;
@@ -127,7 +163,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     }
 
     setRetry(false);
-    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/`);
+    const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/${activeUser.id}/`);
 
     newChatSocket.onopen = () => {
       setDeactive(false);
@@ -150,8 +186,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     };
 
     newChatSocket.onmessage = (e) => {
-      const { message, files, userId, timestamp } = JSON.parse(e.data);
-      chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp) });
+      const { message, files, userId, timestamp, rowKey, partitionKey, seen } = JSON.parse(e.data);
+      chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp), rowKey, partitionKey, seen });
       // fix the cases when we get them out of time
       chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       setChatMsges([...chatMsgesRef.current]);
@@ -165,6 +201,86 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       newChatSocket.close();
     };
   }, [currentGroup, retry]);
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  // Handle 'chat options' click
+  const handleOptionClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Handle 'chat options' close
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Function to delete a selected message
+  const deleteMsg = async (rowKey, partitionKey) => {
+    const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/delete/`;
+    await axios.post(endpoint, {
+      rowKey: rowKey,
+      partitionKey: partitionKey
+    })
+      .then((response) => {
+        console.log(response.data.status);
+        if (response.data.status === "Deleted") {
+          const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
+          chatMsgesRef.current[i].message = "[MESSAGE DELETED]";
+          chatMsgesRef.current[i].files = "";
+          setChatMsges([...chatMsgesRef.current]);
+        }
+      })
+  }
+
+  // Binding for opening the edit message screen
+  const [editMsgBit, setEditMsg] = React.useState(false);
+  const [rk, setrk] = React.useState("");
+  const [pk, setpk] = React.useState("");
+  const [changedMessage, setChangedMessage] = React.useState("");
+  const [currentMessage, setCurrentMessage] = React.useState("");
+
+  // Close the message box UI
+  const handleEditMsgClose = () => {
+    setEditMsg(false);
+    setChangedMessage("");
+    setCurrentMessage("");
+    setrk("")
+    setpk("")
+  };
+
+  // Execute the edit message request
+  const editMsg = async () => {
+    const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/edit/`;
+    await axios.post(endpoint, {
+      rowKey: rk,
+      partitionKey: pk,
+      message: changedMessage
+    })
+      .then((response) => {
+        console.log(response.data.status);
+        if (response.data.status === "Edited") {
+          const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
+          chatMsgesRef.current[i].message = changedMessage;
+          setChatMsges([...chatMsgesRef.current]);
+        }
+      })
+
+    handleEditMsgClose();
+  }
+
+  const selectOption = async (o) => {
+    console.log(rk)
+    if (o === 'Delete') {
+      deleteMsg(rk, pk);
+      handleEditMsgClose();
+    } else if (o === 'Edit') {
+      setEditMsg(true);
+    }
+    handleClose();
+  };
+
+  const username = activeUser.first_name + " " + activeUser.last_name;
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
@@ -212,7 +328,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         </Grid>
         <Divider />
         <List className={classes.userList}>
-          {activeUser.groups.map((group) => (
+          {userGroups.map((group, index) => (
             <ListItem
               disabled={deactive}
               className={clsx({ [classes.currentGroup]: group === currentGroup })}
@@ -228,9 +344,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   className={classes.slimButton}
                   onClick={async () => {
                     await axios.delete("/api/groups/" + group.id + "/remove_user");
-                    router.reload(); // remove me and do reducer state update
-                  }}
-                >
+                    userGroups.splice(index, 1)
+                    setUserGroups(userGroups);
+                    setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
+                  }}>
                   <ExitToAppSharp />
                   Leave
                 </Button>
@@ -245,14 +362,62 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <ListItem key={index}>
               <Grid container>
                 <Grid item xs={12}>
-                  {chatMsg.message !== "" ? (
-                    <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]} />
-                  ) : null}
-                  <MediaRender url={chatMsg.files} isRight={chatMsg.userId === activeUser.id ? true : false} />
-                  <ListItemText
-                    className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
-                    secondary={format(chatMsg.timestamp, "h:mm aa")}
+                  {chatMsg.message !== "" ? <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]} /> : null}
+                  <MediaRender
+                    url={chatMsg.files}
+                    isRight={chatMsg.userId === activeUser.id ? true : false}
                   />
+                  <Grid container>
+                    <Grid item xs={12} >
+                      <List className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}>
+                        <ListItem className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}>
+                          <ListItemText
+                            className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
+                            style={{ width: '100px' }}
+
+                            secondary={(chatMsg.seen.split(" ").length === currentGroup.user_set.length ? "✓ " : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")}
+                          />
+                          <ListItem button
+                            className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })}
+                            aria-label="more"
+                            aria-controls="long-menu"
+                            aria-haspopup="true"
+                            style={{ width: '20px', height: '20px' }}
+                            onClick={(e) => {
+                              handleOptionClick(e);
+                              setpk(chatMsg.partitionKey);
+                              setrk(chatMsg.rowKey);
+                              setCurrentMessage(chatMsg.message);
+                            }}
+                          >
+                            <MoreVertIcon />
+                          </ListItem>
+                          <Menu
+                            id="long-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={open}
+                            onClose={handleClose}
+                            PaperProps={{
+                              style: {
+                                maxHeight: ITEM_HEIGHT * 4.5,
+                                width: '20ch',
+                              },
+                            }}
+                          >
+                            {options.map((option) => (
+                              <MenuItem key={option} onClick={() => {
+                                selectOption(option)
+                              }}>
+                                {option}
+                              </MenuItem>
+                            ))}
+                          </Menu>
+                        </ListItem>
+                      </List>
+                    </Grid>
+                  </Grid>
+
                 </Grid>
               </Grid>
             </ListItem>
@@ -264,10 +429,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           onSubmit={async (e) => {
             e.preventDefault();
             const files = await uploadFiles();
-            const el = document.querySelector("#send-logo") as HTMLElement;
-            el.classList.add(classes.fly);
-            setTimeout(() => el.classList.remove(classes.fly), 2000);
             if (message !== "" || files !== "") {
+              const el = document.querySelector("#send-logo") as HTMLElement;
+              el.classList.add(classes.fly);
+              setTimeout(() => el.classList.remove(classes.fly), 2000);
+
               // Idk if there is a better way.
               chatSocket.send(
                 JSON.stringify({
@@ -322,15 +488,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                             </button>
                             {emojiOpen && (
                               <div className={classes.dropdown}>
-                                <Picker
-                                  set="apple"
-                                  onSelect={(emoji) => {
-                                    setMessage(message + emoji.native);
-                                  }}
-                                  title="Pick your emoji…"
-                                  emoji="point_up"
-                                  style={{ position: "absolute", bottom: "20px", right: "20px" }}
-                                />
+                                <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Search', categories: { search: 'Results of search', recent: 'Recent' } }} />
                               </div>
                             )}
                           </div>
@@ -369,7 +527,39 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           ))}
         </List>
       </Grid>
-    </Grid>
+      <Dialog
+        open={editMsgBit}
+        onClose={handleEditMsgClose}
+        aria-labelledby="form-dialog-title"
+        fullWidth
+        maxWidth="sm">
+        <DialogTitle id="form-dialog-title">Edit Message</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Edit your message below:
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="standard-multiline-flexible"
+            label="New Message"
+            multiline
+            rowsMax={10}
+            fullWidth
+            defaultValue={currentMessage}
+            onChange={(e) => setChangedMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditMsgClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={editMsg} color="primary">
+            Send
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Grid >
   );
 };
 
@@ -386,6 +576,7 @@ const useStyles = makeStyles(() => ({
   currentGroup: {
     border: "2px solid black",
   },
+  hide: { visibility: "hidden" },
   slimButton: { padding: 5 },
   actionButtonArea: { display: "flex", justifyContent: "flex-end" },
   root: {
