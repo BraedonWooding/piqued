@@ -8,8 +8,8 @@ import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { getUser } from "util/auth/user";
 import { User } from "types";
+import { getUser } from "util/auth/user";
 
 const fetchUser = async (id: string) => {
   try {
@@ -67,7 +67,6 @@ const UserDetails = () => {
           const formData = new FormData();
 
           let blob: File | null;
-          console.log(user.profile_picture);
           if (user.profile_picture && user.profile_picture != activeUser.profile_picture) {
             const ext = user.profile_picture.substring(user.profile_picture.lastIndexOf(".") + 1);
             blob = new File([await (await (await fetch(img)).blob()).arrayBuffer()], `profile-${user.id}.${ext}`, {

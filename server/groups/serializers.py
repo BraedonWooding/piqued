@@ -1,16 +1,19 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from user.models import PiquedUser
 
 from .models import Group, PiquedGroup
 
 
-class GroupSerializer(serializers.ModelSerializer):    
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ('name', 'id')
 
+
 class PiquedGroupSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='group.name')
+    name = serializers.CharField(source='group.name', validators=[UniqueValidator(
+        queryset=Group.objects.all(), message="This group name is taken.")])
     id = serializers.IntegerField(source='group.id', read_only=True)
 
     def update(self, instance: PiquedGroup, validated_data):
@@ -30,11 +33,12 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
         piquedUser = PiquedUser.objects.get(user_id=user.id)
 
         # TODO interests
-        group=Group.objects.create(name=groupname)
-        piquedGroup = PiquedGroup.objects.create(group=group)
-        piquedUser.user.groups.set([piquedGroup.group])
+        group = Group.objects.create(name=groupname)
+        piquedGroup = PiquedGroup.objects.create(
+            group=group, creator=user.username)
+        piquedUser.user.groups.add(piquedGroup.group)
         return piquedGroup
 
     class Meta:
         model = PiquedGroup
-        fields = ['id', 'name', 'interests']
+        fields = ['id', 'name', 'interests', "creator"]

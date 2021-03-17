@@ -5,23 +5,21 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
-import { useRouter } from "next/router";
-import React from "react";
+import React, { useReducer, useState } from "react";
 import { Group } from "types";
 import { CREATE_GROUP_PATH, HOME_PATH } from "util/constants";
 
 const SearchGroup = () => {
-  const [searchResults, setGroupResults] = React.useState<Group[]>([]);
+  const [searchResults, setGroupResults] = useState<Group[]>([]);
   const formikClasses = useStyles();
   const searchClasses = searchStyles();
-  const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
-  const router = useRouter();
+  const forceUpdate = useReducer(() => ({}), {})[1] as () => void;
   return (
     <HorizontallyCenteredLayout>
       <Formik
-        initialValues={{ query_term: "", users: [] }}
+        initialValues={{ query_term: "" }}
         onSubmit={async (values) => {
-          var resp = await axios.get("/api/groups/?search=" + values.query_term);
+          const resp = await axios.get("/api/groups/?search=" + values.query_term);
           setGroupResults(resp.data);
         }}
       >
@@ -43,39 +41,34 @@ const SearchGroup = () => {
                     </Avatar>
                   </Grid>
                 </Grid>
-                <Typography variant="h5">
-                  Recommended Groups/Group Search
-                </Typography>
+                <Typography variant="h5">Recommended Groups/Group Search</Typography>
                 <Grid>
                   <Grid container spacing={1}>
                     <Grid item xs={9}>
                       <MyTextField placeholder="Group Name" label="Group Name" name="query_term" autoFocus />
                     </Grid>
-                    <Grid item xs={3} className={searchClasses.searchButton} >
-                      <Button
-                        type="submit" color="primary" variant="contained" disabled={isSubmitting} >
+                    <Grid item xs={3} className={searchClasses.searchButton}>
+                      <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
                         Search
                       </Button>
                     </Grid>
                   </Grid>
                   {searchResults.map((result, index) => (
-                    <Grid container spacing={1} key={index} >
+                    <Grid container spacing={1} key={index}>
                       <Grid item xs={6} className={searchClasses.resultsArea}>
-                        <Typography>
-                          {result.name}
-                        </Typography>
+                        <Typography>{result.name}</Typography>
                       </Grid>
                       <Grid item xs={6} className={searchClasses.joinGroupArea}>
-                        < Button
+                        <Button
                           onClick={async () => {
                             await axios.put("/api/groups/" + result.id + "/add_user");
                             searchResults.splice(index, 1);
-                            console.log(searchResults);
                             setGroupResults(searchResults);
                             forceUpdate();
-                          }}>
-                          < Add />
-                            Join
+                          }}
+                        >
+                          <Add />
+                          Join
                         </Button>
                       </Grid>
                     </Grid>
@@ -83,17 +76,15 @@ const SearchGroup = () => {
                 </Grid>
                 &nbsp;
                 <Typography>
-                  <MyLink href={CREATE_GROUP_PATH}>
-                    Can't find what you're after? Create Group
-                  </MyLink>
+                  <MyLink href={CREATE_GROUP_PATH}>Can't find what you're after? Create Group</MyLink>
                 </Typography>
               </Box>
             </Container>
           </Form>
         )}
       </Formik>
-    </HorizontallyCenteredLayout >
-  )
+    </HorizontallyCenteredLayout>
+  );
 };
 
 const searchStyles = makeStyles(() => ({
@@ -105,5 +96,3 @@ const searchStyles = makeStyles(() => ({
 }));
 
 export default SearchGroup;
-
-

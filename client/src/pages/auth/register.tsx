@@ -14,26 +14,8 @@ import { LOGIN_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
-  first_name: yup
-    .string()
-    .matches(
-      /^(?=[a-zA-Z0-9._]{1,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/,
-      "Input Username and Submit [Max 20 characters that can contain alphanumeric, underscore and dot]"
-    ),
-  last_name: yup
-    .string()
-    .matches(
-      /^(?=[a-zA-Z0-9._]{1,20}$)(?!.*[_.]{2})[^_.].*[^_.]$/,
-      "Input Username and Submit [Max 20 characters that can contain alphanumeric, underscore and dot]"
-    ),
   date_of_birth: yup.date(),
-  email: yup.string().email(),
-  password: yup
-    .string()
-    .matches(
-      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,20}$/,
-      "Input Password and Submit [8 to 20 characters which contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character]"
-    ),
+  email: yup.string().email().matches(/^.*\@unsw.edu.au$/, "Email has to end with @unsw.edu.au"),
   confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
 });
 
@@ -60,6 +42,7 @@ const Register = () => {
           await lookupCurrentUser();
           router.push("/user/details/init");
         }}
+        validationSchema={validationSchema}
       >
         {({ values, isSubmitting, setFieldValue }) => (
           <Form>
