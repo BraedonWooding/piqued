@@ -19,7 +19,7 @@ const MediaRender: FC<MediaRenderProps> = ({url, isRight}: MediaRenderProps ) =>
     } else if (isVideo) {
         return (
             <div style={{textAlign: align, justifyContent: justify}}>
-                <video width="20%" autoPlay={true} muted={true}>
+                <video width="20%" autoPlay={true} muted={true} loop={true}>
                     <source src={url}/>
                 </video>
             </div>
