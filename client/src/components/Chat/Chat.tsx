@@ -11,23 +11,22 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
-  Typography
+  TextField
 } from "@material-ui/core";
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { ExitToAppSharp, SearchRounded, Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
 import { format } from "date-fns";
+import { Picker } from 'emoji-mart';
+import 'emoji-mart/css/emoji-mart.css';
 import { useRouter } from "next/router";
 import React, { FC, useEffect, useRef, useState } from "react";
 import { Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
-import MediaRender from "./MediaRender"
-import { Picker } from 'emoji-mart';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import 'emoji-mart/css/emoji-mart.css';
+import MediaRender from "./MediaRender";
 
 interface ChatProps {
   activeUser: User;
@@ -62,40 +61,40 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const fileDrop = (e: React.DragEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      const files = e.dataTransfer.files;
-      if (files.length) {
-          handleFiles(files);
-      }
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      handleFiles(files);
+    }
   }
 
   const handleFiles = (files: FileList) => {
-      for (let i = 0; i < files.length; i++) {
-          if (validateFile(files[i])) {
-              // a valid file
-              setSelectedFiles((prevArray: [File]) => [...prevArray, files[i]]); // adding the file to prevArray which is our array of selected files (held in state)
-          } else {
-              // not a valid file
-              files[i]['invalid'] = true;
-              setSelectedFiles((prevArray: [File]) => [...prevArray, files[i]]); // adding the file to prevArray which is our array of selected files (held in state)
-              setErrorMessage('File type not permitted');
-          }
+    for (let i = 0; i < files.length; i++) {
+      if (validateFile(files[i])) {
+        // a valid file
+        setSelectedFiles((prevArray: [File]) => [...prevArray, files[i]]); // adding the file to prevArray which is our array of selected files (held in state)
+      } else {
+        // not a valid file
+        files[i]['invalid'] = true;
+        setSelectedFiles((prevArray: [File]) => [...prevArray, files[i]]); // adding the file to prevArray which is our array of selected files (held in state)
+        setErrorMessage('File type not permitted');
       }
+    }
   }
 
   const validateFile = (file: File) => {
-      // If we want to do some valid type processing here
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
-      if (validTypes.indexOf(file.type) === -1) {
-          return false;
-      }
-      return true;
+    // If we want to do some valid type processing here
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+    if (validTypes.indexOf(file.type) === -1) {
+      return false;
+    }
+    return true;
   }
 
   const removeFile = (name: String) => {
-      const fileIndex = selectedFiles.findIndex((e: File) => e.name === name);
-      selectedFiles.splice(fileIndex, 1);
-      setSelectedFiles([...selectedFiles])
+    const fileIndex = selectedFiles.findIndex((e: File) => e.name === name);
+    selectedFiles.splice(fileIndex, 1);
+    setSelectedFiles([...selectedFiles])
   }
 
   const clearFiles = () => {
@@ -107,19 +106,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   }
 
   const uploadFiles = async () => {
-    var urls:String[] = [];
-      for (let i = 0; i < selectedFiles.length; i++) {
-          const formData = new FormData();
-          formData.append('file', selectedFiles[i]);
-          formData.append('group_name', currentGroup.name)
-          const response = await axios.post('/api/upload/', formData);
-          urls.push(response.data["url"]);
-      }
-      // Only handle single files for now
-      if (urls.length === 1) {
-        return urls[0];
-      }
-      return "";
+    var urls: String[] = [];
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const formData = new FormData();
+      formData.append('file', selectedFiles[i]);
+      formData.append('name', currentGroup.name)
+      const response = await axios.post('/api/upload/', formData);
+      urls.push(response.data["url"]);
+    }
+    // Only handle single files for now
+    if (urls.length === 1) {
+      return urls[0];
+    }
+    return "";
   }
 
   // Connects to the websocket and refreshes content on first render only
@@ -246,8 +245,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <ListItem key={index}>
               <Grid container>
                 <Grid item xs={12}>
-                  {chatMsg.message !== "" ? <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]}/> : null}
-                  <MediaRender 
+                  {chatMsg.message !== "" ? <ChatMsg side={chatMsg.userId === activeUser.id ? "right" : "left"} messages={[chatMsg.message]} /> : null}
+                  <MediaRender
                     url={chatMsg.files}
                     isRight={chatMsg.userId === activeUser.id ? true : false}
                   />
@@ -280,52 +279,52 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             }
           }}
         >
-        {currentGroup && (
-          <Grid container className={classes.chatBox}>
-            <Grid item xs={12}>
-              <TextField
-                placeholder="Type something"
-                fullWidth
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onDragOver={ (e: React.DragEvent<HTMLInputElement>) => {e.preventDefault()}}
-                onDragEnter={(e: React.DragEvent<HTMLInputElement>) => {e.preventDefault()}}
-                onDragLeave={(e: React.DragEvent<HTMLInputElement>) => {e.preventDefault()}}
-                onDrop={fileDrop}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <ClickAwayListener onClickAway={handleClickAway}>
-                        <div className={classes.root}>
-                          <button type="button" onClick={handleClick}>
-                            🤨
+          {currentGroup && (
+            <Grid container className={classes.chatBox}>
+              <Grid item xs={12}>
+                <TextField
+                  placeholder="Type something"
+                  fullWidth
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onDragOver={(e: React.DragEvent<HTMLInputElement>) => { e.preventDefault() }}
+                  onDragEnter={(e: React.DragEvent<HTMLInputElement>) => { e.preventDefault() }}
+                  onDragLeave={(e: React.DragEvent<HTMLInputElement>) => { e.preventDefault() }}
+                  onDrop={fileDrop}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <ClickAwayListener onClickAway={handleClickAway}>
+                          <div className={classes.root}>
+                            <button type="button" onClick={handleClick}>
+                              🤨
                           </button>
-                          {emojiOpen ? (
-                            <div className={classes.dropdown}>
-                              <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Recherche', categories: { search: 'Résultats de recherche', recent: 'Récents' } }} />
-                            </div>
-                          ) : null}
-                        </div>
-                      </ClickAwayListener>
-                      <IconButton disabled={deactive} type="submit" color="inherit">
-                        <Send />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid className="file-display-container"> {
-                selectedFiles.map((data: File & {invalid: String}, i: Number) =>
-                    <span className="file-status-bar">
-                        <span className={`file-name ${data.invalid ? 'file-error' : ''}`}>{data.name}</span>
-                        <span className="file-remove" onClick={() => removeFile(data.name)}>X</span>
-                    </span>
+                            {emojiOpen ? (
+                              <div className={classes.dropdown}>
+                                <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Recherche', categories: { search: 'Résultats de recherche', recent: 'Récents' } }} />
+                              </div>
+                            ) : null}
+                          </div>
+                        </ClickAwayListener>
+                        <IconButton disabled={deactive} type="submit" color="inherit">
+                          <Send />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid className="file-display-container"> {
+                selectedFiles.map((data: File & { invalid: String }, i: Number) =>
+                  <span className="file-status-bar">
+                    <span className={`file-name ${data.invalid ? 'file-error' : ''}`}>{data.name}</span>
+                    <span className="file-remove" onClick={() => removeFile(data.name)}>X</span>
+                  </span>
                 )
-            }
+              }
+              </Grid>
             </Grid>
-          </Grid>
-        )}
+          )}
         </form>
       </Grid>
     </Grid >
