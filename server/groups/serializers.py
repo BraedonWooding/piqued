@@ -10,7 +10,7 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ('name', 'id')
 
 class PiquedGroupSerializer(serializers.ModelSerializer):
-    group_name = serializers.CharField(source='group.name')
+    name = serializers.CharField(source='group.name')
     id = serializers.IntegerField(source='group.id', read_only=True)
 
     def update(self, instance: PiquedGroup, validated_data):
@@ -37,4 +37,4 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PiquedGroup
-        fields = ['id', 'group_name', 'interests']
+        fields = ['id', 'name', 'interests']
