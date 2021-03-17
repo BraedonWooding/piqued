@@ -7,20 +7,24 @@ import {
   InputAdornment,
   List,
   ListItem,
+
   ListItemIcon,
   ListItemText,
+
   makeStyles,
+
   Paper,
   TextField,
-  Typography,
+  Typography
 } from "@material-ui/core";
-import { Send } from "@material-ui/icons";
+import { ExitToAppOutlined, Send } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
+import axios from "axios";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
 import React, { FC, useEffect, useRef, useState } from "react";
-import { User, Group } from "types";
+import { Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import axios from "axios";
@@ -47,9 +51,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [chatMsges, setChatMsges] = useState<IChatMsg[]>([]);
   const [message, setMessage] = useState("");
   const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(
-    activeUser.groups.length > 0 ? activeUser.groups[0] : null
-  );
+  const [
+    currentGroup, setCurrentGroup] = useState<Group | null>(
+      activeUser.groups.length > 0 ? activeUser.groups[0] : null
+    );
   const chatMsgesRef = useRef(chatMsges);
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
@@ -126,10 +131,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroup) return;
 
     if (chatSocket) {
-      chatSocket.onclose = () => {};
+      chatSocket.onclose = () => { };
       chatSocket.close();
     }
-    
+
     setRetry(false);
     const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/`);
 
@@ -215,6 +220,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               }}
             >
               <ListItemText primary={group.name} />
+              {group === currentGroup ?
+                <Button onClick={async () => { await axios.delete("/api/groups/" + group.id + "/remove_user"); router.reload() }}>
+                  <Avatar>
+                    <ExitToAppOutlined />
+                  </Avatar>
+                </Button> : null
+              }
             </ListItem>
           ))}
         </List>
@@ -307,7 +319,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         )}
         </form>
       </Grid>
-    </Grid>
+    </Grid >
   );
 };
 
