@@ -301,7 +301,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                           </button>
                             {emojiOpen ? (
                               <div className={classes.dropdown}>
-                                <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Recherche', categories: { search: 'Résultats de recherche', recent: 'Récents' } }} />
+                                <Picker set='apple' onSelect={onEmojiSelect} title='Pick your emoji…' emoji='point_up' style={{ position: 'absolute', bottom: '20px', right: '20px' }} i18n={{ search: 'Search', categories: { search: 'Results of search', recent: 'Recent' } }} />
                               </div>
                             ) : null}
                           </div>
