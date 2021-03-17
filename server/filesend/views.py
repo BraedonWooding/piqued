@@ -1,7 +1,9 @@
+import uuid
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 from .blob import Blob
-import uuid
 
 container_name = "piqued-files-comp3900"
 
@@ -10,7 +12,7 @@ container_name = "piqued-files-comp3900"
 def upload(request):
     # Create our blob_obj for most of the logic
     # Assume we have set the environment variable
-    group_name = request.data['group_name']
+    group_name = request.data['name']
     blob_obj = Blob(container_name)
 
     # Create blob client which is associated with the specific file/blob
