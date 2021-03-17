@@ -2,7 +2,7 @@
 import json
 import sys
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
@@ -11,7 +11,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from dateutil import parser, tz
 from django.conf import settings
 from azure.cosmosdb.table.tablebatch import TableBatch
-
 
 def handleException(e, loc):
     exc_type = e[0]
@@ -54,11 +53,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             handleException(sys.exc_info(),"connecting to socket.")
 
 
-    def get_history(self, msgs_since=datetime.utcnow() - timedelta(days=30)):
-        parameters = {
-            "pk": str(self.groupId),
-            "del": 0
-        }
+    def get_history(self, msgs_since=datetime.now(timezone.utc) - timedelta(days=30)):
         filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
         msgs = self.table_service.query_entities('Messages', filter=filter)
         return msgs
@@ -75,14 +70,16 @@ class GroupConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             message = text_data_json['message']
+            files = text_data_json['files'] # Files are urls
             userId = text_data_json['userId']
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
             rowKey = str(int(timestamp.timestamp() * 10000000))
 
             msg = {
                 'PartitionKey': str(self.groupId),
                 'RowKey': rowKey,
                 'message': message,
+                'files': files,
                 'deleted': 0,
                 'userId': int(userId),
                 'seen': str(self.userId) + " ",
@@ -96,6 +93,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': message,
+                    'files': files,
                     'userId': userId,
                     'createdAt': timestamp.astimezone(),
                     'PartitionKey':  str(self.groupId),
@@ -122,6 +120,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
                 'message': event['message'],
+                'files': event['files'],
                 'userId': event['userId'],
                 'timestamp': str(event["createdAt"]),
                 'partitionKey': event["PartitionKey"],
