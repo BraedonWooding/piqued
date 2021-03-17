@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Group, User
 from django.db import models
-from django.db.models.fields import BooleanField, CharField, DateField
+from django.db.models.fields import BooleanField, CharField, DateField, related
 from django.db.models.fields.files import ImageField
 from django.db.models.fields.related import (ForeignKey, ManyToManyField,
                                              OneToOneField)
@@ -16,6 +16,6 @@ class PiquedUser(models.Model):
     interests: ManyToManyField = models.ManyToManyField(Interest, related_name='users', blank=True)
     courses: ManyToManyField = models.ManyToManyField(Course, related_name='users', blank=True)
     program: ForeignKey = models.ForeignKey(Program, related_name='users', on_delete=models.CASCADE, null=True, default=None, blank=True)
-    
+
     def __str__(self):
         return self.user.__str__()

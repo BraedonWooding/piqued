@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework import filters, permissions
@@ -5,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 
 from .permission import IsCreatable
-from .serializers import PiquedGroup, PiquedGroupSerializer
+from .serializers import GroupSerializer, PiquedGroup, PiquedGroupSerializer
 
 
 class PiquedGroupViewSet(ModelViewSet):

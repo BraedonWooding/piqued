@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from user.models import PiquedUser
@@ -6,11 +7,10 @@ from .models import Group, PiquedGroup
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    piqued_group = serializers.RelatedField(queryset=PiquedGroup.objects.all())
-
     class Meta:
         model = Group
-        fields = ('name', 'id', 'piqued_group')
+        depth = 5
+        fields = ('id', 'user_set', 'name')
 
 
 class PiquedGroupSerializer(serializers.ModelSerializer):
@@ -37,10 +37,10 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
         # TODO interests
         group = Group.objects.create(name=groupname)
         piquedGroup = PiquedGroup.objects.create(
-            group=group, creator=user.username)
+            group=group, created_by=piquedUser)
         piquedUser.user.groups.add(piquedGroup.group)
         return piquedGroup
 
     class Meta:
         model = PiquedGroup
-        fields = ['id', 'name', 'interests', 'creator']
+        fields = ['id', 'name', 'interests', 'created_by']

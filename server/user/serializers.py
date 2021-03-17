@@ -13,6 +13,7 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
     groups = GroupSerializer(source='user.groups', many=True, read_only=True)
+    groups_created = PiquedGroupSerializer(many=True, read_only=True)
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
     profile_picture = serializers.ImageField(required=False, allow_null=True)
@@ -52,4 +53,4 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedUser
         fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id', 'groups',
-                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses')
+                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created')

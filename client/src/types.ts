@@ -2,6 +2,7 @@ export interface Group {
   creator: string;
   name: string;
   id: number;
+  user_set: User[];
 }
 
 export interface User {
@@ -16,4 +17,5 @@ export interface User {
   courses: any[];
   program: string | null;
   groups: Group[];
+  groups_created: Group[];
 }

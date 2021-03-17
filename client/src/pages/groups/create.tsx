@@ -8,7 +8,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { User } from "types";
-import { getUser, lookupCurrentUser } from "util/auth/user";
+import { lookupCurrentUser } from "util/auth/user";
 import { HOME_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 
 const CreateGroup = () => {
@@ -19,12 +19,7 @@ const CreateGroup = () => {
 
   useEffect(() => {
     lookupCurrentUser()
-      .then(() => {
-        const user = getUser();
-        if (!user) router.push("/auth/login");
-        setUser(user);
-      })
-      .catch(() => router.push("/auth/login"));
+      .then(u => setUser(u));
   }, []);
 
   return (
@@ -33,7 +28,6 @@ const CreateGroup = () => {
         initialValues={{ name: "" }}
         onSubmit={async (values) => {
           await axios.post("/api/groups", values);
-          setUser(await lookupCurrentUser());
           router.push(HOME_PATH);
         }}
       >
@@ -48,14 +42,14 @@ const CreateGroup = () => {
                 <MyTextField placeholder="Group Name" label="Group Name" name="name" autoFocus />
                 <Grid container spacing={1}>
                   <Grid item xs={12} className={customClasses.interfaceButtons}>
-                    {user?.groups.map((group) => group.creator === user.username).length >= 3 ? (
+                    {user?.groups_created.length >= 3 ? (
                       <Box textAlign="center" flexDirection="column">
                         <Button type="submit" color="primary" variant="contained" disabled>
                           Create Group
                         </Button>
-                        <Typography className={customClasses.error}>
+                        < Typography className={customClasses.error}>
                           You have reached the limit of creating 3 groups.
-                        </Typography>
+                          </Typography>
                       </Box>
                     ) : (
                       <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
@@ -74,7 +68,7 @@ const CreateGroup = () => {
           </Form>
         )}
       </Formik>
-    </HorizontallyCenteredLayout>
+    </HorizontallyCenteredLayout >
   );
 };
 

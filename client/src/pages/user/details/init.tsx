@@ -17,6 +17,7 @@ const InitDetails = () => {
   const classes = useStyles();
   const [courses, setCourses] = useState([]);
   const [degrees, setDegrees] = useState([]);
+  const [interests, setInterests] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +26,9 @@ const InitDetails = () => {
     });
     axios.get("/api/info/programs/").then((resp) => {
       setDegrees(resp.data);
+    });
+    axios.get("/api/interests/").then((resp) => {
+      setInterests(resp.data);
     });
   }, []);
 
@@ -95,6 +99,25 @@ const InitDetails = () => {
                         />
                       )}
                       getOptionLabel={(option) => `${option.course_name} (${option.course_code})`}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Autocomplete
+                      multiple
+                      id="interests"
+                      placeholder="Interests"
+                      options={interests}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          label="Interests"
+                          inputProps={{
+                            ...params.inputProps,
+                          }}
+                        />
+                      )}
+                      getOptionLabel={(option) => `${option.name}`}
                     />
                   </Grid>
                 </Grid>
