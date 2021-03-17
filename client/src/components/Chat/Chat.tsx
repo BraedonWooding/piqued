@@ -214,6 +214,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         if (response.data.status === "Deleted") {
           const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
           chatMsgesRef.current[i].message = "[MESSAGE DELETED]";
+          chatMsgesRef.current[i].files = "";
           setChatMsges([...chatMsgesRef.current]);
         }
       })
