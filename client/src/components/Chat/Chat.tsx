@@ -41,12 +41,14 @@ import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { useRouter } from "next/router";
 import React, { createRef, DragEvent, FC, useEffect, useRef, useState } from "react";
+//@ts:ignore
 import SendLogo from 'react-svg-loader!styles/send.svg';
 import { Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import { SEARCH_GROUPS_PATH } from "util/constants";
 import MediaRender from "./MediaRender";
+
 
 //let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
 //let edit_endpoint = "http://127.0.0.1:8000/delete/";
