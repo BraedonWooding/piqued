@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { User } from "types";
 import { getUser, lookupCurrentUser } from "util/auth/user";
+import { LOGIN_PATH } from "util/constants";
 
 export const useGetUser = () => {
   const router = useRouter();
@@ -11,10 +12,10 @@ export const useGetUser = () => {
     lookupCurrentUser()
       .then(() => {
         const user = getUser();
-        if (!user) router.push("/auth/login");
+        if (!user) router.push(LOGIN_PATH);
         setUser(user);
       })
-      .catch(() => router.push("/auth/login"));
+      .catch(() => router.push(LOGIN_PATH));
   }, []);
 
   return user;
