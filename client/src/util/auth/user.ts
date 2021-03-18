@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import { User } from "types";
-import { USER } from "util/constants";
+import { LOGIN_PATH, USER } from "util/constants";
 
 export const getUser = () => JSON.parse(localStorage.getItem(USER)) as User;
 
@@ -19,6 +19,6 @@ export const lookupCurrentUser = async () => {
     setUser(res.data);
     return res.data;
   } catch {
-    useRouter().push("/auth/login");
+    useRouter().push(LOGIN_PATH);
   }
 };
