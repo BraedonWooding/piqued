@@ -21,13 +21,13 @@ const InitDetails = () => {
   const router = useRouter();
 
   useEffect(() => {
-    axios.get("/api/info/courses/").then((resp) => {
+    axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
       setCourses(resp.data);
     });
-    axios.get("/api/info/programs/").then((resp) => {
+    axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/programs/").then((resp) => {
       setDegrees(resp.data);
     });
-    axios.get("/api/interests/").then((resp) => {
+    axios.get(process.env.NEXT_PUBLIC_API_URL + "/interests/").then((resp) => {
       setInterests(resp.data);
     });
   }, []);
@@ -41,7 +41,7 @@ const InitDetails = () => {
           courses: [],
         }}
         onSubmit={async (values) => {
-          await axios.patch("/api/users/" + getUser().id, {
+          await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
             program: values.program?.id,
             courses: values.courses?.map((x) => x.id),
