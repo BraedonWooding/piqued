@@ -12,11 +12,11 @@ from .serializers import PiquedUserSerializer
 class UserViewSet(ModelViewSet):
     serializer_class = PiquedUserSerializer
     queryset = PiquedUser.objects.all()
-    permission_classes = (IsCreatable,)
+    permission_classes = []
     lookup_field = 'user_id'
 
     def check_permissions(self, req):
-        return super().check_permissions(req)
+        return None
 
     def retrieve(self, request, *args, **kwargs):
         """

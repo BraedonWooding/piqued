@@ -13,7 +13,7 @@ import { getUser } from "util/auth/user";
 
 const fetchUser = async (id: string) => {
   try {
-    return (await axios.get(`/api/users/${id}`)).data;
+    return (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}/`)).data;
   } catch {
     return null;
   }
@@ -88,7 +88,7 @@ const UserDetails = () => {
           formData.append("id", String(id));
           formData.append("email", user.username);
 
-          axios.patch("/api/users/" + id, formData).then((resp) => {
+          axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + id + "/", formData).then((resp) => {
             const user = resp.data as User;
             if (user) setUser(user);
             router.push("/home");

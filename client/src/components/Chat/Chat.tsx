@@ -141,7 +141,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       const formData = new FormData();
       formData.append("file", selectedFiles[i]);
       formData.append("name", currentGroup.name);
-      const response = await axios.post("/api/upload/", formData);
+      const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/upload/", formData);
       urls.push(response.data["url"]);
     }
     // Only handle single files for now
@@ -345,7 +345,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 <Button
                   className={classes.slimButton}
                   onClick={async () => {
-                    await axios.delete("/api/groups/" + group.id + "/remove_user");
+                    await axios.delete(process.env.NEXT_PUBLIC_API_URL + "/groups/" + group.id + "/remove_user/");
                     userGroups.splice(index, 1)
                     setUserGroups(userGroups);
                     setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
@@ -377,7 +377,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                             className={clsx({ [classes.alignSelfRight]: chatMsg.userId === activeUser.id })}
                             style={{ width: '100px' }}
 
-                            secondary={(chatMsg.seen.split(" ").length === currentGroup.user_set.length ? "✓ " : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")}
+                            secondary={(currentGroup && chatMsg.seen.split(" ").length === currentGroup.user_set.length ? "✓ " : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")}
                           />
                           <ListItem button
                             className={clsx({ [classes.hide]: chatMsg.userId !== activeUser.id })}
@@ -519,7 +519,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       </Grid>
       <Grid item xs={1} className={classes.borderLeft500}>
         <List className={classes.userList}>
-          {currentGroup.user_set.map((user) => (
+          {currentGroup && currentGroup.user_set.map((user) => (
             <ListItem>
               <ListItemIcon>
                 <Avatar alt={user.first_name} src={user.profile_picture} />

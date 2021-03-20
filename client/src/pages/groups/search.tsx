@@ -20,7 +20,7 @@ const SearchGroup = () => {
       <Formik
         initialValues={{ query_term: "" }}
         onSubmit={async (values) => {
-          const resp = await axios.get("/api/groups/?search=" + values.query_term);
+          const resp = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/groups/?search=" + values.query_term);
           setGroupResults(resp.data.filter((x: Group) => getUser().groups.filter(y => y.id == x.id).length == 0));
         }}
       >
@@ -62,7 +62,7 @@ const SearchGroup = () => {
                       <Grid item xs={6} className={searchClasses.joinGroupArea}>
                         <Button
                           onClick={async () => {
-                            await axios.put("/api/groups/" + result.id + "/add_user");
+                            await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + result.id + "/add_user/");
                             searchResults.splice(index, 1);
                             setGroupResults(searchResults);
                             forceUpdate();

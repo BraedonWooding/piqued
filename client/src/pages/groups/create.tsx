@@ -27,7 +27,7 @@ const CreateGroup = () => {
       <Formik
         initialValues={{ name: "" }}
         onSubmit={async (values) => {
-          await axios.post("/api/groups", values);
+          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/groups/", values);
           router.push(HOME_PATH);
         }}
       >
