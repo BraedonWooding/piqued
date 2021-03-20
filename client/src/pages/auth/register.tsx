@@ -15,7 +15,10 @@ import * as yup from "yup";
 
 const validationSchema = yup.object({
   date_of_birth: yup.date(),
-  email: yup.string().email().matches(/^.*\@unsw.edu.au$/, "Email has to end with @unsw.edu.au"),
+  email: yup
+    .string()
+    .email()
+    .matches(/^.*\@unsw.edu.au$/, "Email has to end with @unsw.edu.au"),
   confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
 });
 
