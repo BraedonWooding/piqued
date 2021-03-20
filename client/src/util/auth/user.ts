@@ -15,7 +15,7 @@ export const setUser = (user: User) => localStorage.setItem(USER, JSON.stringify
 
 export const lookupCurrentUser = async () => {
   try {
-    const res = await axios.get("/api/users/self");
+    const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/users/self/");
     setUser(res.data);
     return res.data;
   } catch {

@@ -18,7 +18,10 @@ const validationSchema = yup.object({
   email: yup
     .string()
     .email()
-    .matches(/^.*\@unsw.edu.au$/, "Email has to end with @unsw.edu.au"),
+    .matches(
+      /^.*\@(?:student.|ad.)?unsw.edu.au$/,
+      "Email has to end with @ad.unsw.edu.au, @student.unsw.edu.au, or @unsw.edu.au"
+    ),
   confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
 });
 
@@ -40,7 +43,11 @@ const Register = () => {
         }}
         onSubmit={async ({ confirmPassword, ...other }) => {
           const { date_of_birth, email: username } = other;
-          await axios.post("/api/users", { ...other, date_of_birth: format(date_of_birth, "yyyy-MM-dd"), username });
+          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
+            ...other,
+            date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
+            username,
+          });
           await authenticateToken({ password: other.password, username });
           await lookupCurrentUser();
           router.push("/user/details/init");
