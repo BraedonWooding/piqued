@@ -31,6 +31,7 @@ import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import { useRouter } from "next/router";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
+//@ts:ignore
 import SendLogo from "react-svg-loader!styles/send.svg";
 import { Group, User } from "types";
 import { popToken } from "util/auth/token";
