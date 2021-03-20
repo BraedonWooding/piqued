@@ -136,10 +136,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     return "";
   };
 
-  const onEmojiSelect = (emoji) => {
-    setMessage(message + emoji.native);
-  };
-
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
     if (!currentGroup) return;
@@ -452,33 +448,21 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   fullWidth
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  onDragOver={(e: React.DragEvent<HTMLInputElement>) => {
-                    e.preventDefault();
-                  }}
-                  onDragEnter={(e: React.DragEvent<HTMLInputElement>) => {
-                    e.preventDefault();
-                  }}
-                  onDragLeave={(e: React.DragEvent<HTMLInputElement>) => {
-                    e.preventDefault();
-                  }}
+                  onDragOver={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
+                  onDragEnter={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
+                  onDragLeave={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
                   onDrop={fileDrop}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
-                        <ClickAwayListener
-                          onClickAway={() => {
-                            setEmojiOpen(false);
-                          }}
-                        >
+                        <ClickAwayListener onClickAway={() => setEmojiOpen(false)}>
                           <div className={classes.root}>
                             <button
                               style={{
                                 cursor: "pointer",
                               }}
                               type="button"
-                              onClick={() => {
-                                setEmojiOpen(!emojiOpen);
-                              }}
+                              onClick={() => setEmojiOpen(!emojiOpen)}
                             >
                               🤨
                             </button>
@@ -486,7 +470,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                               <div className={classes.dropdown}>
                                 <Picker
                                   set="apple"
-                                  onSelect={onEmojiSelect}
+                                  onSelect={(emoji) => setMessage(message + emoji.native)}
                                   title="Pick your emoji…"
                                   emoji="point_up"
                                   style={{ position: "absolute", bottom: "20px", right: "20px" }}
