@@ -17,11 +17,13 @@ export const popToken = () => {
 export const setToken = (token: Token) => localStorage.setItem(TOKEN, JSON.stringify(token));
 
 export const refreshAccessToken = async () => {
-  const res = await axios.post("/api/token/refresh", { refresh_token: popToken().refresh });
+  const res = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/token/refresh/", {
+    refresh_token: popToken().refresh,
+  });
   setToken(res.data);
 };
 
 export const authenticateToken = async (details: { username: string; password: string }) => {
-  const res = await axios.post("/api/token", details);
+  const res = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/token/", details);
   setToken(res.data);
 };

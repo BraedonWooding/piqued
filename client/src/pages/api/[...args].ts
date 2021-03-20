@@ -28,7 +28,9 @@ const proxy = createProxyMiddleware({
     // since django doesn't handle post requests with trailing /'s correctly sadly.
     let position = proxyReq.path.lastIndexOf("?");
     if (position < 0) position = proxyReq.path.length;
-    proxyReq.path = proxyReq.path.substring(0, position) + "/" + proxyReq.path.substring(position);
+    proxyReq.path =
+      proxyReq.path.substring(0, position) + "/" + (position != -1) ? proxyReq.path.substring(position) : "?";
+    console.log(proxyReq);
   },
 });
 
