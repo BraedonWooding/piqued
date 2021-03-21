@@ -5,23 +5,34 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
-import React, { useReducer, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Group } from "types";
-import { getUser } from "util/auth/user";
+import { getUser, lookupCurrentUser, setUser } from "util/auth/user";
 import { CREATE_GROUP_PATH, HOME_PATH } from "util/constants";
 
 const SearchGroup = () => {
+
+  useEffect(() => {
+    lookupCurrentUser()
+      .then(u => setUser(u));
+  }, []);
+
   const [searchResults, setGroupResults] = useState<Group[]>([]);
+  const [addedGroups, setAddedGroups] = useState<Group[]>([]);
   const formikClasses = useStyles();
   const searchClasses = searchStyles();
-  const forceUpdate = useReducer(() => ({}), {})[1] as () => void;
+  const [hasSubmitted, setHasSubmitted] = useState<Boolean>(false);
+
   return (
     <HorizontallyCenteredLayout>
       <Formik
         initialValues={{ query_term: "" }}
         onSubmit={async (values) => {
           const resp = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/groups/?search=" + values.query_term);
-          setGroupResults(resp.data.filter((x: Group) => getUser().groups.filter(y => y.id == x.id).length == 0));
+          setGroupResults(resp.data.filter((x: Group) =>
+            getUser().groups.filter(y => y.id == x.id).length == 0
+            && addedGroups.filter(y => y.id == x.id).length == 0)
+          );
         }}
       >
         {({ isSubmitting }) => (
@@ -63,9 +74,11 @@ const SearchGroup = () => {
                         <Button
                           onClick={async () => {
                             await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + result.id + "/add_user/");
-                            searchResults.splice(index, 1);
-                            setGroupResults(searchResults);
-                            forceUpdate();
+                            var rem = searchResults.splice(index, 1)[0];
+                            addedGroups.push(rem);
+                            setAddedGroups([...addedGroups]);
+                            setGroupResults([...searchResults]);
+                            setHasSubmitted(true);
                           }}
                         >
                           <Add />
@@ -74,6 +87,16 @@ const SearchGroup = () => {
                       </Grid>
                     </Grid>
                   ))}
+                  {searchResults.length == 0 && hasSubmitted ?
+                    <Grid container spacing={2}>
+                      <Grid xs={12} className={searchClasses.searchAvatar}>
+                        <Typography>
+                          No groups found
+                      </Typography>
+                      </Grid>
+                    </Grid>
+                    : null
+                  }
                 </Grid>
                 &nbsp;
                 <Typography>
@@ -84,7 +107,7 @@ const SearchGroup = () => {
           </Form>
         )}
       </Formik>
-    </HorizontallyCenteredLayout>
+    </HorizontallyCenteredLayout >
   );
 };
 
