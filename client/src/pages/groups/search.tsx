@@ -21,7 +21,7 @@ const SearchGroup = () => {
   const [addedGroups, setAddedGroups] = useState<Group[]>([]);
   const formikClasses = useStyles();
   const searchClasses = searchStyles();
-  const [hasSubmitted, setHasSubmitted] = useState<Boolean>(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   return (
     <HorizontallyCenteredLayout>
