@@ -5,11 +5,8 @@ import traceback
 from datetime import datetime, timedelta, timezone
 
 from asgiref.sync import sync_to_async
-from azure.cosmosdb.table.models import Entity
-from azure.cosmosdb.table.tablebatch import TableBatch
 from azure.cosmosdb.table.tableservice import TableService
 from channels.generic.websocket import AsyncWebsocketConsumer
-from dateutil import parser, tz
 from django.conf import settings
 
 
@@ -85,7 +82,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'userId': int(userId),
                 'seen': str(self.userId) + " ",
                 'createdAt': timestamp}
-            print(f"Received Message for {userId} in group {self.groupId}: {msg}")
+
             self.table_service.insert_entity('Messages', msg)
 
             # Send message to room group
