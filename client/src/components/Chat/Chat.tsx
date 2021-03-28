@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   Divider,
@@ -48,11 +49,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     activeUser.groups.length > 0 ? activeUser.groups[0] : null
   );
   const chatMsgesRef = useRef(chatMsges);
+  const userGroupsRef = useRef(userGroups);
+  const currentGroupRef = useRef(currentGroup);
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const lastMessageRef = useRef(null);
-  const username = activeUser.first_name + " " + activeUser.last_name;
+  const username = `${activeUser.first_name} ${activeUser.last_name}`;
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const validateFile = (file: File) => {
@@ -83,7 +86,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
-    if (!currentGroup) return;
+    if (!currentGroupRef.current) return;
     else if (!chatSocket) {
       setRetry(false);
       const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
@@ -93,7 +96,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         if (timer) clearInterval(timer);
         setTimer(null);
         chatMsgesRef.current = [];
-        setChatMsges([]);
+        setChatMsges([...chatMsgesRef.current]);
       };
 
       newChatSocket.onclose = () => {
@@ -110,38 +113,67 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
       newChatSocket.onmessage = (e) => {
         const { partitionKey, rowKey, message, files, userId, createdAt, seen } = JSON.parse(e.data);
-        chatMsgesRef.current.push({
-          partitionKey,
-          rowKey,
-          message,
-          files,
-          userId,
-          seen,
-          createdAt: new Date(createdAt),
-        });
-        // fix the cases when we get them out of time
-        chatMsgesRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-        setChatMsges([...chatMsgesRef.current]);
-        lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
+
+        if (partitionKey === currentGroupRef.current.id.toString()) {
+          chatMsgesRef.current.push({
+            partitionKey,
+            rowKey,
+            message,
+            files,
+            userId,
+            seen,
+            createdAt: new Date(createdAt),
+          });
+          // fix the cases when we get them out of time
+          chatMsgesRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+          setChatMsges([...chatMsgesRef.current]);
+          lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
+        } else {
+          const group = userGroupsRef.current.find((g) => g.id.toString() === partitionKey);
+          if (group && !group.has_unseen_messages && !(seen as string).split(" ").includes(activeUser.id.toString())) {
+            group.has_unseen_messages = true;
+            setUserGroups([...userGroupsRef.current]);
+          }
+        }
       };
 
       setChatSocket(newChatSocket);
     }
-  }, [currentGroup, retry]);
+  }, [currentGroupRef.current, retry]);
 
   // Get history of chat after chatsocket has connected
   useEffect(() => {
     if (chatSocket?.readyState) {
-      chatMsgesRef.current = [];
-      setChatMsges(chatMsgesRef.current);
       chatSocket.send(
         JSON.stringify({
           type: "get_history",
-          partitionKey: currentGroup.id.toString(),
+          partitionKey: currentGroupRef.current.id.toString(),
         })
       );
+
+      return () => {
+        chatMsgesRef.current = [];
+        setChatMsges([...chatMsgesRef.current]);
+      };
     }
-  }, [chatSocket?.readyState, currentGroup]);
+    return;
+  }, [chatSocket?.readyState, currentGroupRef.current]);
+
+  // Update seen status after chat msg has been loaded
+  useEffect(() => {
+    chatMsgesRef.current.forEach((chatMsg) => {
+      const { partitionKey, rowKey, seen } = chatMsg;
+      if (!(seen as string).split(" ").includes(activeUser.id.toString()))
+        chatSocket.send(
+          JSON.stringify({
+            type: "seen_message",
+            partitionKey,
+            rowKey,
+            seen: `${seen} ${activeUser.id}`,
+          })
+        );
+    });
+  }, [chatMsgesRef.current]);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
@@ -186,23 +218,38 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map((group, index) => (
             <ListItem
-              disabled={deactive}
-              className={clsx({ [classes.currentGroup]: group === currentGroup })}
-              button
               key={"Group-" + group.id}
+              disabled={deactive}
+              className={clsx({ [classes.currentGroup]: group.id === currentGroup.id })}
+              button
               onClick={() => {
-                setCurrentGroup(group);
+                group.has_unseen_messages = false;
+                currentGroupRef.current = group;
+                setUserGroups([...userGroupsRef.current]);
+                setCurrentGroup({ ...currentGroupRef.current });
               }}
             >
-              <ListItemText primary={group.name} />
-              {group === currentGroup ? (
+              <ListItemText
+                primary={
+                  <>
+                    {group.name}
+                    &nbsp; &nbsp;
+                    {group.has_unseen_messages && <Badge color="error" variant="dot" />}
+                  </>
+                }
+              />
+              {group.id === currentGroup.id ? (
                 <Button
                   className={classes.slimButton}
                   onClick={async () => {
                     await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/groups/${group.id}/remove_user/`);
-                    userGroups.splice(index, 1);
-                    setUserGroups(userGroups);
-                    setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
+                    userGroupsRef.current.splice(index, 1);
+                    setUserGroups([...userGroupsRef.current]);
+                    setCurrentGroup(
+                      userGroupsRef.current.length > 0
+                        ? { ...userGroupsRef.current[0], has_unseen_messages: false }
+                        : null
+                    );
                   }}
                 >
                   <ExitToAppSharp />
@@ -217,6 +264,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.messageArea}>
           {chatMsges.map((chatMsg, index) => {
             const isActiveUser = chatMsg.userId === activeUser.id;
+
             return (
               <ListItem key={index}>
                 <Grid container>
@@ -235,8 +283,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                 style={{ width: "100px" }}
                                 secondary={
                                   (currentGroup && chatMsg.seen.split(" ").length === currentGroup.user_set.length
-                                    ? "✓ "
-                                    : "✓✓ ") + format(chatMsg.createdAt, "h:mm aa")
+                                    ? "✓✓"
+                                    : "✓") + format(chatMsg.createdAt, "h:mm aa")
                                 }
                               />
                             </ListItem>
@@ -300,6 +348,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   files,
                   partitionKey: currentGroup.id.toString(),
                   userId: activeUser.id,
+                  seen: activeUser.id.toString(),
                   createdAt: new Date(),
                 })
               );
@@ -343,8 +392,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       <Grid item xs={1} className={classes.borderLeft500}>
         <List className={classes.userList}>
           {currentGroup &&
-            currentGroup.user_set.map((user) => (
-              <ListItem>
+            currentGroup.user_set.map((user, index) => (
+              <ListItem key={index}>
                 <ListItemIcon>
                   <Avatar alt={user.first_name} src={user.profile_picture} />
                 </ListItemIcon>

@@ -3,6 +3,7 @@ export interface Group {
   name: string;
   id: number;
   user_set: User[];
+  has_unseen_messages: boolean;
 }
 
 export interface User {
