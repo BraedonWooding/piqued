@@ -3,6 +3,7 @@ import axios from "axios";
 import React, { FC, useEffect, useState } from "react";
 import { Grid } from "@giphy/react-components";
 import { GiphyFetch } from "@giphy/js-fetch-api";
+import { IGif } from '@giphy/js-types';
 
 //@ts:ignore
 import GifLogo from "react-svg-loader!assets/icons/gif.svg";
@@ -10,16 +11,10 @@ import GifLogo from "react-svg-loader!assets/icons/gif.svg";
 const API_KEY = "c6Hr9L8EZfXoZtKCliUeRiEtefKxL04j";
 
 interface GifPickerProps {
-  setMessage: (message: string) => void;
+  sendGif: (message: IGif) => void;
 }
 
-interface GifState {
-  total_count: number;
-  count: number;
-  offset: number;
-}
-
-export const GifPicker: FC<GifPickerProps> = ({ setMessage }) => {
+export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
   const classes = useStyles();
   const giphy = new GiphyFetch(API_KEY);
 
@@ -57,8 +52,9 @@ export const GifPicker: FC<GifPickerProps> = ({ setMessage }) => {
 
             <Grid
               key={search || "gif"}
-              onGifClick={(a) => console.log(a)}
+              onGifClick={(a) => { sendGif(a); setGifOpen(false); setSearch(null); }}
               hideAttribution={true}
+              noLink={true}
               fetchGifs={(search as any, fetchMoreGifs)}
               width={225}
               columns={2}

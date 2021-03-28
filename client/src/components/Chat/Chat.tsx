@@ -33,9 +33,6 @@ import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
 import { MediaRender } from "./MediaRender";
 
-//let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
-//let edit_endpoint = "http://127.0.0.1:8000/delete/";
-
 interface ChatProps {
   activeUser: User;
 }
@@ -315,7 +312,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
-                        <GifPicker setMessage={(emoji) => setMessage(message + emoji)} />
+                        <GifPicker
+                          sendGif={(gif) => {
+                            chatSocket.send(
+                              JSON.stringify({
+                                userId: activeUser.id,
+                                files: `https://i.giphy.com/media/${gif.id}/200w.gif`,
+                                message: "",
+                                timestamp: new Date(),
+                              })
+                            );
+                          }
+                          }
+                        />
                         <EmojiPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <IconButton disabled={deactive} type="submit" color="inherit">
                           <SendLogo id="send-logo" width={25} height={25} />
