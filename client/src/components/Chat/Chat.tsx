@@ -19,6 +19,7 @@ import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
 import { EmojiPicker } from "components/Elements/EmojiPicker";
+import { GifPicker } from "components/Elements/GifPicker";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
@@ -314,6 +315,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
+                        <GifPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <EmojiPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <IconButton disabled={deactive} type="submit" color="inherit">
                           <SendLogo id="send-logo" width={25} height={25} />
