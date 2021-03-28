@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
@@ -159,21 +159,23 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     return;
   }, [chatSocket?.readyState, currentGroupRef.current]);
 
-  // Update seen status after chat msg has been loaded
-  useEffect(() => {
-    chatMsgesRef.current.forEach((chatMsg) => {
-      const { partitionKey, rowKey, seen } = chatMsg;
-      if (!(seen as string).split(" ").includes(activeUser.id.toString()))
-        chatSocket.send(
-          JSON.stringify({
-            type: "seen_message",
-            partitionKey,
-            rowKey,
-            seen: `${seen} ${activeUser.id}`,
-          })
-        );
-    });
-  }, [chatMsgesRef.current]);
+  // Update seen status after chat msg has been loaded (does not work)
+  // useEffect(() => {
+  //   if (chatSocket?.readyState) {
+  //     chatMsgesRef.current.forEach((chatMsg) => {
+  //       const { partitionKey, rowKey, seen } = chatMsg;
+  //       if (!(seen as string).split(" ").includes(activeUser.id.toString()))
+  //         chatSocket.send(
+  //           JSON.stringify({
+  //             type: "seen_message",
+  //             partitionKey,
+  //             rowKey,
+  //             seen: `${seen} ${activeUser.id}`,
+  //           })
+  //         );
+  //     });
+  //   }
+  // }, [chatSocket?.readyState, chatMsgesRef.current]);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>

@@ -71,7 +71,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
             # Send message to room group
             if type == "get_history":
                 await self.get_history({
-                    'type': type,
                     'partitionKey':  text_data_json['partitionKey'],
                 })
             elif type == "chat_message":
@@ -110,8 +109,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     }
                 )
             elif type == "seen_message":
-                await self.get_history({
-                    'type': type,
+                await self.seen_message({
                     'partitionKey':  text_data_json['partitionKey'],
                     'rowKey':  text_data_json['rowKey'],
                     'seen':  text_data_json['seen'],
@@ -150,7 +148,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 sys.exc_info(), "socket receiving message type 'chat_message' from socket_group (channel layer).")
 
     async def seen_message(self, event):
-        print("WTP" + event['seen'])
         seen = event['seen']
         msg = {
             'PartitionKey': event["PartitionKey"],
