@@ -24,7 +24,7 @@ import { useRouter } from "next/router";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
-import { Group, User } from "types";
+import { ChatMsg as ChatMsgType, Group, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
@@ -44,7 +44,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const router = useRouter();
 
   const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
-  const [chatMsges, setChatMsges] = useState<ChatMsg[]>([]);
+  const [chatMsges, setChatMsges] = useState<ChatMsgType[]>([]);
   const [message, setMessage] = useState("");
   const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
   const [currentGroup, setCurrentGroup] = useState<Group | null>(
