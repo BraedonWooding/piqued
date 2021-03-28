@@ -2,6 +2,26 @@
 
 import json
 
+with open("raw_interests.raw", "r") as f, open("../server/interests/interests.json", "w") as o:
+    interests = f.readlines()
+    output_interests = []
+    index = 0
+    for interest in interests:
+        interest = interest.strip()
+        print("insert into dbo.interests_interest (name, is_course) values ('" + interest + "', 0)")
+        output_interests.append({
+            "model": "interests.Interest",
+            "pk": index,
+            "fields": {
+                "name": interest,
+                "is_course": False
+            }
+        })
+        index += 1
+    o.write(json.dumps(output_interests))
+
+exit()
+
 with open("courses.json", "r") as f, open("../server/info/courses.json", "w") as o:
     courses = json.load(f)
     output_courses = []
