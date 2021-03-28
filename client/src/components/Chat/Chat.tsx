@@ -86,7 +86,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroup) return;
     else if (!chatSocket) {
       setRetry(false);
-      console.log(activeUser.id);
       const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
       newChatSocket.onopen = () => {
@@ -110,16 +109,15 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       };
 
       newChatSocket.onmessage = (e) => {
-        const { partitionKey, rowKey, message, files, groupId, userId, createdAt, seen } = JSON.parse(e.data);
+        const { partitionKey, rowKey, message, files, userId, createdAt, seen } = JSON.parse(e.data);
         chatMsgesRef.current.push({
+          partitionKey,
+          rowKey,
           message,
           files,
-          groupId,
           userId,
-          createdAt: new Date(createdAt),
-          rowKey,
-          partitionKey,
           seen,
+          createdAt: new Date(createdAt),
         });
         // fix the cases when we get them out of time
         chatMsgesRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -139,7 +137,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       chatSocket.send(
         JSON.stringify({
           type: "get_history",
-          groupId: currentGroup.id,
+          partitionKey: currentGroup.id.toString(),
         })
       );
     }
@@ -248,8 +246,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                 onEdit={async (changedMessage) => {
                                   const { rowKey, partitionKey } = chatMsg;
                                   const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/edit/`, {
-                                    rowKey,
                                     partitionKey,
+                                    rowKey,
                                     message: changedMessage,
                                   });
 
@@ -295,12 +293,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               el.classList.add(classes.fly);
               setTimeout(() => el.classList.remove(classes.fly), 2000);
 
-              // Idk if there is a better way.
               chatSocket.send(
                 JSON.stringify({
-                  userId: activeUser.id,
-                  files,
+                  type: "chat_message",
                   message,
+                  files,
+                  partitionKey: currentGroup.id.toString(),
+                  userId: activeUser.id,
                   createdAt: new Date(),
                 })
               );

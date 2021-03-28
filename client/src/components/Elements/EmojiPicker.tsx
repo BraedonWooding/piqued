@@ -36,7 +36,6 @@ export const EmojiPicker: FC<EmojiPickerProps> = ({ setMessage }) => {
 const useStyles = makeStyles(() => ({
   root: {
     position: "relative",
-    width: 300,
     justifyContent: "flex-end",
     textAlign: "right",
   },
