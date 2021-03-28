@@ -68,7 +68,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   };
 
   const uploadFiles = async () => {
-    const urls: String[] = [];
+    const urls: string[] = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const formData = new FormData();
       formData.append("file", selectedFiles[i]);
@@ -86,9 +86,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroup) return;
     else if (!chatSocket) {
       setRetry(false);
-      const newChatSocket = new WebSocket(
-        `ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/${activeUser.id}/`
-      );
+      console.log(activeUser.id);
+      const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
       newChatSocket.onopen = () => {
         setDeactive(false);
@@ -111,24 +110,40 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       };
 
       newChatSocket.onmessage = (e) => {
-        const { message, files, userId, timestamp, rowKey, partitionKey, seen } = JSON.parse(e.data);
+        const { partitionKey, rowKey, message, files, groupId, userId, createdAt, seen } = JSON.parse(e.data);
         chatMsgesRef.current.push({
           message,
           files,
+          groupId,
           userId,
-          timestamp: new Date(timestamp),
+          createdAt: new Date(createdAt),
           rowKey,
           partitionKey,
           seen,
         });
         // fix the cases when we get them out of time
-        chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        chatMsgesRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         setChatMsges([...chatMsgesRef.current]);
         lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
       };
+
       setChatSocket(newChatSocket);
     }
   }, [currentGroup, retry]);
+
+  // Get history of chat after chatsocket has connected
+  useEffect(() => {
+    if (chatSocket?.readyState) {
+      chatMsgesRef.current = [];
+      setChatMsges(chatMsgesRef.current);
+      chatSocket.send(
+        JSON.stringify({
+          type: "get_history",
+          groupId: currentGroup.id,
+        })
+      );
+    }
+  }, [chatSocket?.readyState, currentGroup]);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
@@ -186,7 +201,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 <Button
                   className={classes.slimButton}
                   onClick={async () => {
-                    await axios.delete(process.env.NEXT_PUBLIC_API_URL + "/groups/" + group.id + "/remove_user/");
+                    await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/groups/${group.id}/remove_user/`);
                     userGroups.splice(index, 1);
                     setUserGroups(userGroups);
                     setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
@@ -223,7 +238,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                 secondary={
                                   (currentGroup && chatMsg.seen.split(" ").length === currentGroup.user_set.length
                                     ? "✓ "
-                                    : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")
+                                    : "✓✓ ") + format(chatMsg.createdAt, "h:mm aa")
                                 }
                               />
                             </ListItem>
@@ -286,7 +301,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   userId: activeUser.id,
                   files,
                   message,
-                  timestamp: new Date(),
+                  createdAt: new Date(),
                 })
               );
               setMessage("");
