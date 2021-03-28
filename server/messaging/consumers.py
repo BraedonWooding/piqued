@@ -31,11 +31,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
             groups = await database_sync_to_async(self.get_groups)()
 
             for group in groups:
-                channelGroupName = 'chat_%s' % group.id
-
                 # Join channel group for each group user is in
                 await self.channel_layer.group_add(
-                    channelGroupName,
+                    'chat_%s' % group.id,
                     self.channel_name
                 )
             try:
@@ -58,11 +56,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
         groups = await database_sync_to_async(self.get_groups)()
 
         for group in groups:
-            channelGroupName = 'chat_%s' % group.id
-
             # Leave channel group for each group user is in
             await self.channel_layer.group_discard(
-                channelGroupName,
+                'chat_%s' % group.id,
                 self.channel_name
             )
 
@@ -79,12 +75,13 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'partitionKey':  text_data_json['partitionKey'],
                 })
             elif type == "chat_message":
-                timestamp = datetime.now(timezone.utc)
+                createdAt = datetime.now(timezone.utc)
                 partitionKey = str(text_data_json['partitionKey'])
-                rowKey = str(int(timestamp.timestamp() * 10000000))
+                rowKey = str(int(createdAt.timestamp() * 10000000))
                 message = text_data_json['message']
                 files = text_data_json['files']  # Files are urls
                 userId = text_data_json['userId']
+                seen = text_data_json["seen"]
 
                 msg = {
                     'PartitionKey': partitionKey,
@@ -93,8 +90,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'files': files,
                     'deleted': 0,
                     'userId': userId,
-                    'seen': str(self.userId) + " ",
-                    'createdAt': timestamp
+                    'seen': seen,
+                    'createdAt': createdAt
                 }
 
                 self.table_service.insert_entity('Messages', msg)
@@ -108,10 +105,17 @@ class GroupConsumer(AsyncWebsocketConsumer):
                         'message': message,
                         'files': files,
                         'userId': userId,
-                        'seen': str(self.userId) + " ",
-                        'createdAt': timestamp.astimezone(),
+                        'seen': seen,
+                        'createdAt': createdAt.astimezone(),
                     }
                 )
+            elif type == "seen_message":
+                await self.get_history({
+                    'type': type,
+                    'partitionKey':  text_data_json['partitionKey'],
+                    'rowKey':  text_data_json['rowKey'],
+                    'seen':  text_data_json['seen'],
+                })
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving data from client.")
@@ -131,16 +135,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         try:
-            seen = event['seen']
-            if str(self.userId) not in seen.split():
-                seen += str(self.userId) + " "
-                msg = {
-                    'PartitionKey': event["PartitionKey"],
-                    'RowKey': event["RowKey"],
-                    'seen': seen
-                }
-                self.table_service.merge_entity('Messages', msg)
-
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
                 'partitionKey': event["PartitionKey"],
@@ -148,9 +142,19 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'message': event['message'],
                 'files': event['files'],
                 'userId': event['userId'],
-                'seen': seen,
+                'seen': event['seen'],
                 'createdAt': str(event["createdAt"]),
             }))
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'chat_message' from socket_group (channel layer).")
+
+    async def seen_message(self, event):
+        print("WTP" + event['seen'])
+        seen = event['seen']
+        msg = {
+            'PartitionKey': event["PartitionKey"],
+            'RowKey': event["RowKey"],
+            'seen': seen
+        }
+        self.table_service.merge_entity('Messages', msg)
