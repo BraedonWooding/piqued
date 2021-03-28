@@ -21,11 +21,14 @@ export interface User {
 }
 
 export interface ChatMsg {
+  partitionKey: string;
+  rowKey: string;
   message: string;
   files: string;
   userId: number;
-  timestamp: Date;
-  rowKey: string;
-  partitionKey: string;
+  groupId: number;
+  createdAt: Date;
   seen: string;
 }
+
+export type ChatType = "get_history" | "chat_message"
