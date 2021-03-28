@@ -14,7 +14,7 @@ export const EmojiPicker: FC<EmojiPickerProps> = ({ setMessage }) => {
   return (
     <ClickAwayListener onClickAway={() => setEmojiOpen(false)}>
       <div className={classes.root}>
-        <button style={{ cursor: "pointer" }} type="button" onClick={() => setEmojiOpen(!emojiOpen)}>
+        <button style={{ cursor: "pointer", border: "none", background: "none" }} type="button" onClick={() => setEmojiOpen(!emojiOpen)}>
           🤨
         </button>
         {emojiOpen && (
@@ -36,9 +36,10 @@ export const EmojiPicker: FC<EmojiPickerProps> = ({ setMessage }) => {
 const useStyles = makeStyles(() => ({
   root: {
     position: "relative",
-    width: 300,
+    width: 30,
     justifyContent: "flex-end",
     textAlign: "right",
+    border: "none",
   },
   dropdown: {
     position: "absolute",

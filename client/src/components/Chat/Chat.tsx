@@ -19,6 +19,7 @@ import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
 import { EmojiPicker } from "components/Elements/EmojiPicker";
+import { GifPicker } from "components/Elements/GifPicker";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
@@ -31,9 +32,6 @@ import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
 import { MediaRender } from "./MediaRender";
-
-//let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
-//let edit_endpoint = "http://127.0.0.1:8000/delete/";
 
 interface ChatProps {
   activeUser: User;
@@ -149,8 +147,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={7}>
+          <Grid item xs={7} style={{textAlign: "right", paddingRight: "10px"}}>
             <Button
+              style={{maxWidth: "70%"}}
               onClick={() => {
                 router.push(SEARCH_GROUPS_PATH);
               }}
@@ -159,18 +158,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             >
               <SearchRounded />
               Search
-            </Button>
-            &nbsp;
-            <Button
-              onClick={() => {
-                popUser();
-                popToken();
-                router.push(LOGIN_PATH);
-              }}
-              color="primary"
-              variant="contained"
-            >
-              Logout
             </Button>
           </Grid>
         </Grid>
@@ -314,6 +301,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
+                        <GifPicker
+                          sendGif={(gif) => {
+                            chatSocket.send(
+                              JSON.stringify({
+                                userId: activeUser.id,
+                                files: `https://i.giphy.com/media/${gif.id}/200w.gif`,
+                                message: "",
+                                timestamp: new Date(),
+                              })
+                            );
+                          }
+                          }
+                        />
                         <EmojiPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <IconButton disabled={deactive} type="submit" color="inherit">
                           <SendLogo id="send-logo" width={25} height={25} />
@@ -332,6 +332,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         </form>
       </Grid>
       <Grid item xs={1} className={classes.borderLeft500}>
+        <Button
+            onClick={() => {
+              popUser();
+              popToken();
+              router.push(LOGIN_PATH);
+            }}
+            style={{marginTop: "20px", marginLeft: "20px"}}
+            color="primary"
+            variant="contained"
+          >
+          Logout
+        </Button>
         <List className={classes.userList}>
           {currentGroup &&
             currentGroup.user_set.map((user) => (
@@ -353,7 +365,7 @@ const useStyles = makeStyles(() => ({
   headBG: { backgroundColor: "#e0e0e0" },
   borderRight500: { borderRight: "1px solid #e0e0e0" },
   borderLeft500: { borderLeft: "1px solid #e0e0e0" },
-  userList: { height: "80vh", overflowY: "auto" },
+  userList: { overflowY: "auto", display: "flex", flexDirection: "column", flexGrow: 1 },
   messageArea: { height: "90vh", overflowY: "auto" },
   alignSelfRight: { textAlign: "right" },
   searchBox: { padding: 10 },
