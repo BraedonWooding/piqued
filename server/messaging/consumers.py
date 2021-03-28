@@ -6,8 +6,10 @@ from datetime import datetime, timedelta, timezone
 
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.tableservice import TableService
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from user.models import PiquedUser
 
 
 def handleException(e, loc):
@@ -21,13 +23,17 @@ class GroupConsumer(AsyncWebsocketConsumer):
         try:
             self.groupId = self.scope['url_route']['kwargs']['groupId']
             self.userId = self.scope['url_route']['kwargs']['userId']
-            self.channelGroupName = 'chat_%s' % self.groupId
 
-            # Join channel group
-            await self.channel_layer.group_add(
-                self.channelGroupName,
-                self.channel_name
-            )
+            groups = await database_sync_to_async(self.get_groups)()
+
+            for group in groups:
+                channelGroupName = 'chat_%s' % group.id
+
+                # Join channel group for each group user is in
+                await self.channel_layer.group_add(
+                    channelGroupName,
+                    self.channel_name
+                )
 
             self.table_service = TableService(
                 account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY
@@ -51,17 +57,26 @@ class GroupConsumer(AsyncWebsocketConsumer):
             handleException(sys.exc_info(),"connecting to socket.")
 
 
+    def get_groups(self):
+        piquedUser =  PiquedUser.objects.get(user_id=self.userId)
+        return list(piquedUser.user.groups.all())
+
     def get_history(self, msgs_since=datetime.now(timezone.utc) - timedelta(days=30)):
         filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
         msgs = self.table_service.query_entities('Messages', filter=filter)
         return msgs
 
     async def disconnect(self, close_code):
-        # Leave room group
-        await self.channel_layer.group_discard(
-            self.channelGroupName,
-            self.channel_name
-        )
+        groups = await database_sync_to_async(self.getGroups)()
+
+        for group in groups:
+            channelGroupName = 'chat_%s' % group.id
+
+            # Leave channel group for each group user is in
+            await self.channel_layer.group_discard(
+                channelGroupName,
+                self.channel_name
+            )
 
     # Receive message from WebSocket
     async def receive(self, text_data):
