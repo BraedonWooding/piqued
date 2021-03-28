@@ -20,7 +20,12 @@ interface EditDeleteChatMsgButtonProps {
 }
 
 export const EditDeleteChatMsgButton: FC<EditDeleteChatMsgButtonProps> = ({ initialMessage, onEdit, onDelete }) => {
-  const options = ["Edit", "Delete"];
+  const options = [];
+  if (initialMessage.trim()) {
+    options.push("Edit");
+  }
+  options.push("Delete");
+
   const [message, setMessage] = useState(initialMessage);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
