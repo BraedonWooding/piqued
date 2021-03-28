@@ -55,7 +55,7 @@ export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
               onGifClick={(a) => { sendGif(a); setGifOpen(false); setSearch(null); }}
               hideAttribution={true}
               noLink={true}
-              fetchGifs={(search as any, fetchMoreGifs)}
+              fetchGifs={fetchMoreGifs}
               width={225}
               columns={2}
               gutter={6}
