@@ -74,30 +74,25 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
             # Send message to room group
             if type == "get_history":
-                groupId = text_data_json['groupId']
-
-                await self.channel_layer.group_send(
-                    "chat_%i" % groupId,
-                    {
-                        'type': type,
-                        'groupId':  groupId,
-                    }
-                )
-            else:  # default to trying to send a chat message
+                await self.get_history({
+                    'type': type,
+                    'partitionKey':  text_data_json['partitionKey'],
+                })
+            elif type == "chat_message":
+                timestamp = datetime.now(timezone.utc)
+                partitionKey = str(text_data_json['partitionKey'])
+                rowKey = str(int(timestamp.timestamp() * 10000000))
                 message = text_data_json['message']
                 files = text_data_json['files']  # Files are urls
-                groupId = text_data_json['groupId']
                 userId = text_data_json['userId']
-                timestamp = datetime.now(timezone.utc)
-                rowKey = str(int(timestamp.timestamp() * 10000000))
 
                 msg = {
-                    'PartitionKey': str(self.groupId),
+                    'PartitionKey': partitionKey,
                     'RowKey': rowKey,
                     'message': message,
                     'files': files,
                     'deleted': 0,
-                    'userId': int(userId),
+                    'userId': userId,
                     'seen': str(self.userId) + " ",
                     'createdAt': timestamp
                 }
@@ -105,14 +100,13 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 self.table_service.insert_entity('Messages', msg)
 
                 await self.channel_layer.group_send(
-                    "chat_%i" % groupId,
+                    "chat_%s" % partitionKey,
                     {
-                        'type': "chat_message",
-                        'PartitionKey':  str(self.groupId),
+                        'type': type,
+                        'PartitionKey': partitionKey,
                         'RowKey': rowKey,
                         'message': message,
                         'files': files,
-                        'groupId': groupId,
                         'userId': userId,
                         'seen': str(self.userId) + " ",
                         'createdAt': timestamp.astimezone(),
@@ -125,8 +119,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
     # Functions to receive message from room group based on message type
     async def get_history(self, event):
         try:
-            groupId = event['groupId']
-            filter = "PartitionKey eq '%i' and deleted eq 0" % groupId
+            partitionKey = event['partitionKey']
+            filter = "PartitionKey eq '%s' and deleted eq 0" % partitionKey
             msgs = self.table_service.query_entities('Messages', filter=filter)
 
             for msg in msgs:

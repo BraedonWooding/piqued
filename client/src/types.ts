@@ -26,9 +26,8 @@ export interface ChatMsg {
   message: string;
   files: string;
   userId: number;
-  groupId: number;
   createdAt: Date;
   seen: string;
 }
 
-export type ChatType = "get_history" | "chat_message"
+export type ChatType = "get_history" | "chat_message";
