@@ -19,3 +19,13 @@ export interface User {
   groups: Group[];
   groups_created: Group[];
 }
+
+export interface ChatMsg {
+  message: string;
+  files: string;
+  userId: number;
+  timestamp: Date;
+  rowKey: string;
+  partitionKey: string;
+  seen: string;
+}
