@@ -42,13 +42,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const router = useRouter();
 
   const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
-  const [chatMsges, setChatMsges] = useState<ChatMsgType[]>([]);
+  const [chatMsgs, setchatMsgs] = useState<ChatMsgType[]>([]);
   const [message, setMessage] = useState("");
   const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
   const [currentGroup, setCurrentGroup] = useState<Group | null>(
     activeUser.groups.length > 0 ? activeUser.groups[0] : null
   );
-  const chatMsgesRef = useRef(chatMsges);
+  const chatMsgsRef = useRef(chatMsgs);
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
@@ -61,23 +61,22 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     // write the profile picture in there as well
     const user_map = {};
     currentGroup.user_set.map(u => user_map[u.id] = u);
-    let current_msg_set: ChatMsgType[] = [];
-    let newest_msg: null | ChatMsgType = null;
-    const all_msgs: [User, ChatMsgType[]][] = [];
-    chatMsges.map(m => {
-      if (!newest_msg || (m.userId == newest_msg.userId &&
-                          !newest_msg.files && m.timestamp.getTime() - newest_msg.timestamp.getTime()) / 1000 < 60) {
+    var current_msg_set: ChatMsgType[] = [];
+    var newest_msg: null | ChatMsgType = null;
+    var all_msgs: [User, ChatMsgType[]][] = [];
+    chatMsgs.map(m => {
+      if (newest_msg === null ||
+          (m.userId === newest_msg.userId && !newest_msg.files && (m.timestamp.getTime() - newest_msg.timestamp.getTime()) / 1000 < 60)) {
         // if over same minute
         current_msg_set.push(m);
         newest_msg = m;
       } else {
-        all_msgs.push([user_map[m.userId] || null, current_msg_set]);
+        all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
         current_msg_set = [m];
         newest_msg = m;
       }
     });
-    console.log(user_map);
-    if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, current_msg_set]);
+    if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
 
     return all_msgs;
   }
@@ -126,8 +125,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       setDeactive(false);
       if (timer) clearInterval(timer);
       setTimer(null);
-      chatMsgesRef.current = [];
-      setChatMsges([]);
+      chatMsgsRef.current = [];
+      setchatMsgs([]);
     };
 
     newChatSocket.onclose = () => {
@@ -144,10 +143,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
     newChatSocket.onmessage = (e) => {
       const { message, files, userId, timestamp, rowKey, partitionKey, seen } = JSON.parse(e.data);
-      chatMsgesRef.current.push({ message, files, userId, timestamp: new Date(timestamp), rowKey, partitionKey, seen });
+      chatMsgsRef.current.push({ message, files, userId, timestamp: new Date(timestamp), rowKey, partitionKey, seen });
       // fix the cases when we get them out of time
-      chatMsgesRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      setChatMsges([...chatMsgesRef.current]);
+      chatMsgsRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      setchatMsgs([...chatMsgsRef.current]);
       lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
     };
     setChatSocket(newChatSocket);
@@ -221,8 +220,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       <Grid item xs={8}>
         <List className={classes.messageArea}>
           {getMsgs().map(([user, chatMsgs], index) => {
-            console.log(chatMsgs);
-            const isActiveUser = user.id === activeUser.id;
+            const isActiveUser = user?.id === activeUser.id;
             const last = chatMsgs[chatMsgs.length - 1];
             return (
               <ListItem key={index}>
@@ -260,9 +258,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                     message: changedMessage,
                                   });
                                   if (response.data.status === "Edited") {
-                                    const i = chatMsgesRef.current.findIndex((obj) => obj.rowKey == rowKey);
-                                    chatMsgesRef.current[i].message = changedMessage;
-                                    setChatMsges([...chatMsgesRef.current]);
+                                    const i = chatMsgsRef.current.findIndex((obj) => obj.rowKey == rowKey);
+                                    chatMsgsRef.current[i].message = changedMessage;
+                                    setchatMsgs([...chatMsgsRef.current]);
                                   }
                                 }}
                                 onDelete={async () => {
@@ -272,8 +270,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                     partitionKey,
                                   });
                                   if (response.data.status === "Deleted") {
-                                    const i = chatMsgesRef.current.findIndex((obj) => obj.rowKey == rowKey);
-                                    setChatMsges([...chatMsgesRef.current.splice(i, 1)]);
+                                    const i = chatMsgsRef.current.findIndex((obj) => obj.rowKey == rowKey);
+                                    setchatMsgs([...chatMsgsRef.current.splice(i, 1)]);
                                   }
                                 }}
                               />
