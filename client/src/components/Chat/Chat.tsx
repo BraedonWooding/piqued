@@ -15,7 +15,6 @@ import {
   TextField,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
-import { ChatMsg } from "@mui-treasury/components/chatMsg";
 import axios from "axios";
 import clsx from "clsx";
 import { EmojiPicker } from "components/Elements/EmojiPicker";
@@ -32,9 +31,10 @@ import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
 import { MediaRender } from "./MediaRender";
+import { ChatMessage } from "./ChatMessage";
 
 interface ChatProps {
-  activeUser: User;
+  activeUser: User | null;
 }
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
@@ -55,6 +55,32 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const lastMessageRef = useRef(null);
   const username = activeUser.first_name + " " + activeUser.last_name;
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const getMsgs = () => {
+    // chunk msgs together if sent within a minute from the same person
+    // write the profile picture in there as well
+    const user_map = {};
+    currentGroup.user_set.map(u => user_map[u.id] = u);
+    let current_msg_set: ChatMsgType[] = [];
+    let newest_msg: null | ChatMsgType = null;
+    const all_msgs: [User, ChatMsgType[]][] = [];
+    chatMsges.map(m => {
+      if (!newest_msg || (m.userId == newest_msg.userId &&
+                          !newest_msg.files && m.timestamp.getTime() - newest_msg.timestamp.getTime()) / 1000 < 60) {
+        // if over same minute
+        current_msg_set.push(m);
+        newest_msg = m;
+      } else {
+        all_msgs.push([user_map[m.userId] || null, current_msg_set]);
+        current_msg_set = [m];
+        newest_msg = m;
+      }
+    });
+    console.log(user_map);
+    if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, current_msg_set]);
+
+    return all_msgs;
+  }
 
   const validateFile = (file: File) => {
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
@@ -194,16 +220,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       </Grid>
       <Grid item xs={8}>
         <List className={classes.messageArea}>
-          {chatMsges.map((chatMsg, index) => {
-            const isActiveUser = chatMsg.userId === activeUser.id;
+          {getMsgs().map(([user, chatMsgs], index) => {
+            console.log(chatMsgs);
+            const isActiveUser = user.id === activeUser.id;
+            const last = chatMsgs[chatMsgs.length - 1];
             return (
               <ListItem key={index}>
                 <Grid container>
                   <Grid item xs={12}>
-                    {chatMsg.message !== "" && (
-                      <ChatMsg side={isActiveUser ? "right" : "left"} messages={[chatMsg.message]} />
-                    )}
-                    <MediaRender url={chatMsg.files} isRight={isActiveUser ? true : false} />
+                    <ChatMessage
+                        msgs={chatMsgs}
+                        user={user}
+                        side={isActiveUser ? "right" : "left"} />
+                    <MediaRender url={last.files} isRight={isActiveUser ? true : false} />
                     <Grid container>
                       <Grid item xs={12}>
                         <List className={clsx({ [classes.alignSelfRight]: isActiveUser })}>
@@ -213,13 +242,14 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                 className={clsx({ [classes.alignSelfRight]: isActiveUser })}
                                 style={{ width: "100px" }}
                                 secondary={
-                                  (currentGroup && chatMsg.seen.split(" ").length === currentGroup.user_set.length
+                                  (currentGroup && last.seen.split(" ").every(i => currentGroup.user_set.map(u => String(u.id)).includes(i))
                                     ? "✓ "
-                                    : "✓✓ ") + format(chatMsg.timestamp, "h:mm aa")
+                                    : "✓✓ ") + format(last.timestamp, "h:mm aa")
                                 }
                               />
                             </ListItem>
-                            {isActiveUser && (
+                            {/* solve this laterz */}
+                            {/* {isActiveUser && (
                               <EditDeleteChatMsgButton
                                 initialMessage={chatMsg.message}
                                 onEdit={async (changedMessage) => {
@@ -229,7 +259,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                     partitionKey,
                                     message: changedMessage,
                                   });
-
                                   if (response.data.status === "Edited") {
                                     const i = chatMsgesRef.current.findIndex((obj) => obj.rowKey == rowKey);
                                     chatMsgesRef.current[i].message = changedMessage;
@@ -244,13 +273,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                   });
                                   if (response.data.status === "Deleted") {
                                     const i = chatMsgesRef.current.findIndex((obj) => obj.rowKey == rowKey);
-                                    chatMsgesRef.current[i].message = "[MESSAGE DELETED]";
-                                    chatMsgesRef.current[i].files = "";
-                                    setChatMsges([...chatMsgesRef.current]);
+                                    setChatMsges([...chatMsgesRef.current.splice(i, 1)]);
                                   }
                                 }}
                               />
-                            )}
+                            )} */}
                           </Box>
                         </List>
                       </Grid>
