@@ -8,6 +8,8 @@ import { FullyCenteredLayout } from "components/Layout/Layout";
 import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
+import React from "react";
+import FacebookLogin from 'react-facebook-login';
 import { authenticateToken } from "util/auth/token";
 import { lookupCurrentUser } from "util/auth/user";
 import { LOGIN_PATH } from "util/constants";
@@ -28,6 +30,16 @@ const validationSchema = yup.object({
 const Register = () => {
   const classes = useStyles();
   const router = useRouter();
+
+  const facebookLogin = (e: DragEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    for (let i = 0; i < files.length; i++) if (validateFile(files[i])) setSelectedFiles([...selectedFiles, files[i]]);
+  };
+
+  const responseFacebook = (response) => {
+    console.log(response);
+  }
 
   return (
     <FullyCenteredLayout>
@@ -62,6 +74,18 @@ const Register = () => {
                   <LockOutlined color="secondary" />
                 </Avatar>
                 <Typography variant="h5">Register</Typography>
+                &nbsp;
+                <button className="btn btn-facebook">
+                  <i className="fa fa-facebook mr-1"></i>
+                  Login with Facebook
+                </button>
+                &nbsp;
+                <FacebookLogin
+                  appId={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}
+                  autoLoad={false}
+                  fields="name,email,picture"
+                  scope="user_birthday, user_likes"
+                  callback={responseFacebook} />
                 <Grid container spacing={3}>
                   <Grid item xs={6}>
                     <MyTextField placeholder="First Name" label="First Name" name="first_name" autoFocus />
