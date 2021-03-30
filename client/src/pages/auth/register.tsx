@@ -83,7 +83,7 @@ const Register = () => {
                 <FacebookLogin
                   appId={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID}
                   autoLoad={false}
-                  fields="name,email,picture"
+                  fields="id,name,birthday,first_name,last_name,likes{name,id,link}"
                   scope="user_birthday, user_likes"
                   callback={responseFacebook} />
                 <Grid container spacing={3}>
