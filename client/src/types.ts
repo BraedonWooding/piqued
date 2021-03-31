@@ -19,6 +19,7 @@ export interface User {
   program: string | null;
   groups: Group[];
   groups_created: Group[];
+  status: Status;
 }
 
 export interface ChatMsg {
@@ -31,4 +32,14 @@ export interface ChatMsg {
   seen: string;
 }
 
-export type ChatType = "get_history" | "chat_message";
+export enum Status {
+  ONLINE = "Online",
+  OFFLINE = "Offline",
+}
+
+export enum MessageType {
+  GET_HISTORY = "get_history",
+  CHAT_MESSAGE = "chat_message",
+  SEEN_MESSAGE = "seen_message",
+  STATUS_UPDATE = "status_update",
+}

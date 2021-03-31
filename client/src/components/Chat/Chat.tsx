@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField
+  TextField,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
@@ -25,9 +25,9 @@ import { useRouter } from "next/router";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
-import { ChatMsg as ChatMsgType, Group, User } from "types";
+import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
-import { popUser } from "util/auth/user";
+import { getUser, popUser } from "util/auth/user";
 import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
@@ -44,17 +44,15 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
   const [chatMsges, setChatMsges] = useState<ChatMsgType[]>([]);
   const [message, setMessage] = useState("");
-  const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(
-    activeUser.groups.length > 0 ? activeUser.groups[0] : null
-  );
+  const [chatSocket, setChatSocket] = useState<WebSocket>(null);
+  const [currentGroup, setCurrentGroup] = useState<Group>(activeUser.groups.length > 0 ? activeUser.groups[0] : null);
   const chatMsgesRef = useRef(chatMsges);
   const userGroupsRef = useRef(userGroups);
   const currentGroupRef = useRef(currentGroup);
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
-  const lastMessageRef = useRef(null);
+  const [timer, setTimer] = useState<NodeJS.Timeout>(null);
+  const lastMessageRef = useRef<HTMLDivElement>();
   const username = `${activeUser.first_name} ${activeUser.last_name}`;
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -112,27 +110,46 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       };
 
       newChatSocket.onmessage = (e) => {
-        const { partitionKey, rowKey, message, files, userId, createdAt, seen } = JSON.parse(e.data);
+        const parsedData = JSON.parse(e.data);
 
-        if (partitionKey === currentGroupRef.current.id.toString()) {
-          chatMsgesRef.current.push({
-            partitionKey,
-            rowKey,
-            message,
-            files,
-            userId,
-            seen,
-            createdAt: new Date(createdAt),
-          });
-          // fix the cases when we get them out of time
-          chatMsgesRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-          setChatMsges([...chatMsgesRef.current]);
-          lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
-        } else {
-          const group = userGroupsRef.current.find((g) => g.id.toString() === partitionKey);
-          if (group && !group.has_unseen_messages && !(seen as string).split(" ").includes(activeUser.id.toString())) {
-            group.has_unseen_messages = true;
-            setUserGroups([...userGroupsRef.current]);
+        if (parsedData.type === MessageType.CHAT_MESSAGE) {
+          const { partitionKey, rowKey, message, files, userId, createdAt, seen } = parsedData;
+
+          if (partitionKey === currentGroupRef.current.id.toString()) {
+            chatMsgesRef.current.push({
+              partitionKey,
+              rowKey,
+              message,
+              files,
+              userId,
+              seen,
+              createdAt: new Date(createdAt),
+            });
+            // fix the cases when we get them out of time
+            chatMsgesRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+            setChatMsges([...chatMsgesRef.current]);
+            lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+          } else {
+            const group = userGroupsRef.current.find((g) => g.id.toString() === partitionKey);
+            if (
+              group &&
+              !group.has_unseen_messages &&
+              !(seen as string).split(" ").includes(activeUser.id.toString())
+            ) {
+              group.has_unseen_messages = true;
+              setUserGroups([...userGroupsRef.current]);
+            }
+          }
+        } else if (parsedData.type === MessageType.STATUS_UPDATE) {
+          const { status, userId } = parsedData;
+
+          for (let i = 0; i < userGroupsRef.current.length; i++) {
+            const user = userGroupsRef.current[i].user_set.find((u) => u.id === Number(userId));
+            if (user) {
+              user.status = status;
+              setUserGroups([...userGroupsRef.current]);
+              break;
+            }
           }
         }
       };
@@ -146,7 +163,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (chatSocket?.readyState) {
       chatSocket.send(
         JSON.stringify({
-          type: "get_history",
+          type: MessageType.GET_HISTORY,
           partitionKey: currentGroupRef.current.id.toString(),
         })
       );
@@ -185,7 +202,14 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <List>
               <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
-                  <Avatar alt={username} src={activeUser.profile_picture} />
+                  <Badge
+                    overlap="circle"
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    color={getUser().status === Status.ONLINE ? "secondary" : "error"}
+                    variant="dot"
+                  >
+                    <Avatar alt={username} src={activeUser.profile_picture} />
+                  </Badge>
                 </ListItemIcon>
                 <ListItemText primary={username} />
               </ListItem>
@@ -331,7 +355,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             );
           })}
-          <ListItem ref={lastMessageRef} />
+          <div ref={lastMessageRef} />
         </List>
         <Divider />
         <form
@@ -345,7 +369,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
               chatSocket.send(
                 JSON.stringify({
-                  type: "chat_message",
+                  type: MessageType.CHAT_MESSAGE,
                   message,
                   files,
                   partitionKey: currentGroup.id.toString(),
@@ -394,21 +418,31 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       <Grid item xs={1} className={classes.borderLeft500}>
         <List className={classes.userList}>
           {currentGroup &&
-            currentGroup.user_set.map((user, index) => (
-              <ListItem key={index}>
-                <ListItemIcon>
-                  <Avatar alt={user.first_name} src={user.profile_picture} />
-                </ListItemIcon>
-                <ListItemText primary={user.first_name + " " + user.last_name} />
-              </ListItem>
-            ))}
+            currentGroup.user_set.map(
+              (user, index) =>
+                user.id !== activeUser.id && (
+                  <ListItem key={index}>
+                    <ListItemIcon>
+                      <Badge
+                        overlap="circle"
+                        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                        color={user.status === Status.ONLINE ? "secondary" : "error"}
+                        variant="dot"
+                      >
+                        <Avatar alt={user.first_name} src={user.profile_picture} />
+                      </Badge>
+                    </ListItemIcon>
+                    <ListItemText primary={username} />
+                  </ListItem>
+                )
+            )}
         </List>
       </Grid>
     </Grid>
   );
 };
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
   chatSection: { width: "100%", height: "100vh" },
   headBG: { backgroundColor: "#e0e0e0" },
   borderRight500: { borderRight: "1px solid #e0e0e0" },
@@ -418,9 +452,7 @@ const useStyles = makeStyles(() => ({
   alignSelfRight: { textAlign: "right" },
   searchBox: { padding: 10 },
   chatBox: { padding: 20 },
-  currentGroup: {
-    border: "2px solid black",
-  },
+  currentGroup: { border: "2px solid black" },
   hide: { visibility: "hidden" },
   slimButton: { padding: 5 },
   fly: {
