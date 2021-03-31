@@ -3,8 +3,8 @@ import json
 import sys
 import traceback
 from datetime import datetime, timedelta, timezone
+from enum import Enum
 
-from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.tableservice import TableService
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -20,13 +20,23 @@ def handleException(e, loc):
           "\nTraceback: " + str(traceback.format_exception(exc_type, exc_value, exc_tb)))
 
 
+class MessageType(str, Enum):
+    GET_HISTORY = "get_history",
+    CHAT_MESSAGE = "chat_message",
+    SEEN_MESSAGE = "seen_message",
+    STATUS_UPDATE = "status_update"
+
+
 class GroupConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
         try:
             self.userId = self.scope['url_route']['kwargs']['userId']
             self.table_service = TableService(
                 account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY
             )
+
+            await self.accept()
 
             groups = await database_sync_to_async(self.get_groups)()
 
@@ -36,6 +46,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'chat_%s' % group.id,
                     self.channel_name
                 )
+                await self.channel_layer.group_send(
+                    "chat_%s" % group.id,
+                    {
+                        'type': MessageType.STATUS_UPDATE,
+                        'userId': self.userId,
+                        'status': "Online",
+                        'isResponse': False
+                    })
+
             try:
                 if not self.table_service.exists('Messages'):
                     self.table_service.create_table('Messages')
@@ -44,7 +63,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 if not self.table_service.exists('Messages'):
                     raise
 
-            await self.accept()
         except Exception:
             handleException(sys.exc_info(), "connecting to socket.")
 
@@ -61,19 +79,27 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'chat_%s' % group.id,
                 self.channel_name
             )
+            await self.channel_layer.group_send(
+                "chat_%s" % group.id,
+                {
+                    'type': MessageType.STATUS_UPDATE,
+                    'userId': self.userId,
+                    'status': "Offline",
+                    'isResponse': False
+                })
 
     # Receive message from WebSocket
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            type = text_data_json['type']
+            message_type = text_data_json['type']
 
             # Send message to room group
-            if type == "get_history":
+            if message_type == MessageType.GET_HISTORY:
                 await self.get_history({
                     'partitionKey':  text_data_json['partitionKey'],
                 })
-            elif type == "chat_message":
+            elif message_type == MessageType.CHAT_MESSAGE:
                 createdAt = datetime.now(timezone.utc)
                 partitionKey = str(text_data_json['partitionKey'])
                 rowKey = str(int(createdAt.timestamp() * 10000000))
@@ -98,7 +124,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_send(
                     "chat_%s" % partitionKey,
                     {
-                        'type': type,
+                        'type': message_type,
                         'PartitionKey': partitionKey,
                         'RowKey': rowKey,
                         'message': message,
@@ -108,7 +134,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                         'createdAt': createdAt.astimezone(),
                     }
                 )
-            elif type == "seen_message":
+            elif message_type == MessageType.SEEN_MESSAGE:
                 await self.seen_message({
                     'partitionKey':  text_data_json['partitionKey'],
                     'rowKey':  text_data_json['rowKey'],
@@ -118,15 +144,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
             handleException(
                 sys.exc_info(), "socket receiving data from client.")
 
-    # Functions to receive message from room group based on message type
+    # Function handlers to receive message from room group based on message type
     async def get_history(self, event):
         try:
             partitionKey = event['partitionKey']
-            filter = "PartitionKey eq '%s' and deleted eq 0" % partitionKey
-            msgs = self.table_service.query_entities('Messages', filter=filter)
+            msgs = self.table_service.query_entities(
+                'Messages', filter="PartitionKey eq '%s' and deleted eq 0" % partitionKey)
 
             for msg in msgs:
-                await self.chat_message(msg)
+                await self.chat_message({'type': MessageType.CHAT_MESSAGE, **msg})
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'get_history' from socket_group (channel layer).")
@@ -135,6 +161,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         try:
             # Send message to WebSocket
             await self.send(text_data=json.dumps({
+                'type': event['type'],
                 'partitionKey': event["PartitionKey"],
                 'rowKey': event["RowKey"],
                 'message': event['message'],
@@ -148,10 +175,43 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 sys.exc_info(), "socket receiving message type 'chat_message' from socket_group (channel layer).")
 
     async def seen_message(self, event):
-        seen = event['seen']
-        msg = {
-            'PartitionKey': event["PartitionKey"],
-            'RowKey': event["RowKey"],
-            'seen': seen
-        }
-        self.table_service.merge_entity('Messages', msg)
+        try:
+            self.table_service.merge_entity('Messages', {
+                'PartitionKey': event["PartitionKey"],
+                'RowKey': event["RowKey"],
+                'seen': event['seen']
+            })
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'seen_message' from socket_group (channel layer).")
+
+    async def status_update(self, event):
+        try:
+            if (not event["isResponse"]):
+                await self.send(text_data=json.dumps({
+                    'type': MessageType.STATUS_UPDATE,
+                    'status': event["status"],
+                    'userId': event["userId"],
+                }))
+
+                groups = await database_sync_to_async(self.get_groups)()
+
+                for group in groups:
+                    print(self.userId)
+                    print(group)
+                    await self.channel_layer.group_send("chat_%s" % group.id, {
+                        'type': MessageType.STATUS_UPDATE,
+                        'status': event["status"],
+                        'userId': event["userId"],
+                        'isResponse': True
+                    })
+            elif (event["isResponse"] and self.userId != event["userId"]):
+                await self.send(text_data=json.dumps({
+                    'type': MessageType.STATUS_UPDATE,
+                    'status': event["status"],
+                    'userId': event["userId"],
+                }))
+
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'status_update' from socket_group (channel layer).")
