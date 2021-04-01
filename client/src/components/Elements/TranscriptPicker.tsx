@@ -1,38 +1,22 @@
-import { Box, makeStyles } from "@material-ui/core";
-import { useStyles } from "components/Common/FormikUI";
-import React, { ChangeEvent, useRef } from "react";
+import { makeStyles } from "@material-ui/core";
+import React, { ChangeEvent, FC, useRef } from "react";
 
 interface TranscriptPickerProps {
-  initialUrl: string;
-  onSaveAvatar: (imageData: File) => Promise<string>;
-  disabled: boolean;
+  transcriptSelect: (transcript: File) => void;
 }
 
-export const TranscriptPicker = ({ }) => {
-  const classes = useStyles();
-  const uploadClasses = createStyles();
+export const TranscriptPicker: FC<TranscriptPickerProps> = ({ transcriptSelect }) => {
   const inputFile = useRef<HTMLInputElement>(null);
 
-  const newFile = (e: ChangeEvent<HTMLInputElement>) => {
+  const newTranscript = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target || !e.target.files || e.target.files.length == 0) return;
 
-    const url = (window.URL || window.webkitURL).createObjectURL(e.target.files[0]);
-    // setBaseUrl(url);
+    transcriptSelect(e.target.files[0]);
   };
 
   return (
     <div style={{ display: "flex", alignContent: "center" }}>
-      <input type="file" onChange={newFile} id="file" ref={inputFile} accept=".pdf" />
-      <Box
-        className={classes.avatar_root}
-        onClick={() => inputFile.current.click()}
-      >
-
-        {/* <FileCopyOutlined className={uploadClasses.upload_icon} />
-        <Box className={uploadClasses.upload_overlay}>
-          <Box>Edit</Box>
-        </Box> */}
-      </Box>
+      <input type="file" onChange={newTranscript} id="file" ref={inputFile} accept=".pdf" />
     </div>
   );
 };
@@ -44,5 +28,4 @@ const createStyles = makeStyles(() => ({
     borderRadius: "5px"
   },
   upload_overlay: { width: "100%", height: "100%" },
-  // upload_field: { display }
 }));

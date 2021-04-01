@@ -12,32 +12,11 @@ import { User } from "types";
 import { lookupCurrentUser } from "util/auth/user";
 import { HOME_PATH } from "util/constants";
 
-const uploadFiles = async () => {
-  const urls: String[] = [];
-  const formData = new FormData();
-  // formData.append("file", selectedFiles[i]);
-  // formData.append("name", currentGroup.name);
-  const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/upload/", formData);
-  // urls.push(response.data["url"]);
-  // Only handle single files for now
-  if (urls.length === 1) {
-    return urls[0];
-  }
-  return "";
-};
-
-const validateFile = (file: File) => {
-  // If we want to do some valid type processing here
-  const validTypes = [""];
-  if (validTypes.indexOf(file.type) === -1) {
-    return false;
-  }
-  return true;
-};
-
 const TranscriptUpload = () => {
+
   const classes = useStyles();
   const customClasses = createStyles();
+  const [selectedTranscript, setTranscript] = useState<File>(null);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
@@ -49,10 +28,11 @@ const TranscriptUpload = () => {
   return (
     <HorizontallyCenteredLayout>
       <Formik
-        initialValues={{ name: "" }}
-        onSubmit={async (values) => {
-          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/groups/", values);
-          // router.push(HOME_PATH);
+        initialValues={{}}
+        onSubmit={async () => {
+          const formData = new FormData();
+          formData.append("transcript", selectedTranscript);
+          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/transcript/upload/", formData);
         }}
       >
         {({ isSubmitting }) => (
@@ -64,7 +44,7 @@ const TranscriptUpload = () => {
                 </Avatar>
                 <Typography variant="h5">Upload Your Transcript</Typography>
                 &nbsp;
-                <TranscriptPicker />
+                <TranscriptPicker transcriptSelect={setTranscript} />
                 &nbsp;
                 <Grid container spacing={1}>
                   <Grid item xs={12} className={customClasses.interfaceButtons}>
