@@ -48,7 +48,7 @@ import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import { SEARCH_GROUPS_PATH } from "util/constants";
 import MediaRender from "./MediaRender";
-
+import { removeToken } from '../../firebase'
 
 //let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
 //let edit_endpoint = "http://127.0.0.1:8000/delete/";
@@ -302,7 +302,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <Grid container spacing={1}>
               <Grid item xs={6} className={classes.actionButtonArea}>
                 <Button
-                  onClick={() => {
+                  onClick={ async () => {
+                    await removeToken(); // Removing FCM token from database. Ensure this finishes before popping user and token
                     popUser();
                     popToken();
                     router.push("/auth/login");

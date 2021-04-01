@@ -11,7 +11,12 @@ from azure.cosmosdb.table.tableservice import TableService
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dateutil import parser, tz
 from django.conf import settings
-
+from firebase_notifications.notificationSend import sendToAllUserDevices 
+from groups.models import PiquedGroup
+from groups.serializers import PiquedGroupSerializer
+from user.models import PiquedUser
+from user.serializers import PiquedUserSerializer
+from django.contrib.auth.models import Group, User
 
 def handleException(e, loc):
     exc_type = e[0]
@@ -58,6 +63,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
         filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
         msgs = self.table_service.query_entities('Messages', filter=filter)
         return msgs
+    
+    def sendNotifications(self, message):
+        piquedGroup = PiquedGroup.objects.all().filter(id=self.groupId).first()
+        group = piquedGroup.group
+        users = group.user_set.all()
+        for user in users:
+            print("Send from consumers.py")
+            piquedUser = PiquedUser.objects.all().filter(user=user.id).first()
+            sendToAllUserDevices(piquedUser, group.name, message)
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -102,6 +116,10 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'seen': str(self.userId) + " "
                 }
             )
+
+            # Send firebase notifications
+            await sync_to_async(self.sendNotifications)(str(message))
+
         except Exception:
             handleException(sys.exc_info(),"socket receiving data from client.")
 
