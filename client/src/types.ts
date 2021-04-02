@@ -3,6 +3,7 @@ export interface Group {
   name: string;
   id: number;
   user_set: User[];
+  expired_at: Date | null;
 }
 
 export interface User {
