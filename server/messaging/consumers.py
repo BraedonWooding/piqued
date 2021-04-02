@@ -2,13 +2,12 @@
 import json
 import sys
 import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
 
 from azure.cosmosdb.table.tableservice import TableService
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.layers import get_channel_layer
 from django.conf import settings
 from user.models import PiquedUser
 
@@ -227,7 +226,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 groups = await database_sync_to_async(self.get_groups)()
 
                 for group in groups:
-                    await get_channel_layer().group_send("chat_%s" % group.id, {
+                    await self.channel_layer.group_send("chat_%s" % group.id, {
                         'type': MessageType.STATUS_UPDATE,
                         'status': event["status"],
                         'userId': self.userId,
