@@ -147,9 +147,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={7} style={{textAlign: "right", paddingRight: "10px"}}>
+          <Grid item xs={7} style={{ textAlign: "right", paddingRight: "10px" }}>
             <Button
-              style={{maxWidth: "70%"}}
+              style={{ maxWidth: "70%" }}
               onClick={() => {
                 router.push(SEARCH_GROUPS_PATH);
               }}
@@ -163,33 +163,36 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         </Grid>
         <Divider />
         <List className={classes.userList}>
-          {userGroups.map((group, index) => (
-            <ListItem
-              disabled={deactive}
-              className={clsx({ [classes.currentGroup]: group === currentGroup })}
-              button
-              key={"Group-" + group.id}
-              onClick={() => {
-                setCurrentGroup(group);
-              }}
-            >
-              <ListItemText primary={group.name} />
-              {group === currentGroup ? (
-                <Button
-                  className={classes.slimButton}
-                  onClick={async () => {
-                    await axios.delete(process.env.NEXT_PUBLIC_API_URL + "/groups/" + group.id + "/remove_user/");
-                    userGroups.splice(index, 1);
-                    setUserGroups(userGroups);
-                    setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
+          {userGroups.map(
+            (group, index) =>
+              Date.now() > group.expired_at.getTime() && (
+                <ListItem
+                  disabled={deactive}
+                  className={clsx({ [classes.currentGroup]: group === currentGroup })}
+                  button
+                  key={"Group-" + group.id}
+                  onClick={() => {
+                    setCurrentGroup(group);
                   }}
                 >
-                  <ExitToAppSharp />
-                  Leave
-                </Button>
-              ) : null}
-            </ListItem>
-          ))}
+                  <ListItemText primary={group.name} />
+                  {group === currentGroup ? (
+                    <Button
+                      className={classes.slimButton}
+                      onClick={async () => {
+                        await axios.delete(process.env.NEXT_PUBLIC_API_URL + "/groups/" + group.id + "/remove_user/");
+                        userGroups.splice(index, 1);
+                        setUserGroups(userGroups);
+                        setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
+                      }}
+                    >
+                      <ExitToAppSharp />
+                      Leave
+                    </Button>
+                  ) : null}
+                </ListItem>
+              )
+          )}
         </List>
       </Grid>
       <Grid item xs={8}>
@@ -311,8 +314,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                 timestamp: new Date(),
                               })
                             );
-                          }
-                          }
+                          }}
                         />
                         <EmojiPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <IconButton disabled={deactive} type="submit" color="inherit">
@@ -333,15 +335,15 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       </Grid>
       <Grid item xs={1} className={classes.borderLeft500}>
         <Button
-            onClick={() => {
-              popUser();
-              popToken();
-              router.push(LOGIN_PATH);
-            }}
-            style={{marginTop: "20px", marginLeft: "20px"}}
-            color="primary"
-            variant="contained"
-          >
+          onClick={() => {
+            popUser();
+            popToken();
+            router.push(LOGIN_PATH);
+          }}
+          style={{ marginTop: "20px", marginLeft: "20px" }}
+          color="primary"
+          variant="contained"
+        >
           Logout
         </Button>
         <List className={classes.userList}>

@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from user.models import PiquedUser
@@ -43,4 +42,4 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PiquedGroup
-        fields = ['id', 'name', 'interests', 'created_by']
+        fields = ['id', 'name', 'interests', 'created_by', 'expired_at']
