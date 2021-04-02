@@ -473,7 +473,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                         <Avatar alt={user.first_name} src={user.profile_picture} />
                       </Badge>
                     </ListItemIcon>
-                    <ListItemText primary={user.username} />
+                    <ListItemText primary={`${user.first_name} ${user.last_name}`} />
                   </ListItem>
                 )
             )}
