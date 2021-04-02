@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField
+  TextField,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
@@ -243,9 +243,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={7} style={{textAlign: "right", paddingRight: "10px"}}>
+          <Grid item xs={7} style={{ textAlign: "right", paddingRight: "10px" }}>
             <Button
-              style={{maxWidth: "70%"}}
+              style={{ maxWidth: "70%" }}
               onClick={() => {
                 router.push(SEARCH_GROUPS_PATH);
               }}
@@ -425,8 +425,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                                 timestamp: new Date(),
                               })
                             );
-                          }
-                          }
+                          }}
                         />
                         <EmojiPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <IconButton disabled={deactive} type="submit" color="inherit">
@@ -447,15 +446,15 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       </Grid>
       <Grid item xs={1} className={classes.borderLeft500}>
         <Button
-            onClick={() => {
-              popUser();
-              popToken();
-              router.push(LOGIN_PATH);
-            }}
-            style={{marginTop: "20px", marginLeft: "20px"}}
-            color="primary"
-            variant="contained"
-          >
+          onClick={() => {
+            popUser();
+            popToken();
+            router.push(LOGIN_PATH);
+          }}
+          style={{ marginTop: "20px", marginLeft: "20px" }}
+          color="primary"
+          variant="contained"
+        >
           Logout
         </Button>
         <List className={classes.userList}>
@@ -474,7 +473,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                         <Avatar alt={user.first_name} src={user.profile_picture} />
                       </Badge>
                     </ListItemIcon>
-                    <ListItemText primary={username} />
+                    <ListItemText primary={user.username} />
                   </ListItem>
                 )
             )}
