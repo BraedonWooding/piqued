@@ -14,6 +14,7 @@ import {
   makeStyles,
   Paper,
   TextField,
+  Typography,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
@@ -115,10 +116,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
         // Update seen status after history messages have been loaded
         if (parsedData.type === MessageType.GET_HISTORY) {
-          parsedData.messages.forEach((m) => {
+          const chatMsgList: ChatMsgType[] = [];
+          parsedData.messages.forEach((m: ChatMsgType) => {
             const { partitionKey, rowKey, message, files, userId, createdAt, seen } = m;
-
-            chatMsgesRef.current.push({
+            chatMsgList.push({
               partitionKey,
               rowKey,
               message,
@@ -129,7 +130,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             });
           });
 
+          // fix the cases when we get them out of time
+          chatMsgList.sort((a: ChatMsgType, b: ChatMsgType) => a.createdAt.getTime() - b.createdAt.getTime());
+          chatMsgesRef.current = chatMsgesRef.current.concat(chatMsgList);
           setChatMsges([...chatMsgesRef.current]);
+          lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
         } else if (parsedData.type === MessageType.CHAT_MESSAGE) {
           const { partitionKey, rowKey, message, files, userId, createdAt, seen } = parsedData;
 
@@ -161,12 +166,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           }
         } else if (parsedData.type === MessageType.SEEN_MESSAGE) {
           const { partitionKey, rowKey, seen } = parsedData;
-          const message = chatMsgesRef.current.find(
-            (msg) => msg.partitionKey === partitionKey && msg.rowKey === rowKey
-          );
+          // we only care if it's the last message
+          const lastMessage = chatMsgesRef.current[chatMsgesRef.current.length - 1];
 
-          if (message) {
-            message.seen = seen;
+          if (lastMessage.partitionKey === partitionKey && lastMessage.rowKey === rowKey) {
+            lastMessage.seen = seen;
             setChatMsges([...chatMsgesRef.current]);
           }
         } else if (parsedData.type === MessageType.STATUS_UPDATE) {
@@ -204,23 +208,21 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     return;
   }, [chatSocket?.readyState, currentGroupRef.current]);
 
-  // Update seen status after chat messages have been loaded
+  // Update seen status of last message after chat messages have been loaded
   useEffect(() => {
-    if (chatSocket?.readyState) {
-      chatMsgesRef.current.forEach((chatMsg) => {
-        const { partitionKey, rowKey, seen } = chatMsg;
-        if (!(seen as string).split(" ").includes(activeUser.id.toString()))
-          chatSocket.send(
-            JSON.stringify({
-              type: MessageType.SEEN_MESSAGE,
-              partitionKey,
-              rowKey,
-              seen: `${seen} ${activeUser.id}`,
-            })
-          );
-      });
+    if (chatSocket?.readyState && chatMsgesRef.current.length > 0) {
+      const { partitionKey, rowKey, seen } = chatMsgesRef.current[chatMsgesRef.current.length - 1];
+      if (!(seen as string).split(" ").includes(activeUser.id.toString()))
+        chatSocket.send(
+          JSON.stringify({
+            type: MessageType.SEEN_MESSAGE,
+            partitionKey,
+            rowKey,
+            seen: `${seen} ${activeUser.id}`,
+          })
+        );
     }
-  }, [chatSocket?.readyState, chatMsges]);
+  }, [chatSocket?.readyState, chatMsgesRef.current]);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
@@ -324,11 +326,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                               <ListItemText
                                 className={clsx({ [classes.alignSelfRight]: isActiveUser })}
                                 style={{ width: "100px" }}
-                                secondary={
-                                  (currentGroup && chatMsg.seen.split(" ").length === currentGroup.user_set.length
-                                    ? "✓✓"
-                                    : "✓") + format(chatMsg.createdAt, "h:mm aa")
-                                }
+                                secondary={format(chatMsg.createdAt, "h:mm aa")}
                               />
                             </ListItem>
                             {isActiveUser && (
@@ -364,6 +362,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                               />
                             )}
                           </Box>
+                          {(() => {
+                            if (index === chatMsges.length - 1) {
+                              const chatMsgSeenIds = chatMsg.seen.split(" ").map((m) => Number(m));
+                              return currentGroup.user_set.every((u) => chatMsgSeenIds.includes(u.id));
+                            } else return false;
+                          })() && <Typography variant="subtitle1">seen</Typography>}
                         </List>
                       </Grid>
                     </Grid>

@@ -205,6 +205,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'RowKey': event["rowKey"],
                 'seen': event['seen']
             })
+
             await self.send(text_data=json.dumps({
                 'type': event['type'],
                 'partitionKey': event["partitionKey"],
