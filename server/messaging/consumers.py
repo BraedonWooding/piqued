@@ -3,6 +3,7 @@ import json
 import sys
 import traceback
 from datetime import datetime, timedelta, timezone
+from os import sync
 
 from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.models import Entity
@@ -11,6 +12,9 @@ from azure.cosmosdb.table.tableservice import TableService
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dateutil import parser, tz
 from django.conf import settings
+from groups.models import PiquedGroup
+from user.models import PiquedUser
+from user.views import PiquedUsersForGroupViewSet, UserViewSet
 
 
 def handleException(e, loc):
@@ -19,12 +23,17 @@ def handleException(e, loc):
     exc_tb = e[2]
     print("\n\n--------\nError in " + loc + "\n" + str(exc_value) + "\nTraceback: " + str(traceback.format_exception(exc_type, exc_value, exc_tb)))
 
+def SendAlerts():
+    PiquedUsersForGroupViewSet(group_id=1).get_queryset().all()
+
 class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
             self.groupId = self.scope['url_route']['kwargs']['groupId']
             self.userId = self.scope['url_route']['kwargs']['userId']
             self.channelGroupName = 'chat_%s' % self.groupId
+
+            await sync_to_async(SendAlerts)
 
             # Join channel group
             await self.channel_layer.group_add(
