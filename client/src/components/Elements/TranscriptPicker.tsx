@@ -1,4 +1,3 @@
-import { makeStyles } from "@material-ui/core";
 import React, { ChangeEvent, FC, useRef } from "react";
 
 interface TranscriptPickerProps {
@@ -20,12 +19,3 @@ export const TranscriptPicker: FC<TranscriptPickerProps> = ({ transcriptSelect }
     </div>
   );
 };
-
-const createStyles = makeStyles(() => ({
-  upload_icon: {
-    width: "300px",
-    height: "200px",
-    borderRadius: "5px"
-  },
-  upload_overlay: { width: "100%", height: "100%" },
-}));
