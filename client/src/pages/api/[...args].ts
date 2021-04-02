@@ -30,7 +30,6 @@ const proxy = createProxyMiddleware({
     if (position < 0) position = proxyReq.path.length;
     proxyReq.path =
       proxyReq.path.substring(0, position) + "/" + (position != -1) ? proxyReq.path.substring(position) : "?";
-    console.log(proxyReq);
   },
 });
 

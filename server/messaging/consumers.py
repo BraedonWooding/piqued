@@ -8,6 +8,7 @@ from enum import Enum
 from azure.cosmosdb.table.tableservice import TableService
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.layers import get_channel_layer
 from django.conf import settings
 from user.models import PiquedUser
 
@@ -75,10 +76,6 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
         for group in groups:
             # Leave channel group for each group user is in
-            await self.channel_layer.group_discard(
-                'chat_%s' % group.id,
-                self.channel_name
-            )
             await self.channel_layer.group_send(
                 "chat_%s" % group.id,
                 {
@@ -87,6 +84,10 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'status': "Offline",
                     'isResponse': False
                 })
+            await self.channel_layer.group_discard(
+                'chat_%s' % group.id,
+                self.channel_name
+            )
 
     # Receive message from WebSocket
     async def receive(self, text_data):
@@ -101,7 +102,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 })
             elif message_type == MessageType.CHAT_MESSAGE:
                 createdAt = datetime.now(timezone.utc)
-                partitionKey = str(text_data_json['partitionKey'])
+                partitionKey = text_data_json['partitionKey']
                 rowKey = str(int(createdAt.timestamp() * 10000000))
                 message = text_data_json['message']
                 files = text_data_json['files']  # Files are urls
@@ -135,11 +136,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     }
                 )
             elif message_type == MessageType.SEEN_MESSAGE:
-                await self.seen_message({
-                    'partitionKey':  text_data_json['partitionKey'],
-                    'rowKey':  text_data_json['rowKey'],
-                    'seen':  text_data_json['seen'],
-                })
+                partitionKey = text_data_json['partitionKey']
+
+                await self.channel_layer.group_send(
+                    "chat_%s" % partitionKey, {
+                        'type': MessageType.SEEN_MESSAGE,
+                        'partitionKey': partitionKey,
+                        'rowKey':  text_data_json['rowKey'],
+                        'seen':  text_data_json['seen'],
+                    })
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving data from client.")
@@ -148,18 +153,38 @@ class GroupConsumer(AsyncWebsocketConsumer):
     async def get_history(self, event):
         try:
             partitionKey = event['partitionKey']
-            msgs = self.table_service.query_entities(
+            messages = self.table_service.query_entities(
                 'Messages', filter="PartitionKey eq '%s' and deleted eq 0" % partitionKey)
+            serializable_messages = []
 
-            for msg in msgs:
-                await self.chat_message({'type': MessageType.CHAT_MESSAGE, **msg})
+            for message in messages:
+                serializable_messages.append({
+                    'partitionKey': message["PartitionKey"],
+                    'rowKey': message["RowKey"],
+                    'message': message['message'],
+                    'files': message['files'],
+                    'userId': message['userId'],
+                    'seen': message['seen'],
+                    'createdAt': str(message["createdAt"]),
+                })
+
+            await self.history_messages({'type': MessageType.GET_HISTORY, 'messages': serializable_messages})
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'get_history' from socket_group (channel layer).")
 
+    async def history_messages(self, event):
+        try:
+            await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'messages': event['messages'],
+            }))
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'history_messages' from socket_group (channel layer).")
+
     async def chat_message(self, event):
         try:
-            # Send message to WebSocket
             await self.send(text_data=json.dumps({
                 'type': event['type'],
                 'partitionKey': event["PartitionKey"],
@@ -177,41 +202,37 @@ class GroupConsumer(AsyncWebsocketConsumer):
     async def seen_message(self, event):
         try:
             self.table_service.merge_entity('Messages', {
-                'PartitionKey': event["PartitionKey"],
-                'RowKey': event["RowKey"],
+                'PartitionKey': event["partitionKey"],
+                'RowKey': event["rowKey"],
                 'seen': event['seen']
             })
+            await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'partitionKey': event["partitionKey"],
+                'rowKey': event["rowKey"],
+                'seen': event['seen'],
+            }))
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'seen_message' from socket_group (channel layer).")
 
     async def status_update(self, event):
         try:
+            await self.send(text_data=json.dumps({
+                'type': MessageType.STATUS_UPDATE,
+                'status': event["status"],
+                'userId': event["userId"],
+            }))
             if (not event["isResponse"]):
-                await self.send(text_data=json.dumps({
-                    'type': MessageType.STATUS_UPDATE,
-                    'status': event["status"],
-                    'userId': event["userId"],
-                }))
-
                 groups = await database_sync_to_async(self.get_groups)()
 
                 for group in groups:
-                    print(self.userId)
-                    print(group)
-                    await self.channel_layer.group_send("chat_%s" % group.id, {
+                    await get_channel_layer().group_send("chat_%s" % group.id, {
                         'type': MessageType.STATUS_UPDATE,
                         'status': event["status"],
-                        'userId': event["userId"],
+                        'userId': self.userId,
                         'isResponse': True
                     })
-            elif (event["isResponse"] and self.userId != event["userId"]):
-                await self.send(text_data=json.dumps({
-                    'type': MessageType.STATUS_UPDATE,
-                    'status': event["status"],
-                    'userId': event["userId"],
-                }))
-
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'status_update' from socket_group (channel layer).")

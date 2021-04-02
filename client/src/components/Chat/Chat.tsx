@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import { ChatMsg } from "@mui-treasury/components/chatMsg";
@@ -27,7 +27,7 @@ import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
-import { getUser, popUser } from "util/auth/user";
+import { popUser } from "util/auth/user";
 import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
@@ -112,7 +112,24 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       newChatSocket.onmessage = (e) => {
         const parsedData = JSON.parse(e.data);
 
-        if (parsedData.type === MessageType.CHAT_MESSAGE) {
+        // Update seen status after history messages have been loaded
+        if (parsedData.type === MessageType.GET_HISTORY) {
+          parsedData.messages.forEach((m) => {
+            const { partitionKey, rowKey, message, files, userId, createdAt, seen } = m;
+
+            chatMsgesRef.current.push({
+              partitionKey,
+              rowKey,
+              message,
+              files,
+              userId,
+              seen,
+              createdAt: new Date(createdAt),
+            });
+          });
+
+          setChatMsges([...chatMsgesRef.current]);
+        } else if (parsedData.type === MessageType.CHAT_MESSAGE) {
           const { partitionKey, rowKey, message, files, userId, createdAt, seen } = parsedData;
 
           if (partitionKey === currentGroupRef.current.id.toString()) {
@@ -130,6 +147,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             setChatMsges([...chatMsgesRef.current]);
             lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
           } else {
+            // handle notification for message being sent to another group
             const group = userGroupsRef.current.find((g) => g.id.toString() === partitionKey);
             if (
               group &&
@@ -140,6 +158,16 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               setUserGroups([...userGroupsRef.current]);
             }
           }
+        } else if (parsedData.type === MessageType.SEEN_MESSAGE) {
+          const { partitionKey, rowKey, seen } = parsedData;
+          const message = chatMsgesRef.current.find(
+            (msg) => msg.partitionKey === partitionKey && msg.rowKey === rowKey
+          );
+
+          if (message) {
+            message.seen = seen;
+            setChatMsges([...chatMsgesRef.current]);
+          }
         } else if (parsedData.type === MessageType.STATUS_UPDATE) {
           const { status, userId } = parsedData;
 
@@ -148,7 +176,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             if (user) {
               user.status = status;
               setUserGroups([...userGroupsRef.current]);
-              break;
             }
           }
         }
@@ -176,23 +203,23 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     return;
   }, [chatSocket?.readyState, currentGroupRef.current]);
 
-  // Update seen status after chat msg has been loaded (does not work)
-  // useEffect(() => {
-  //   if (chatSocket?.readyState) {
-  //     chatMsgesRef.current.forEach((chatMsg) => {
-  //       const { partitionKey, rowKey, seen } = chatMsg;
-  //       if (!(seen as string).split(" ").includes(activeUser.id.toString()))
-  //         chatSocket.send(
-  //           JSON.stringify({
-  //             type: "seen_message",
-  //             partitionKey,
-  //             rowKey,
-  //             seen: `${seen} ${activeUser.id}`,
-  //           })
-  //         );
-  //     });
-  //   }
-  // }, [chatSocket?.readyState, chatMsgesRef.current]);
+  // Update seen status after chat messages have been loaded
+  useEffect(() => {
+    if (chatSocket?.readyState) {
+      chatMsgesRef.current.forEach((chatMsg) => {
+        const { partitionKey, rowKey, seen } = chatMsg;
+        if (!(seen as string).split(" ").includes(activeUser.id.toString()))
+          chatSocket.send(
+            JSON.stringify({
+              type: MessageType.SEEN_MESSAGE,
+              partitionKey,
+              rowKey,
+              seen: `${seen} ${activeUser.id}`,
+            })
+          );
+      });
+    }
+  }, [chatSocket?.readyState, chatMsges]);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
@@ -205,7 +232,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   <Badge
                     overlap="circle"
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                    color={getUser().status === Status.ONLINE ? "secondary" : "error"}
+                    color="secondary"
                     variant="dot"
                   >
                     <Avatar alt={username} src={activeUser.profile_picture} />
