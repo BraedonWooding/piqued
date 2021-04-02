@@ -1,10 +1,8 @@
-import { ClickAwayListener, makeStyles, TextField } from "@material-ui/core";
-import axios from "axios";
-import React, { FC, useEffect, useState } from "react";
-import { Grid } from "@giphy/react-components";
 import { GiphyFetch } from "@giphy/js-fetch-api";
-import { IGif } from '@giphy/js-types';
-
+import { IGif } from "@giphy/js-types";
+import { Grid } from "@giphy/react-components";
+import { ClickAwayListener, makeStyles, TextField } from "@material-ui/core";
+import React, { FC, useState } from "react";
 //@ts:ignore
 import GifLogo from "react-svg-loader!assets/icons/gif.svg";
 
@@ -27,10 +25,15 @@ export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
     } else {
       return giphy.trending({ offset, limit: 10 });
     }
-  }
+  };
 
   return (
-    <ClickAwayListener onClickAway={() => {setGifOpen(false); setSearch(null)}}>
+    <ClickAwayListener
+      onClickAway={() => {
+        setGifOpen(false);
+        setSearch(null);
+      }}
+    >
       <div className={classes.root}>
         <button
           style={{ cursor: "pointer", border: "none", background: "none" }}
@@ -49,10 +52,13 @@ export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
               }}
               style={{ marginBottom: "15px" }}
             />
-
             <Grid
               key={search || "gif"}
-              onGifClick={(a) => { sendGif(a); setGifOpen(false); setSearch(null); }}
+              onGifClick={(a) => {
+                sendGif(a);
+                setGifOpen(false);
+                setSearch(null);
+              }}
               hideAttribution={true}
               noLink={true}
               fetchGifs={fetchMoreGifs}
@@ -70,7 +76,6 @@ export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
 const useStyles = makeStyles(() => ({
   root: {
     position: "relative",
-    width: 300,
     justifyContent: "flex-end",
     textAlign: "right",
   },
