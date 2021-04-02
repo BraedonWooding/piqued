@@ -18,6 +18,13 @@ class UserViewSet(ModelViewSet):
     def check_permissions(self, req):
         return None
 
+    def get_queryset(self):
+        if 'group_id' not in self.kwargs:
+            return PiquedUser.objects.all()
+
+        group_id = self.kwargs['group_id']
+        return PiquedUser.objects.filter(user__groups__id__exact=group_id)
+
     def retrieve(self, request, *args, **kwargs):
         """
         If provided 'user_id' is "self" then return the current user.
