@@ -116,7 +116,7 @@ DATABASES = {
         'HOST': 'HOST',
         'PORT': '1433',
         'OPTIONS': {
-            'driver': 'FreeTDS' if os.name == 'posix' else 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,
             'host_is_server': True,
         },
