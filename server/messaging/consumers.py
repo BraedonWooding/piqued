@@ -9,6 +9,8 @@ from azure.cosmosdb.table.tableservice import TableService
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from django.contrib.auth.models import Group
+from groups.models import PiquedGroup
 from user.models import PiquedUser
 
 
@@ -38,9 +40,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
 
-            groups = await database_sync_to_async(self.get_groups)()
+            self.groups = await database_sync_to_async(self.get_groups)()
 
-            for group in groups:
+            for group in self.groups:
                 # Join channel group for each group user is in
                 await self.channel_layer.group_add(
                     'chat_%s' % group.id,
@@ -67,13 +69,11 @@ class GroupConsumer(AsyncWebsocketConsumer):
             handleException(sys.exc_info(), "connecting to socket.")
 
     def get_groups(self):
-        piquedUser = PiquedUser.objects.get(user_id=self.userId)
-        return list(piquedUser.user.groups.all())
+        groups = Group.objects.filter(user__id__exact=self.userId)
+        return list(groups.all())
 
     async def disconnect(self, close_code):
-        groups = await database_sync_to_async(self.get_groups)()
-
-        for group in groups:
+        for group in self.groups:
             # Leave channel group for each group user is in
             await self.channel_layer.group_send(
                 "chat_%s" % group.id,
@@ -223,9 +223,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 'userId': event["userId"],
             }))
             if (not event["isResponse"]):
-                groups = await database_sync_to_async(self.get_groups)()
-
-                for group in groups:
+                for group in self.groups:
                     await self.channel_layer.group_send("chat_%s" % group.id, {
                         'type': MessageType.STATUS_UPDATE,
                         'status': event["status"],
