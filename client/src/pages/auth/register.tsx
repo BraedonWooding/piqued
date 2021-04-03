@@ -30,12 +30,7 @@ const validationSchema = yup.object({
 const Register = () => {
   const classes = useStyles();
   const router = useRouter();
-
-  const [FB_FirstName, setFBFirstname] = useState("");
-  const [FB_LastName, setFBLastname] = useState("");
-  const [FB_dob, setFBdob] = useState<Date>();
   const [FB_interests, setFBInterests] = useState<String[]>();
-  const [FB_email, setFBemail] = useState("");
 
   const responseFacebook = (response, setFieldValue) => {
     console.log(response);
@@ -43,6 +38,8 @@ const Register = () => {
     setFieldValue("first_name", response["first_name"])
     setFieldValue("last_name", response["last_name"])
     setFieldValue("email", response["first_name"][0].toLowerCase() + "." + response["last_name"].toLowerCase() + "@student.unsw.edu.au")
+    setFieldValue("date_of_birth", new Date(response["birthday"]))
+    //birthday setFieldValue("email", response["first_name"][0].toLowerCase() + "." + response["last_name"].toLowerCase() + "@student.unsw.edu.au")
 
     var interest_names = [];
     for (var i = 0; i < response["likes"]["data"].length; i++) {
@@ -58,22 +55,25 @@ const Register = () => {
           first_name: "",
           last_name: "",
           date_of_birth: new Date(),
-          username: "",
           email: "",
           password: "",
           confirmPassword: "",
         }}
         onSubmit={async ({ confirmPassword, ...other }) => {
+          console.log(other)
           const { date_of_birth, email: username, } = other;
+          console.log(other)
+          console.log(username)
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
             ...other,
             date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
-            email: username,
+            username: username,
           });
           await authenticateToken({ password: other.password, username });
-          await lookupCurrentUser();
+          var usr = await lookupCurrentUser();
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
-            interests: FB_interests
+            interests: FB_interests,
+            userId: usr["id"]
           });
           router.push("/user/details/init");
         }}
@@ -95,10 +95,10 @@ const Register = () => {
                   callback={data => responseFacebook(data, setFieldValue)} />
                 <Grid container spacing={3}>
                   <Grid item xs={6}>
-                    <MyTextField placeholder="First Name" value={FB_FirstName} onChange={e => { setFBFirstname(e.target.value) }} label="First Name" name="first_name" autoFocus />
+                    <MyTextField placeholder="First Name" value={values.first_name} label="First Name" name="first_name" autoFocus />
                   </Grid>
                   <Grid item xs={6}>
-                    <MyTextField placeholder="Last Name" value={FB_LastName} onChange={e => { setFBLastname(e.target.value) }} label="Last Name" name="last_name" />
+                    <MyTextField placeholder="Last Name" value={values.last_name} label="Last Name" name="last_name" />
                   </Grid>
                 </Grid>
                 <Field
@@ -107,10 +107,10 @@ const Register = () => {
                   label="Date of Birth"
                   name="date_of_birth"
                   format="dd/MM/yyyy"
-                  value={FB_dob}
-                  onChange={(value: Date) => setFBdob(value)}
+                  value={values.date_of_birth}
+                  onChange={(value: Date) => setFieldValue("date_of_birth", value)}
                 />
-                <MyTextField placeholder="UNSW Email" value={FB_email} onChange={e => { setFBemail(e.target.value) }} label="UNSW Email" name="email" />
+                <MyTextField placeholder="UNSW Email" value={values.email} label="UNSW Email" name="email" />
                 <MyTextField placeholder="Password" label="Password" name="password" type="password" />
                 <MyTextField
                   placeholder="Confirm Password"
