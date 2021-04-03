@@ -2,8 +2,9 @@ from django.urls import path
 from django.urls.conf import include
 from rest_framework import views
 from rest_framework.routers import DefaultRouter
+from . import views
 
-from .views import InterestGraphViewSet, InterestViewSet
+from .views import InterestGraphViewSet, InterestViewSet, addInterests
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -11,5 +12,6 @@ router.register(r'interests', InterestViewSet)
 router.register(r'interest-graph', InterestGraphViewSet)
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('addInterests/', views.addInterests)
 ]
