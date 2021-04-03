@@ -65,11 +65,26 @@ class GroupConsumer(AsyncWebsocketConsumer):
         return msgs
     
     def sendNotifications(self, message):
-        piquedGroup = PiquedGroup.objects.all().filter(id=self.groupId).first()
+        piquedGroup = PiquedGroup.objects.all().filter(group_id=self.groupId).first()
+        # Getting muted users dict
+
+        #print(piquedGroup.muted_users)
+        
+        try:
+            mutedUsers = json.loads(piquedGroup.muted_users)
+        except:
+            mutedUsers = {}
+
         group = piquedGroup.group
+
+        #print(mutedUsers)
+        
         users = group.user_set.all()
         for user in users:
-            print("Send from consumers.py")
+            # If mutedUsers[user.id] < 0, it is muted indefinitely
+            if str(user.id) in mutedUsers and (mutedUsers[str(user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.id)], tz=timezone.utc)):
+                print("Should be skipping")
+                continue
             piquedUser = PiquedUser.objects.all().filter(user=user.id).first()
             sendToAllUserDevices(piquedUser, group.name, message)
 

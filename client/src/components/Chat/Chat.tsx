@@ -49,6 +49,7 @@ import { popUser } from "util/auth/user";
 import { SEARCH_GROUPS_PATH } from "util/constants";
 import MediaRender from "./MediaRender";
 import { removeToken } from '../../firebase'
+import { MuteButton } from "./MuteButton";
 
 //let delete_endpoint = '${process.env.NEXT_PUBLIC_WS_URL} + /delete/';
 //let edit_endpoint = "http://127.0.0.1:8000/delete/";
@@ -97,6 +98,22 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [groupHover, setGroupHover] = useState(new Array(activeUser.groups.length).fill(false));
+
+  const handleGroupHover = (index) => {
+    setGroupHover((prevArray) => {
+      const newArr = [...prevArray]; // copying the old array
+      newArr[index] = true;
+      return newArr;
+    });
+  };
+  const handleGroupLeave = (index) => {
+    setGroupHover((prevArray) => {
+      const newArr = [...prevArray]; // copying the old array
+      newArr[index] = false;
+      return newArr;
+    });
+  };
 
   const validateFile = (file: File) => {
     // If we want to do some valid type processing here
@@ -225,7 +242,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       partitionKey: partitionKey
     })
       .then((response) => {
-        console.log(response.data.status);
         if (response.data.status === "Deleted") {
           const i = chatMsgesRef.current.findIndex((obj => obj.rowKey == rk));
           chatMsgesRef.current[i].message = "[MESSAGE DELETED]";
@@ -333,6 +349,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map((group, index) => (
             <ListItem
+              onMouseEnter={ (e) => handleGroupHover(index) }
+              onMouseLeave={ (e) => handleGroupLeave(index) }
               disabled={deactive}
               className={clsx({ [classes.currentGroup]: group === currentGroup })}
               button
@@ -354,6 +372,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   <ExitToAppSharp />
                   Leave
                 </Button>
+              ) : null}
+              {groupHover[index] === true ? (
+                <MuteButton
+                  userId={activeUser.id}
+                  groupId={currentGroup.id}
+                />
               ) : null}
             </ListItem>
           ))}
