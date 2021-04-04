@@ -17,4 +17,4 @@ class PiquedGroup(models.Model):
     muted_users = models.CharField(max_length=2000, default="", blank=True) # Dictionary of muted users stored as a string
 
     def __str__(self):
-        return self.user.__str__()
+        return self.group.__str__()
