@@ -7,6 +7,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
+import { HOME_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -46,7 +47,7 @@ const InitDetails = () => {
             program: values.program?.id,
             courses: values.courses?.map((x) => x.id),
           });
-          router.push("/home");
+          router.push(HOME_PATH);
         }}
         validationSchema={validationSchema}
       >
