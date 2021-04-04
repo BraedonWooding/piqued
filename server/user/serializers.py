@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
-from groups.models import Group, PiquedGroup
+from groups.models import PiquedGroup
 from groups.serializers import PiquedGroupSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
