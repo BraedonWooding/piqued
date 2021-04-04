@@ -1,4 +1,4 @@
-import React, { ComponentPropsWithoutRef, FC, forwardRef, useEffect, useRef } from "react";
+import { ComponentPropsWithoutRef, FC, forwardRef, useEffect, useRef } from "react";
 import { makeStyles } from "@material-ui/core";
 import Measure from 'react-measure'
 

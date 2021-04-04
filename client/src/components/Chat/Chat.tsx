@@ -22,7 +22,7 @@ import { EmojiPicker } from "components/Elements/EmojiPicker";
 import { GifPicker } from "components/Elements/GifPicker";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
-import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
+import { DragEvent, FC, useEffect, useRef, useState } from "react";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
@@ -64,21 +64,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const fileDrop = (e: DragEvent<HTMLInputElement>) => {
     e.preventDefault();
     const files = e.dataTransfer.files;
-    setSelectedFiles([...selectedFiles, ...files]);
+    setSelectedFiles([...selectedFiles, ...Array.from(files)]);
   };
 
   const uploadFiles = async () => {
-    const urls: string[] = [];
+    const urls: { url: string, type: string }[] = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const formData = new FormData();
       formData.append("file", selectedFiles[i]);
-      formData.append("name", currentGroup.name);
+      formData.append("group_id", String(currentGroup.id));
       const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/upload/", formData);
-      urls.push(response.data["url"]);
+      urls.push(response.data);
     }
-    // Only handle single files for now
-    if (urls.length === 1) return urls[0];
-    return "";
+    return urls;
   };
 
   // Connects to the websocket and refreshes content on first render only
@@ -120,7 +118,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               partitionKey,
               rowKey,
               message,
-              files,
+              // @HACK: Backward support for single files
+              files: (typeof(files) === "string" && (files as string).includes("[")) ? JSON.parse(files) : [{url: files as unknown as string}].filter(f => f && f.url && f.url.trim()),
               userId,
               seen,
               createdAt: new Date(createdAt),
@@ -139,17 +138,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               partitionKey,
               rowKey,
               message,
-              files,
+              // @HACK: Backward support for single files
+              files: (typeof(files) === "string" && (files as string).includes("[")) ? JSON.parse(files) : [{url: files as unknown as string}].filter(f => f && f.url && f.url.trim()),
               userId,
               seen,
               createdAt: new Date(createdAt),
             });
+
             // fix the cases when we get them out of time
             chatMsgsRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
             setChatMsgs([...chatMsgsRef.current]);
           } else {
             // handle notification for message being sent to another group
-            const group = userGroupsRef.current.find((g) => g.id.toString() === partitionKey);
+            const group = userGroupsRef?.current?.find((g) => g.id.toString() === partitionKey);
             if (
               group &&
               !group.has_unseen_messages &&
@@ -335,13 +336,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         md={7}
         lg={7}
         sm={6}
-        style={{ paddingTop: 0 }}
         onDragOver={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
         onDragEnter={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
         onDragLeave={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
         onDrop={fileDrop}
       >
-        <List className={classes.messageArea}>
+        <List style={{paddingTop: 0}} className={classes.messageArea}>
           <ScrollableMsgs ref={scrollableRef}>
             {(() => {
               const lastSeenSet = chatMsgs[chatMsgs.length - 1]?.seen.split(" ") || [];
@@ -445,7 +445,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           onSubmit={async (e) => {
             e.preventDefault();
             const files = await uploadFiles();
-            if (message !== "" || files !== "") {
+            if (message !== "" || files.length > 0) {
               const el = document.querySelector("#send-logo") as HTMLElement;
               el.classList.add(classes.fly);
               setTimeout(() => el.classList.remove(classes.fly), 2000);
@@ -454,7 +454,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 JSON.stringify({
                   type: MessageType.CHAT_MESSAGE,
                   message,
-                  files,
+                  files: JSON.stringify(files),
                   partitionKey: currentGroup.id.toString(),
                   userId: activeUser.id,
                   seen: activeUser.id.toString(),
@@ -557,7 +557,7 @@ const useStyles = makeStyles((theme) => ({
   alignSelfRight: { textAlign: "right" },
   name: { marginLeft: "48px" },
   searchBox: { padding: 10 },
-  chatBox: { padding: 20 },
+  chatBox: { padding: 10, height: "10vh" },
   currentGroup: { border: "2px solid black" },
   hide: { visibility: "hidden" },
   slimButton: { padding: 5 },

@@ -11,7 +11,7 @@ import {
   TextField,
 } from "@material-ui/core";
 import { MoreVert } from "@material-ui/icons";
-import React, { FC, useState } from "react";
+import { FC, useState } from "react";
 
 interface EditDeleteChatMsgButtonProps {
   initialMessage: string;
@@ -55,6 +55,7 @@ export const EditDeleteChatMsgButton: FC<EditDeleteChatMsgButtonProps> = ({ init
         aria-label="more"
         aria-controls="long-menu"
         aria-haspopup="true"
+        style={{ padding: 0, paddingLeft: 5, paddingRight: 5 }}
         onClick={(e) => setAnchorEl(e.currentTarget)}
       >
         <MoreVert />
