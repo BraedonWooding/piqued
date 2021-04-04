@@ -5,7 +5,7 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
 import * as yup from "yup";
 
@@ -20,7 +20,6 @@ const InitDetails = () => {
   const [interests, setInterests] = useState([]);
   const [userInterests, setUserInterests] = useState([]);
   const router = useRouter();
-  const testref = useRef();
 
   useEffect(() => {
 
@@ -35,12 +34,6 @@ const InitDetails = () => {
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests)
-
-    if (testref.current) {
-      testref.current.setFieldValue("interests", getUser().interests);
-      console.log("It should have run")
-      console.log(testref.current)
-    }
     //FIGURE OUT HOW TO GRAB THE INTERESTS HERE
   }, []);
 
@@ -49,7 +42,6 @@ const InitDetails = () => {
   return (
     <FullyCenteredLayout>
       <Formik
-        innerRef={testref}
         enableReinitialize
         initialValues={{
           program: null,
@@ -126,6 +118,7 @@ const InitDetails = () => {
                       id="interests"
                       placeholder="Interests"
                       options={interests}
+                      value={getUser().interests}
                       onChange={(e, values) => {
                         setFieldValue("interests", values)
                         console.log(testref.current)
