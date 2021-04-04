@@ -17,7 +17,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   group = payload['data']['group'];
   message = payload['data']['message'];
-  // Customize notification here
+
   const notificationTitle = `Piqued message from ${group}`;
   const notificationOptions = {
     body: message,
