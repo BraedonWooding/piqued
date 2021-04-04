@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'interests.apps.InterestsConfig',
     'info.apps.InfoConfig',
-    'groups.apps.GroupsConfig'
+    'groups.apps.GroupsConfig',
 ]
 
 MIDDLEWARE = [
@@ -116,7 +116,7 @@ DATABASES = {
         'HOST': 'HOST',
         'PORT': '1433',
         'OPTIONS': {
-            'driver': 'FreeTDS' if os.name == 'posix' else 'ODBC Driver 17 for SQL Server',
+            'driver': 'FreeTDS',
             'unicode_results': True,
             'host_is_server': True,
         },
@@ -152,6 +152,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
