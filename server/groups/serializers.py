@@ -42,4 +42,4 @@ class PiquedGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PiquedGroup
-        fields = ['id', 'name', 'interests', 'created_by', 'expired_at']
+        fields = ['id', 'name', 'interests', 'created_by']

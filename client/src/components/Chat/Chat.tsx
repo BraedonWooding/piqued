@@ -263,7 +263,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map(
             (group, index) =>
-              Date.now() > group.expired_at.getTime() && (
+              (!group.expired_at || Date.now() > group.expired_at.getTime()) && (
                 <ListItem
                   key={"Group-" + group.id}
                   disabled={deactive}

@@ -15,7 +15,6 @@ class PiquedGroup(models.Model):
         Interest, related_name="groups", blank=True)
     created_by: ForeignKey = models.ForeignKey(
         PiquedUser, on_delete=models.SET_NULL, related_name="groups_created", null=True, blank=True)
-    expired_at: DateField = models.DateField("Expiry Date", null=True)
 
     def __str__(self):
         return self.user.__str__()

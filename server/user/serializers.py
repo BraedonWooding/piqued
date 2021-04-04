@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from groups.serializers import GroupSerializer, PiquedGroupSerializer
+from django.contrib.auth.models import User
+from groups.models import Group, PiquedGroup
+from groups.serializers import PiquedGroupSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -11,7 +13,7 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', validators=[UniqueValidator(
         queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
-    groups = GroupSerializer(source='user.groups', many=True, read_only=True)
+    groups = serializers.SerializerMethodField()
     groups_created = PiquedGroupSerializer(many=True, read_only=True)
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
@@ -22,6 +24,11 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         required=True,
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
+
+    def get_groups(self, obj: PiquedUser):
+        groups = PiquedGroup.objects.filter(
+            group__user__id__exact=obj.user_id).all()
+        return [PiquedGroupSerializer(pg).data for pg in groups.all()]
 
     def update(self, instance: PiquedUser, validated_data):
         if 'user' in validated_data:
