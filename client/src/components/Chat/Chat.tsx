@@ -355,7 +355,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               className={clsx({ [classes.currentGroup]: group === currentGroup })}
               button
               key={"Group-" + group.id}
-              onClick={() => {
+              onClick={(e) => {
+                console.log("PROPAGATED");
                 setCurrentGroup(group);
               }}
             >
