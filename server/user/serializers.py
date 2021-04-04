@@ -9,6 +9,7 @@ from .models import PiquedUser
 
 
 class PiquedUserSerializer(serializers.ModelSerializer):
+    from interests.serializers import InterestSerializer
     username = serializers.CharField(source='user.username', validators=[UniqueValidator(
         queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
@@ -23,6 +24,7 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         required=True,
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
+    interests = InterestSerializer(many=True, read_only=True)
 
     def update(self, instance: PiquedUser, validated_data):
         if 'user' in validated_data:

@@ -75,6 +75,7 @@ const Register = () => {
             interests: FB_interests,
             userId: usr["id"]
           });
+          var usr = await lookupCurrentUser();
           router.push("/user/details/init");
         }}
         validationSchema={validationSchema}
