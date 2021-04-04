@@ -1,15 +1,11 @@
-import React, { FC } from "react";
-import PropTypes from "prop-types";
+import { FC } from "react";
 import cx from "clsx";
 import Grid from "@material-ui/core/Grid";
 import Avatar from "@material-ui/core/Avatar";
 import Typography from "@material-ui/core/Typography";
 
-import withStyles from "@material-ui/core/styles/withStyles";
-import defaultChatMsgStyles from "@mui-treasury/styles/chatMsg/default";
 import { ChatMsg as ChatMsgType, Group, User } from "types";
 import { createMuiTheme, makeStyles } from "@material-ui/core";
-import { theme } from "theme";
 import { red } from "@material-ui/core/colors";
 import { MediaRender } from "./MediaRender";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
@@ -65,36 +61,47 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
           </Grid>
         )}
         <Grid item xs={8}>
-          {msgs
-            .map((msg, i) => {
-              return (
-                // eslint-disable-next-line react/no-array-index-key
-                <div key={i} className={classes[`${side}Row`]}>
-                  {msg.message && (
-                    <div>
-                      <Typography align={"left"} className={cx(classes.msg, classes[side], attachClass(i))}>
-                        {msg.message}
-                      </Typography>
-                      {side === "right" && (<EditDeleteChatMsgButton
-                            initialMessage={msg.message}
-                            onDelete={() => onMessageChanged("deleted", msg)}
-                            onEdit={(modification) => (modification.trim() != "" ? onMessageChanged("edited", msg, modification) : onMessageChanged("deleted", msg))}
-                      />)}
-                    </div>
-                  )}
-                  <Grid container justify={(side === "right" ? "flex-end" : "flex-start")} alignItems="flex-start" >
-                    <MediaRender url={msg.files} onLoad={onMediaLoad} isRight={side == "right"} />
-                    {side === "right" && msg.files && !msg.message && (
+          {msgs.map((msg, i) => {
+            return (
+              // eslint-disable-next-line react/no-array-index-key
+              <div key={i} className={classes[`${side}Row`]}>
+                {msg.message && (
+                  <div>
+                    <Typography align={"left"} className={cx(classes.msg, classes[side], attachClass(i))}>
+                      {msg.message}
+                    </Typography>
+                    {side === "right" && (
                       <EditDeleteChatMsgButton
                         initialMessage={msg.message}
                         onDelete={() => onMessageChanged("deleted", msg)}
-                        onEdit={(modification) => (modification.trim() != "" ? onMessageChanged("edited", msg, modification) : onMessageChanged("deleted", msg))}
+                        onEdit={(modification) =>
+                          modification.trim() != ""
+                            ? onMessageChanged("edited", msg, modification)
+                            : onMessageChanged("deleted", msg)
+                        }
                       />
                     )}
-                  </Grid>
-                </div>
-              );
-            })}
+                  </div>
+                )}
+                <Grid container justify={side === "right" ? "flex-end" : "flex-start"} alignItems="flex-start">
+                  {msg.files.map((file) => (
+                    <MediaRender url={file.url} type={file.type} onLoad={onMediaLoad} />
+                  ))}
+                  {side === "right" && msg.files && !msg.message && (
+                    <EditDeleteChatMsgButton
+                      initialMessage={msg.message}
+                      onDelete={() => onMessageChanged("deleted", msg)}
+                      onEdit={(modification) =>
+                        modification.trim() != ""
+                          ? onMessageChanged("edited", msg, modification)
+                          : onMessageChanged("deleted", msg)
+                      }
+                    />
+                  )}
+                </Grid>
+              </div>
+            );
+          })}
         </Grid>
       </Grid>
     </Grid>
@@ -105,7 +112,7 @@ const chatStyle = makeStyles(({ palette, spacing }) => {
   const radius = spacing(2.5);
   const size = spacing(4);
   const rightBgColor = palette.primary.main;
-  // if you want the same as facebook messenger, use this color '#09f'
+
   return {
     avatar: {
       width: size,

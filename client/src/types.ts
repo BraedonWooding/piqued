@@ -26,10 +26,16 @@ export interface ChatMsg {
   partitionKey: string;
   rowKey: string;
   message: string;
-  files: string;
+  files: {url: string, type: string}[];
   userId: number;
   createdAt: Date;
   seen: string;
+}
+
+declare global {
+  interface Window {
+    pdfjsLib: any;
+  }
 }
 
 export enum Status {

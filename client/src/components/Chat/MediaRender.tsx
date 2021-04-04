@@ -1,39 +1,46 @@
+import axios from "axios";
 import { FC } from "react";
+import { DefaultTypeAdapter, SupportedCodeExtensions, TypeMap } from "./Types";
+import { CodeRenderer } from "./Types/CodeRenderer";
 
 interface MediaRenderProps {
   url: string;
-  isRight: boolean;
+  type?: string;
   onLoad: () => void;
 }
 
-export const MediaRender: FC<MediaRenderProps> = ({ url, isRight, onLoad }: MediaRenderProps) => {
-  const align = isRight ? "right" : "left";
-  const justify = isRight ? "flex-end" : "flex-start";
-  var isImage: boolean =
-    url.endsWith("png") ||
-    url.endsWith("jpg") ||
-    url.endsWith("jpeg") ||
-    url.endsWith("gif") ||
-    url.endsWith("PNG") ||
-    url.endsWith("JPG") ||
-    url.endsWith("JPEG") ||
-    url.endsWith("GIF");
-  var isVideo: boolean = url.endsWith("mp4") || url.endsWith("MP4");
-  if (isImage) {
-    return (
-      <div style={{ textAlign: align, justifyContent: justify }}>
-        <img src={url} min-width="40%" onLoad={onLoad} />
-      </div>
-    );
-  } else if (isVideo) {
-    return (
-      <div style={{ textAlign: align, justifyContent: justify }}>
-        <video width="40%" autoPlay={true} muted={true} loop={true}>
-          <source src={url} />
-        </video>
-      </div>
-    );
-  } else {
-    return null;
+export const MediaRender: FC<MediaRenderProps> = ({ url, type, onLoad }: MediaRenderProps) => {
+  // legacy
+  if (!type) {
+    var isImage: boolean =
+      url.endsWith("png") ||
+      url.endsWith("jpg") ||
+      url.endsWith("jpeg") ||
+      url.endsWith("gif") ||
+      url.endsWith("PNG") ||
+      url.endsWith("JPG") ||
+      url.endsWith("JPEG") ||
+      url.endsWith("GIF");
+    var isVideo: boolean = url.endsWith("mp4") || url.endsWith("MP4");
+    var ext = url.substring(url.lastIndexOf(".") + 1).toLowerCase();
+    type = isImage
+      ? `image/${ext}`
+      : isVideo
+      ? "video/mp4"
+      : "application/octet-stream";
   }
+
+  let TypeAdapter = TypeMap[type]
+    || TypeMap[type.substring(0, type.indexOf("/"))]
+    || DefaultTypeAdapter;
+
+  if (type == "application/octet-stream") {
+    const filename = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
+    if (SupportedCodeExtensions.some(c => filename.match(c))) {
+      TypeAdapter = CodeRenderer;
+      type = filename;
+    }
+  }
+
+  return <TypeAdapter url={url} type={type} onLoad={onLoad} />;
 };
