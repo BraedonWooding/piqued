@@ -14,7 +14,6 @@ interface MuteButtonProps {
 
 export const MuteButton: FC<MuteButtonProps> = ({ userId, groupId }) => {
     const [muteDialogOpen, setMuteDialogOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
     const handleOpenMuteDialog = () => setMuteDialogOpen(true);
     const handleCloseMuteDialog = () => setMuteDialogOpen(false);
 
@@ -45,11 +44,12 @@ export const MuteButton: FC<MuteButtonProps> = ({ userId, groupId }) => {
     return (
         <>
             <Button onClick={ (e) => handleMuteClicked(e) }>
-                Mute Options
+                Mute
             </Button>
             <Dialog
                 open={muteDialogOpen}
                 onClose={handleCloseMuteDialog}
+                onClick={ (e) => e.stopPropagation() }
                 aria-labelledby="form-dialog-title"
                 fullWidth
                 maxWidth="sm"

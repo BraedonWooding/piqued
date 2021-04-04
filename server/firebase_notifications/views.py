@@ -64,10 +64,8 @@ def mute(request):
         mutedUsersString = json.dumps(mutedUsers)
         group.muted_users = mutedUsersString
         group.save()
-        print(PiquedGroup.objects.all().filter(group_id=groupId).first().muted_users)
         return Response()
-    except e:
-        print(e)
+    except:
         return Response(status=500)
 
 @api_view(['POST'])
@@ -81,8 +79,6 @@ def unmute(request):
             mutedUsers = json.loads(group.muted_users)
         else:
             mutedUsers = {}
-        print(mutedUsers)
-        print(type(userId))
         # Delete entry
         if str(userId) in mutedUsers:
             del mutedUsers[str(userId)]
@@ -91,6 +87,5 @@ def unmute(request):
         group.muted_users = mutedUsersString
         group.save()
         return Response()
-    except e:
-        print(e)
+    except:
         return Response(status=500)
