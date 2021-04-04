@@ -1,7 +1,7 @@
 import { ClickAwayListener, makeStyles } from "@material-ui/core";
 import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
-import React, { FC, useState } from "react";
+import { FC, useState } from "react";
 
 interface EmojiPickerProps {
   setMessage: (message: string) => void;
@@ -14,7 +14,11 @@ export const EmojiPicker: FC<EmojiPickerProps> = ({ setMessage }) => {
   return (
     <ClickAwayListener onClickAway={() => setEmojiOpen(false)}>
       <div className={classes.root}>
-        <button style={{ cursor: "pointer", border: "none", background: "none" }} type="button" onClick={() => setEmojiOpen(!emojiOpen)}>
+        <button
+          style={{ cursor: "pointer", border: "none", background: "none" }}
+          type="button"
+          onClick={() => setEmojiOpen(!emojiOpen)}
+        >
           🤨
         </button>
         {emojiOpen && (
