@@ -24,7 +24,6 @@ import { EmojiPicker } from "components/Elements/EmojiPicker";
 import { GifPicker } from "components/Elements/GifPicker";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
-import process from "node:process";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
