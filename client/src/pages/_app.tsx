@@ -5,15 +5,13 @@ import "util/axios";
 import "../styles/globals.css";
 import { theme } from "../theme";
 
-const MyApp = ({ Component, pageProps }: any) => {
-  return (
-    <MuiThemeProvider theme={theme}>
-      <CssBaseline />
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <Component {...pageProps} />
-      </MuiPickersUtilsProvider>
-    </MuiThemeProvider>
-  );
-};
+const MyApp = ({ Component, pageProps }: any) => (
+  <MuiThemeProvider theme={theme}>
+    <CssBaseline />
+    <MuiPickersUtilsProvider utils={DateFnsUtils}>
+      <Component {...pageProps} />
+    </MuiPickersUtilsProvider>
+  </MuiThemeProvider>
+);
 
 export default MyApp;
