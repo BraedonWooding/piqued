@@ -5,7 +5,7 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getUser } from "util/auth/user";
 import * as yup from "yup";
 
@@ -18,9 +18,12 @@ const InitDetails = () => {
   const [courses, setCourses] = useState([]);
   const [degrees, setDegrees] = useState([]);
   const [interests, setInterests] = useState([]);
+  const [userInterests, setUserInterests] = useState([]);
   const router = useRouter();
+  const testref = useRef();
 
   useEffect(() => {
+
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
       setCourses(resp.data);
     });
@@ -31,16 +34,28 @@ const InitDetails = () => {
       console.log(resp)
       setInterests(resp.data);
     });
+    setUserInterests(getUser().interests)
+
+    if (testref.current) {
+      testref.current.setFieldValue("interests", getUser().interests);
+      console.log("It should have run")
+      console.log(testref.current)
+    }
     //FIGURE OUT HOW TO GRAB THE INTERESTS HERE
   }, []);
+
+
 
   return (
     <FullyCenteredLayout>
       <Formik
+        innerRef={testref}
+        enableReinitialize
         initialValues={{
           program: null,
           year: 1,
           courses: [],
+          interests: [],
         }}
         onSubmit={async (values) => {
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
@@ -62,7 +77,9 @@ const InitDetails = () => {
                     <Autocomplete
                       id="program"
                       placeholder="program"
-                      onChange={(e, value) => setFieldValue("program", value)}
+                      onChange={(e, value) => {
+                        setFieldValue("program", value)
+                      }}
                       options={degrees}
                       renderInput={(params) => <TextField {...params} variant="outlined" label="Degree" required />}
                       getOptionLabel={(option) => option.name}
@@ -109,6 +126,11 @@ const InitDetails = () => {
                       id="interests"
                       placeholder="Interests"
                       options={interests}
+                      onChange={(e, values) => {
+                        setFieldValue("interests", values)
+                        console.log(testref.current)
+                      }
+                      }
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -133,7 +155,7 @@ const InitDetails = () => {
           </Form>
         )}
       </Formik>
-    </FullyCenteredLayout>
+    </FullyCenteredLayout >
   );
 };
 
