@@ -28,19 +28,24 @@ export const EditDeleteChatMsgButton: FC<EditDeleteChatMsgButtonProps> = ({ init
 
   const [message, setMessage] = useState(initialMessage);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const handleOpenEditDialog = () => setEditDialogOpen(true);
-  const handleCloseEditDialog = () => setEditDialogOpen(false);
+
   const handleCloseMenu = () => setAnchorEl(null);
 
   const handleEdit = (changedMessage: string) => {
-    onEdit(changedMessage);
-    handleCloseEditDialog();
-    handleCloseMenu();
+    setEditDialogOpen(false);
+    if (changedMessage.trim() == "") {
+      setDeleteDialogOpen(true);
+    } else {
+      onEdit(changedMessage);
+      handleCloseMenu();
+    }
   };
 
   const handleDelete = () => {
     onDelete();
+    setDeleteDialogOpen(false);
     handleCloseMenu();
   };
 
@@ -71,8 +76,8 @@ export const EditDeleteChatMsgButton: FC<EditDeleteChatMsgButtonProps> = ({ init
           <MenuItem
             key={index}
             onClick={() => {
-              if (option === "Edit") handleOpenEditDialog();
-              else if (option === "Delete") handleDelete();
+              if (option === "Edit") setEditDialogOpen(true);
+              else if (option === "Delete") setDeleteDialogOpen(true);
             }}
           >
             {option}
@@ -80,7 +85,7 @@ export const EditDeleteChatMsgButton: FC<EditDeleteChatMsgButtonProps> = ({ init
         ))}
         <Dialog
           open={editDialogOpen}
-          onClose={handleCloseEditDialog}
+          onClose={() => setEditDialogOpen(false)}
           aria-labelledby="form-dialog-title"
           fullWidth
           maxWidth="sm"
@@ -90,22 +95,43 @@ export const EditDeleteChatMsgButton: FC<EditDeleteChatMsgButtonProps> = ({ init
             <DialogContentText>Edit your message below:</DialogContentText>
             <TextField
               autoFocus
+              onFocus={(el) => el.target.value = el.target.value || message}
               margin="dense"
               id="standard-multiline-flexible"
               label="New Message"
               multiline
               rowsMax={10}
               fullWidth
-              defaultValue={message}
+              defaultValue={undefined}
               onChange={(e) => setMessage(e.currentTarget.value)}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseEditDialog} color="primary">
+            <Button onClick={() => setEditDialogOpen(false)} color="primary">
               Cancel
             </Button>
             <Button onClick={() => handleEdit(message)} color="primary">
-              Send
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          aria-labelledby="form-dialog-title"
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle id="form-dialog-title">Are you sure you want to delete your message?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>{initialMessage}</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={() => handleDelete()} color="primary">
+              Delete
             </Button>
           </DialogActions>
         </Dialog>

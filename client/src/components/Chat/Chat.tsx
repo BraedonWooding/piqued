@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   Divider,
@@ -24,7 +25,7 @@ import { useRouter } from "next/router";
 import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
-import { ChatMsg as ChatMsgType, Group, User } from "types";
+import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
@@ -32,6 +33,8 @@ import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
 import { MediaRender } from "./MediaRender";
 import { ChatMessage } from "./ChatMessage";
+import { ScrollableMsgs } from "./ScrollableMsgs";
+import Measure from "react-measure";
 
 interface ChatProps {
   activeUser: User | null;
@@ -42,59 +45,30 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const router = useRouter();
 
   const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
-  const [chatMsgs, setchatMsgs] = useState<ChatMsgType[]>([]);
+  const [chatMsgs, setChatMsgs] = useState<ChatMsgType[]>([]);
   const [message, setMessage] = useState("");
-  const [chatSocket, setChatSocket] = useState<WebSocket | null>(null);
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(
-    activeUser.groups.length > 0 ? activeUser.groups[0] : null
-  );
+  const [chatSocket, setChatSocket] = useState<WebSocket>(null);
+  const [currentGroup, setCurrentGroup] = useState<Group>(activeUser.groups.length > 0 ? activeUser.groups[0] : null);
   const chatMsgsRef = useRef(chatMsgs);
+  const userGroupsRef = useRef(userGroups);
+  const currentGroupRef = useRef(currentGroup);
+  const scrollableRef = useRef<Measure>();
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
-  const lastMessageRef = useRef(null);
-  const username = activeUser.first_name + " " + activeUser.last_name;
+  const [timer, setTimer] = useState<NodeJS.Timeout>(null);
+  const username = `${activeUser.first_name} ${activeUser.last_name}`;
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
-  const getMsgs = () => {
-    // chunk msgs together if sent within a minute from the same person
-    // write the profile picture in there as well
-    const user_map = {};
-    currentGroup.user_set.map(u => user_map[u.id] = u);
-    var current_msg_set: ChatMsgType[] = [];
-    var newest_msg: null | ChatMsgType = null;
-    var all_msgs: [User, ChatMsgType[]][] = [];
-    chatMsgs.map(m => {
-      if (newest_msg === null ||
-          (m.userId === newest_msg.userId && !newest_msg.files && (m.timestamp.getTime() - newest_msg.timestamp.getTime()) / 1000 < 60)) {
-        // if over same minute
-        current_msg_set.push(m);
-        newest_msg = m;
-      } else {
-        all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
-        current_msg_set = [m];
-        newest_msg = m;
-      }
-    });
-    if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
-
-    return all_msgs;
-  }
-
-  const validateFile = (file: File) => {
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-    if (validTypes.indexOf(file.type) === -1) return false;
-    return true;
-  };
+  const [chunkedMsgs, setChunkedMsgs] = useState<[User, ChatMsgType[]][]>([]);
+  const [currentUsers, setCurrentUsers] = useState<string[]>([]);
 
   const fileDrop = (e: DragEvent<HTMLInputElement>) => {
     e.preventDefault();
     const files = e.dataTransfer.files;
-    for (let i = 0; i < files.length; i++) if (validateFile(files[i])) setSelectedFiles([...selectedFiles, files[i]]);
+    setSelectedFiles([...selectedFiles, ...files]);
   };
 
   const uploadFiles = async () => {
-    const urls: String[] = [];
+    const urls: string[] = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const formData = new FormData();
       formData.append("file", selectedFiles[i]);
@@ -109,77 +83,200 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
-    if (!currentGroup) return;
+    if (!currentGroupRef.current) return;
+    else if (!chatSocket) {
+      setRetry(false);
+      const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
-    if (chatSocket) {
-      chatSocket.onclose = () => {};
-      chatSocket.close();
+      newChatSocket.onopen = () => {
+        setDeactive(false);
+        if (timer) clearInterval(timer);
+        setTimer(null);
+        chatMsgsRef.current = [];
+        setChatMsgs([...chatMsgsRef.current]);
+      };
+
+      newChatSocket.onclose = () => {
+        // the websocket was closed this was probably due to a dropped internet connection
+        // we should do a retry loop!
+        setDeactive(true);
+        if (timer) clearInterval(timer);
+        setTimer(
+          setInterval(() => {
+            setRetry(true);
+          }, 2000)
+        );
+      };
+
+      newChatSocket.onmessage = (e) => {
+        const parsedData = JSON.parse(e.data);
+
+        // Update seen status after history messages have been loaded
+        if (parsedData.type === MessageType.GET_HISTORY) {
+          const chatMsgList: ChatMsgType[] = [];
+          parsedData.messages.forEach((m: ChatMsgType) => {
+            const { partitionKey, rowKey, message, files, userId, seen, createdAt } = m;
+            chatMsgList.push({
+              partitionKey,
+              rowKey,
+              message,
+              files,
+              userId,
+              seen,
+              createdAt: new Date(createdAt),
+            });
+          });
+
+          // fix the cases when we get them out of time
+          chatMsgList.sort((a: ChatMsgType, b: ChatMsgType) => a.createdAt.getTime() - b.createdAt.getTime());
+          chatMsgsRef.current = chatMsgsRef.current.concat(chatMsgList);
+          setChatMsgs([...chatMsgsRef.current]);
+        } else if (parsedData.type === MessageType.CHAT_MESSAGE) {
+          const { partitionKey, rowKey, message, files, userId, seen, createdAt } = parsedData;
+
+          if (partitionKey === currentGroupRef.current.id.toString()) {
+            chatMsgsRef.current.push({
+              partitionKey,
+              rowKey,
+              message,
+              files,
+              userId,
+              seen,
+              createdAt: new Date(createdAt),
+            });
+            // fix the cases when we get them out of time
+            chatMsgsRef.current.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+            setChatMsgs([...chatMsgsRef.current]);
+          } else {
+            // handle notification for message being sent to another group
+            const group = userGroupsRef.current.find((g) => g.id.toString() === partitionKey);
+            if (
+              group &&
+              !group.has_unseen_messages &&
+              !(seen as string).split(" ").includes(activeUser.id.toString())
+            ) {
+              group.has_unseen_messages = true;
+              setUserGroups([...userGroupsRef.current]);
+            }
+          }
+        } else if (parsedData.type === MessageType.SEEN_MESSAGE) {
+          const { partitionKey, rowKey, seen } = parsedData;
+          // we only care if it's the last message
+          const lastMessage = chatMsgsRef.current[chatMsgsRef.current.length - 1];
+
+          if (lastMessage.partitionKey === partitionKey && lastMessage.rowKey === rowKey) {
+            lastMessage.seen = seen;
+            setChatMsgs([...chatMsgsRef.current]);
+          }
+        } else if (parsedData.type === MessageType.STATUS_UPDATE) {
+          const { status, userId } = parsedData;
+
+          for (let i = 0; i < userGroupsRef.current.length; i++) {
+            const user = userGroupsRef.current[i].user_set.find((u) => u.id === Number(userId));
+            if (user) {
+              user.status = status;
+              setUserGroups([...userGroupsRef.current]);
+            }
+          }
+        }
+      };
+
+      setChatSocket(newChatSocket);
     }
-
-    setRetry(false);
-    const newChatSocket = new WebSocket(
-      `ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${currentGroup.id}/${activeUser.id}/`
-    );
-
-    newChatSocket.onopen = () => {
-      setDeactive(false);
-      if (timer) clearInterval(timer);
-      setTimer(null);
-      chatMsgsRef.current = [];
-      setchatMsgs([]);
-    };
-
-    newChatSocket.onclose = () => {
-      // the websocket was closed this was probably due to a dropped internet connection
-      // we should do a retry loop!
-      setDeactive(true);
-      if (timer) clearInterval(timer);
-      setTimer(
-        setInterval(() => {
-          setRetry(true);
-        }, 2000)
-      );
-    };
-
-    newChatSocket.onmessage = (e) => {
-      const { message, files, userId, timestamp, rowKey, partitionKey, seen } = JSON.parse(e.data);
-      chatMsgsRef.current.push({ message, files, userId, timestamp: new Date(timestamp), rowKey, partitionKey, seen });
-      // fix the cases when we get them out of time
-      chatMsgsRef.current.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      setchatMsgs([...chatMsgsRef.current]);
-      lastMessageRef.current.scrollIntoView({ behaviour: "smooth" });
-    };
-    setChatSocket(newChatSocket);
-
-    // when the component drops close the socket
-    return () => {
-      newChatSocket.onclose = undefined;
-      newChatSocket.close();
-    };
   }, [currentGroup, retry]);
+
+  // Get history of chat after chatsocket has connected
+  useEffect(() => {
+    if (chatSocket?.readyState) {
+      chatSocket.send(
+        JSON.stringify({
+          type: MessageType.GET_HISTORY,
+          partitionKey: currentGroupRef.current.id.toString(),
+        })
+      );
+
+      setCurrentUsers(currentGroup.user_set.map((u) => String(u.id)));
+
+      return () => {
+        chatMsgsRef.current = [];
+        setChatMsgs([...chatMsgsRef.current]);
+      };
+    }
+    return;
+  }, [chatSocket?.readyState, currentGroupRef.current]);
+
+  // Update seen status of last message after chat messages have been loaded
+  useEffect(() => {
+    if (chatSocket?.readyState && chatMsgsRef.current.length > 0) {
+      const { partitionKey, rowKey, seen } = chatMsgsRef.current[chatMsgsRef.current.length - 1];
+      if (!(seen as string).split(" ").includes(activeUser.id.toString()))
+        chatSocket.send(
+          JSON.stringify({
+            type: MessageType.SEEN_MESSAGE,
+            partitionKey,
+            rowKey,
+            seen: `${seen} ${activeUser.id}`,
+          })
+        );
+    }
+  }, [chatSocket?.readyState, chatMsgsRef.current]);
+
+  useEffect(() => {
+    // chunk msgs together if sent within a minute from the same person
+    // write the profile picture in there as well
+    const user_map = {};
+    currentGroup.user_set.map((u) => (user_map[u.id] = u));
+    var current_msg_set: ChatMsgType[] = [];
+    var newest_msg: null | ChatMsgType = null;
+    var all_msgs: [User, ChatMsgType[]][] = [];
+    chatMsgs.map((m) => {
+      if (
+        newest_msg === null ||
+        (m.userId === newest_msg.userId && (m.createdAt.getTime() - newest_msg.createdAt.getTime()) / 1000 < 60)
+      ) {
+        // if over same minute
+        current_msg_set.push(m);
+        newest_msg = m;
+      } else {
+        all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+        current_msg_set = [m];
+        newest_msg = m;
+      }
+    });
+    if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+
+    setChunkedMsgs(all_msgs);
+  }, [currentGroupRef.current, chatMsgs]);
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
-      <Grid item xs={3} className={classes.borderRight500}>
+      <Grid item xl={2} md={3} lg={2} xs={3} sm={3} className={classes.borderRight500}>
         <Grid container spacing={1} alignItems="center">
           <Grid item xs={5}>
             <List>
               <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
-                  <Avatar alt={username} src={activeUser.profile_picture} />
+                  <Badge
+                    overlap="circle"
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    color="secondary"
+                    variant="dot"
+                  >
+                    <Avatar alt={username} src={activeUser.profile_picture} />
+                  </Badge>
                 </ListItemIcon>
                 <ListItemText primary={username} />
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={7} style={{textAlign: "right", paddingRight: "10px"}}>
+          <Grid item xs={7} style={{ textAlign: "right", paddingRight: "10px" }}>
             <Button
-              style={{maxWidth: "70%"}}
+              style={{ maxWidth: "70%" }}
               onClick={() => {
                 router.push(SEARCH_GROUPS_PATH);
               }}
               color="primary"
-              variant="contained"
+              variant="text"
             >
               <SearchRounded />
               Search
@@ -190,23 +287,38 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map((group, index) => (
             <ListItem
-              disabled={deactive}
-              className={clsx({ [classes.currentGroup]: group === currentGroup })}
-              button
               key={"Group-" + group.id}
+              disabled={deactive}
+              className={clsx({ [classes.currentGroup]: group.id === currentGroup.id })}
+              button
               onClick={() => {
-                setCurrentGroup(group);
+                group.has_unseen_messages = false;
+                currentGroupRef.current = group;
+                setUserGroups([...userGroupsRef.current]);
+                setCurrentGroup({ ...currentGroupRef.current });
               }}
             >
-              <ListItemText primary={group.name} />
-              {group === currentGroup ? (
+              <ListItemText
+                primary={
+                  <>
+                    {group.name}
+                    &nbsp; &nbsp;
+                    {group.has_unseen_messages && <Badge color="error" variant="dot" />}
+                  </>
+                }
+              />
+              {group.id === currentGroup.id ? (
                 <Button
                   className={classes.slimButton}
                   onClick={async () => {
-                    await axios.delete(process.env.NEXT_PUBLIC_API_URL + "/groups/" + group.id + "/remove_user/");
-                    userGroups.splice(index, 1);
-                    setUserGroups(userGroups);
-                    setCurrentGroup(userGroups.length > 0 ? userGroups[0] : null);
+                    await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/groups/${group.id}/remove_user/`);
+                    userGroupsRef.current.splice(index, 1);
+                    setUserGroups([...userGroupsRef.current]);
+                    setCurrentGroup(
+                      userGroupsRef.current.length > 0
+                        ? { ...userGroupsRef.current[0], has_unseen_messages: false }
+                        : null
+                    );
                   }}
                 >
                   <ExitToAppSharp />
@@ -217,75 +329,116 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           ))}
         </List>
       </Grid>
-      <Grid item xs={8}>
+      <Grid
+        item
+        xl={8}
+        md={7}
+        lg={7}
+        sm={6}
+        style={{ paddingTop: 0 }}
+        onDragOver={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
+        onDragEnter={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
+        onDragLeave={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
+        onDrop={fileDrop}
+      >
         <List className={classes.messageArea}>
-          {getMsgs().map(([user, chatMsgs], index) => {
-            const isActiveUser = user?.id === activeUser.id;
-            const last = chatMsgs[chatMsgs.length - 1];
-            return (
-              <ListItem key={index}>
-                <Grid container>
-                  <Grid item xs={12}>
-                    <ChatMessage
-                        msgs={chatMsgs}
-                        user={user}
-                        side={isActiveUser ? "right" : "left"} />
-                    <MediaRender url={last.files} isRight={isActiveUser ? true : false} />
+          <ScrollableMsgs ref={scrollableRef}>
+            {(() => {
+              const lastSeenSet = chatMsgs[chatMsgs.length - 1]?.seen.split(" ") || [];
+              const lastSeen = currentUsers.every((i) => lastSeenSet.includes(i));
+              let earliestSeenMsg: number | null = null;
+
+              const lastSeenSetUsers = currentGroup.user_set
+                .filter((x) => x.id != activeUser.id && lastSeenSet.includes(String(x.id)))
+                .map((x) => x.first_name);
+              let lastSeenUsers = "Seen by ";
+              lastSeenUsers += Array.from(new Set(lastSeenSetUsers)).slice(0, 3).join(", ");
+              if (lastSeenSetUsers.length == 0) {
+                lastSeenUsers = "Sent";
+              } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
+                lastSeenUsers += "everyone";
+              } else if (lastSeenSetUsers.length > 3) {
+                lastSeenUsers += `and ${lastSeenSetUsers.length - 3} others`;
+              }
+
+              if (!lastSeen) {
+                // hasn't been seen by all members so we should show the previous message that has
+                for (let i = chunkedMsgs.length - 2; i >= 0; i--) {
+                  let [_, chatMsgs] = chunkedMsgs[i];
+                  const msg = chatMsgs.find((x) => {
+                    const users = x.seen?.split(" ") || [];
+                    return currentUsers.every((i) => users.includes(i));
+                  });
+                  if (msg !== undefined) {
+                    earliestSeenMsg = i;
+                    break;
+                  }
+                }
+              }
+
+              return chunkedMsgs.map(([user, chatMsgs], index) => {
+                const isActiveUser = user?.id === activeUser.id;
+                let seen: string = "";
+                if (index == chunkedMsgs.length - 1) seen = (lastSeen ? "✓✓ " : "✓ ") + `${lastSeenUsers} `;
+                else if (index == earliestSeenMsg) seen = "✓✓ " + `Seen by everyone `;
+
+                return (
+                  <ListItem key={index}>
                     <Grid container>
                       <Grid item xs={12}>
+                        <ChatMessage
+                          msgs={chatMsgs}
+                          user={user}
+                          side={isActiveUser ? "right" : "left"}
+                          // :( it does exist they just have bad type script files
+                          onMediaLoad={() => (scrollableRef.current as any).measure()}
+                          onMessageChanged={async (type, msg, modification) => {
+                            const { rowKey, partitionKey } = msg;
+                            if (type == "edited") {
+                              const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/edit/`, {
+                                partitionKey,
+                                rowKey,
+                                message: modification,
+                              });
+                              if (response.data.status === "Edited") {
+                                msg.message = modification;
+                                setChatMsgs([...chatMsgsRef.current]);
+                              }
+                            } else if (type == "deleted") {
+                              const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/delete/`, {
+                                rowKey,
+                                partitionKey,
+                              });
+                              if (response.data.status === "Deleted") {
+                                const i = chatMsgsRef.current.findIndex((obj) => obj.rowKey == rowKey);
+                                chatMsgsRef.current.splice(i, 1);
+                                setChatMsgs([...chatMsgsRef.current]);
+                              }
+                            }
+                          }}
+                        />
                         <List className={clsx({ [classes.alignSelfRight]: isActiveUser })}>
                           <Box display="flex">
-                            <ListItem className={clsx({ [classes.alignSelfRight]: isActiveUser })}>
-                              <ListItemText
-                                className={clsx({ [classes.alignSelfRight]: isActiveUser })}
-                                style={{ width: "100px" }}
-                                secondary={
-                                  (currentGroup && last.seen.split(" ").every(i => currentGroup.user_set.map(u => String(u.id)).includes(i))
-                                    ? "✓ "
-                                    : "✓✓ ") + format(last.timestamp, "h:mm aa")
-                                }
-                              />
+                            <ListItem
+                              style={{ padding: 0 }}
+                              className={clsx({ [classes.alignSelfRight]: isActiveUser })}
+                            >
+                              {
+                                <ListItemText
+                                  className={clsx({ [classes.alignSelfRight]: isActiveUser }, classes.name)}
+                                  secondary={seen + format(chatMsgs[chatMsgs.length - 1].createdAt, "h:mm aa")}
+                                />
+                              }
                             </ListItem>
-                            {/* solve this laterz */}
-                            {/* {isActiveUser && (
-                              <EditDeleteChatMsgButton
-                                initialMessage={chatMsg.message}
-                                onEdit={async (changedMessage) => {
-                                  const { rowKey, partitionKey } = chatMsg;
-                                  const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/edit/`, {
-                                    rowKey,
-                                    partitionKey,
-                                    message: changedMessage,
-                                  });
-                                  if (response.data.status === "Edited") {
-                                    const i = chatMsgsRef.current.findIndex((obj) => obj.rowKey == rowKey);
-                                    chatMsgsRef.current[i].message = changedMessage;
-                                    setchatMsgs([...chatMsgsRef.current]);
-                                  }
-                                }}
-                                onDelete={async () => {
-                                  const { rowKey, partitionKey } = chatMsg;
-                                  const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/delete/`, {
-                                    rowKey,
-                                    partitionKey,
-                                  });
-                                  if (response.data.status === "Deleted") {
-                                    const i = chatMsgsRef.current.findIndex((obj) => obj.rowKey == rowKey);
-                                    setchatMsgs([...chatMsgsRef.current.splice(i, 1)]);
-                                  }
-                                }}
-                              />
-                            )} */}
                           </Box>
                         </List>
                       </Grid>
                     </Grid>
-                  </Grid>
-                </Grid>
-              </ListItem>
-            );
-          })}
-          <ListItem ref={lastMessageRef} />
+                  </ListItem>
+                );
+              });
+            })()}
+          </ScrollableMsgs>
         </List>
         <Divider />
         <form
@@ -297,13 +450,15 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               el.classList.add(classes.fly);
               setTimeout(() => el.classList.remove(classes.fly), 2000);
 
-              // Idk if there is a better way.
               chatSocket.send(
                 JSON.stringify({
-                  userId: activeUser.id,
-                  files,
+                  type: MessageType.CHAT_MESSAGE,
                   message,
-                  timestamp: new Date(),
+                  files,
+                  partitionKey: currentGroup.id.toString(),
+                  userId: activeUser.id,
+                  seen: activeUser.id.toString(),
+                  createdAt: new Date(),
                 })
               );
               setMessage("");
@@ -319,10 +474,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   fullWidth
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  onDragOver={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
-                  onDragEnter={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
-                  onDragLeave={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
-                  onDrop={fileDrop}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -330,14 +481,16 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                           sendGif={(gif) => {
                             chatSocket.send(
                               JSON.stringify({
-                                userId: activeUser.id,
-                                files: `https://i.giphy.com/media/${gif.id}/200w.gif`,
+                                type: MessageType.CHAT_MESSAGE,
                                 message: "",
-                                timestamp: new Date(),
+                                files: `https://i.giphy.com/media/${gif.id}/200w.gif`,
+                                partitionKey: currentGroup.id.toString(),
+                                userId: activeUser.id,
+                                seen: activeUser.id.toString(),
+                                createdAt: new Date(),
                               })
                             );
-                          }
-                          }
+                          }}
                         />
                         <EmojiPicker setMessage={(emoji) => setMessage(message + emoji)} />
                         <IconButton disabled={deactive} type="submit" color="inherit">
@@ -356,27 +509,36 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
         </form>
       </Grid>
-      <Grid item xs={1} className={classes.borderLeft500}>
+      <Grid item xs className={classes.borderLeft500}>
         <Button
-            onClick={() => {
-              popUser();
-              popToken();
-              router.push(LOGIN_PATH);
-            }}
-            style={{marginTop: "20px", marginLeft: "20px"}}
-            color="primary"
-            variant="contained"
-          >
+          onClick={() => {
+            popUser();
+            popToken();
+            router.push(LOGIN_PATH);
+          }}
+          style={{ marginTop: "20px", marginLeft: "20px" }}
+          color="primary"
+          variant="outlined"
+        >
           Logout
         </Button>
         <List className={classes.userList}>
           {currentGroup &&
-            currentGroup.user_set.map((user) => (
-              <ListItem>
+            currentGroup.user_set.map((user, index) => (
+              <ListItem key={index}>
                 <ListItemIcon>
-                  <Avatar alt={user.first_name} src={user.profile_picture} />
+                  <Badge
+                    overlap="circle"
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    color={user.status === Status.ONLINE ? "secondary" : "error"}
+                    variant="dot"
+                  >
+                    <Avatar alt={user.first_name} src={user.profile_picture} />
+                  </Badge>
                 </ListItemIcon>
-                <ListItemText primary={user.first_name + " " + user.last_name} />
+                <ListItemText
+                  primary={`${user.first_name} ${user.last_name}${user.id === activeUser.id ? " (you)" : ""}`}
+                />
               </ListItem>
             ))}
         </List>
@@ -385,19 +547,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   );
 };
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
   chatSection: { width: "100%", height: "100vh" },
   headBG: { backgroundColor: "#e0e0e0" },
   borderRight500: { borderRight: "1px solid #e0e0e0" },
   borderLeft500: { borderLeft: "1px solid #e0e0e0" },
   userList: { overflowY: "auto", display: "flex", flexDirection: "column", flexGrow: 1 },
-  messageArea: { height: "90vh", overflowY: "auto" },
+  messageArea: { height: "90vh" },
   alignSelfRight: { textAlign: "right" },
+  name: { marginLeft: "48px" },
   searchBox: { padding: 10 },
   chatBox: { padding: 20 },
-  currentGroup: {
-    border: "2px solid black",
-  },
+  currentGroup: { border: "2px solid black" },
   hide: { visibility: "hidden" },
   slimButton: { padding: 5 },
   fly: {

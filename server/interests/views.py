@@ -1,7 +1,8 @@
 from rest_framework.viewsets import ModelViewSet
 
+from .graph_serializer import InterestGraphSerializer
 from .models import Interest
-from .serializers import InterestGraphSerializer, InterestSerializer
+from .serializers import InterestSerializer
 
 
 class InterestViewSet(ModelViewSet):

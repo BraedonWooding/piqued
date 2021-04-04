@@ -3,9 +3,10 @@ import { FC } from "react";
 interface MediaRenderProps {
   url: string;
   isRight: boolean;
+  onLoad: () => void;
 }
 
-export const MediaRender: FC<MediaRenderProps> = ({ url, isRight }: MediaRenderProps) => {
+export const MediaRender: FC<MediaRenderProps> = ({ url, isRight, onLoad }: MediaRenderProps) => {
   const align = isRight ? "right" : "left";
   const justify = isRight ? "flex-end" : "flex-start";
   var isImage: boolean =
@@ -21,13 +22,13 @@ export const MediaRender: FC<MediaRenderProps> = ({ url, isRight }: MediaRenderP
   if (isImage) {
     return (
       <div style={{ textAlign: align, justifyContent: justify }}>
-        <img src={url} width="20%" />
+        <img src={url} min-width="40%" onLoad={onLoad} />
       </div>
     );
   } else if (isVideo) {
     return (
       <div style={{ textAlign: align, justifyContent: justify }}>
-        <video width="20%" autoPlay={true} muted={true} loop={true}>
+        <video width="40%" autoPlay={true} muted={true} loop={true}>
           <source src={url} />
         </video>
       </div>
