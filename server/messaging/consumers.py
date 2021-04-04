@@ -74,7 +74,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
     def sendNotifications(self, message):
         groupId = int(message['PartitionKey'])
         stringMessage = message['message']
-        piquedGroup = PiquedGroup.objects.all().filter(group_id=groupId).first()
+        piquedGroup = PiquedGroup.objects.filter(group_id=groupId).first()
 
         # Getting muted users dict
         try:
@@ -84,13 +84,12 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
         group = piquedGroup.group
         
-        users = group.user_set.all()
+        users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
         for user in users:
             # If mutedUsers[user.id] < 0, it is muted indefinitely
-            if str(user.id) in mutedUsers and (mutedUsers[str(user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.id)], tz=timezone.utc)):
+            if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
                 continue
-            piquedUser = PiquedUser.objects.all().filter(user=user.id).first()
-            sendToAllUserDevices(piquedUser, group.name, stringMessage)
+            sendToAllUserDevices(user, group.name, stringMessage)
             
     def get_groups(self):
         groups = Group.objects.filter(user__id__exact=self.userId)
