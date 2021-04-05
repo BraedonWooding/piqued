@@ -14,7 +14,7 @@ class PiquedUserSerializer(serializers.Serializer):
     username = serializers.CharField(source='user.username', validators=[UniqueValidator(
         queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
-    groups = GroupSerializer(source='user.groups', many=True, read_only=True)
+    groups = serializers.SerializerMethodField(read_only=True)
     groups_created = serializers.SerializerMethodField(read_only=True)
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
