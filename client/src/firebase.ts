@@ -25,7 +25,7 @@ Called if/when we want foreground notifications to be handled in some way
 export const setupForegroundHandling = () => {
   const messaging = firebase.messaging();
   messaging.onMessage((payload) => {
-    console.log('payload is ', payload)
+    console.log('Payload is ', payload)
   })
 }
 
@@ -36,16 +36,12 @@ export const addToken = () => {
   const messaging = firebase.messaging();
   messaging.getToken({ vapidKey: vapidKey }).then((currentToken) => {
     if (currentToken) {
-      console.log(currentToken)
       const fcm_token = {
         "fcm_token": currentToken
       }
       axios.post(process.env.NEXT_PUBLIC_API_URL + "/add_fcm_tokens/", fcm_token)
-      .then((response) => {
-        console.log(response.status)
-      })
       .catch((error) => {
-        console.error({ error })
+        console.error({ error });
       })
     } else {
       console.log('No registration token available. Request permission to generate one.');
@@ -62,14 +58,10 @@ export const removeToken = () => {
   const messaging = firebase.messaging();
   return messaging.getToken({ vapidKey: vapidKey }).then((currentToken) => {
     if (currentToken) {
-      console.log(currentToken)
       const fcm_token = {
         "fcm_token": currentToken
       }
       axios.post(process.env.NEXT_PUBLIC_API_URL + "/remove_fcm_tokens/", fcm_token)
-      .then((response) => {
-        console.log(response.status)
-      })
       .catch((error) => {
         console.error({ error })
       })

@@ -58,21 +58,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const [groupHover, setGroupHover] = useState(new Array(activeUser.groups.length).fill(false));
+  const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
 
   const handleGroupHover = (index) => {
-    setGroupHover((prevArray) => {
-      const newArr = [...prevArray]; // copying the old array
-      newArr[index] = true;
-      return newArr;
-    });
+    setGroupHover(index);
   };
-  const handleGroupLeave = (index) => {
-    setGroupHover((prevArray) => {
-      const newArr = [...prevArray]; // copying the old array
-      newArr[index] = false;
-      return newArr;
-    });
+  const handleGroupLeave = () => {
+    setGroupHover(null);
   };
   const [timer, setTimer] = useState<NodeJS.Timeout>(null);
   const lastMessageRef = useRef<HTMLDivElement>();
@@ -284,8 +276,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map((group, index) => (
             <ListItem
-              onMouseEnter={ (e) => handleGroupHover(index) }
-              onMouseLeave={ (e) => handleGroupLeave(index) }
+              onMouseOver={ (e) => handleGroupHover(index) }
+              onMouseLeave={ (e) => handleGroupLeave() }
               key={"Group-" + group.id}
               disabled={deactive}
               className={clsx({ [classes.currentGroup]: group.id === currentGroup.id })}
@@ -325,7 +317,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   Leave
                 </Button>
               ) : null}
-              {groupHover[index] === true ? (
+              {groupHover === index ? (
                 <MuteButton
                   userId={activeUser.id}
                   groupId={group.id}
