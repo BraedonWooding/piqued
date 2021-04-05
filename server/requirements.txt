@@ -12,3 +12,6 @@ azure-cosmosdb-table
 Pillow
 pyodbc
 firebase-admin
+textblob
+fuzzywuzzy
+nltk
