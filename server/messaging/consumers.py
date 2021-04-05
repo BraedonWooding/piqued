@@ -32,19 +32,18 @@ class MessageType(str, Enum):
 
 
 class GroupConsumer(AsyncWebsocketConsumer):
-
     async def connect(self):
         try:
             self.userId = self.scope['url_route']['kwargs']['userId']
             self.table_service = TableService(
                 account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY
             )
+            self.groupIds = []
 
             await self.accept()
 
-            self.groups = await database_sync_to_async(self.get_groups)()
-
-            for group in self.groups:
+            for group in await database_sync_to_async(self.get_groups)():
+                self.groupIds.append(group.id)
                 # Join channel group for each group user is in
                 await self.channel_layer.group_add(
                     'chat_%s' % group.id,
@@ -96,10 +95,10 @@ class GroupConsumer(AsyncWebsocketConsumer):
         return list(groups.all())
 
     async def disconnect(self, close_code):
-        for group in self.groups:
+        for groupId in self.groupIds:
             # Leave channel group for each group user is in
             await self.channel_layer.group_send(
-                "chat_%s" % group.id,
+                "chat_%s" % groupId,
                 {
                     'type': MessageType.STATUS_UPDATE,
                     'userId': self.userId,
@@ -107,11 +106,10 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'isResponse': False
                 })
             await self.channel_layer.group_discard(
-                'chat_%s' % group.id,
+                'chat_%s' % groupId,
                 self.channel_name
             )
 
-    # Receive message from WebSocket
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
@@ -246,13 +244,13 @@ class GroupConsumer(AsyncWebsocketConsumer):
     async def status_update(self, event):
         try:
             await self.send(text_data=json.dumps({
-                'type': MessageType.STATUS_UPDATE,
+                'type': event['type'],
                 'status': event["status"],
                 'userId': event["userId"],
             }))
             if (not event["isResponse"]):
-                for group in self.groups:
-                    await self.channel_layer.group_send("chat_%s" % group.id, {
+                for groupId in self.groupIds:
+                    await self.channel_layer.group_send("chat_%s" % groupId, {
                         'type': MessageType.STATUS_UPDATE,
                         'status': event["status"],
                         'userId': self.userId,
