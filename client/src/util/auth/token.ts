@@ -18,7 +18,7 @@ export const setToken = (token: Token) => localStorage.setItem(TOKEN, JSON.strin
 
 export const refreshAccessToken = async () => {
   const res = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/token/refresh/", {
-    refresh_token: popToken().refresh,
+    refresh: popToken().refresh,
   });
   setToken(res.data);
 };

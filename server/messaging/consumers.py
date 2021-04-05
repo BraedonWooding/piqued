@@ -2,39 +2,61 @@
 import json
 import sys
 import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from enum import Enum
 
-from asgiref.sync import sync_to_async
-from azure.cosmosdb.table.models import Entity
-from azure.cosmosdb.table.tablebatch import TableBatch
 from azure.cosmosdb.table.tableservice import TableService
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from dateutil import parser, tz
 from django.conf import settings
+from django.contrib.auth.models import Group
+from groups.models import PiquedGroup
+from user.models import PiquedUser
+from firebase_notifications.notificationSend import sendToAllUserDevices
+from asgiref.sync import sync_to_async
 
 
 def handleException(e, loc):
     exc_type = e[0]
     exc_value = e[1]
     exc_tb = e[2]
-    print("\n\n--------\nError in " + loc + "\n" + str(exc_value) + "\nTraceback: " + str(traceback.format_exception(exc_type, exc_value, exc_tb)))
+    print("\n\n--------\nError in " + loc + "\n" + str(exc_value) +
+          "\nTraceback: " + str(traceback.format_exception(exc_type, exc_value, exc_tb)))
+
+
+class MessageType(str, Enum):
+    GET_HISTORY = "get_history",
+    CHAT_MESSAGE = "chat_message",
+    SEEN_MESSAGE = "seen_message",
+    STATUS_UPDATE = "status_update"
+
 
 class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
-            self.groupId = self.scope['url_route']['kwargs']['groupId']
             self.userId = self.scope['url_route']['kwargs']['userId']
-            self.channelGroupName = 'chat_%s' % self.groupId
-
-            # Join channel group
-            await self.channel_layer.group_add(
-                self.channelGroupName,
-                self.channel_name
-            )
-
             self.table_service = TableService(
                 account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY
             )
+            self.groupIds = []
+
+            await self.accept()
+
+            for group in await database_sync_to_async(self.get_groups)():
+                self.groupIds.append(group.id)
+                # Join channel group for each group user is in
+                await self.channel_layer.group_add(
+                    'chat_%s' % group.id,
+                    self.channel_name
+                )
+                await self.channel_layer.group_send(
+                    "chat_%s" % group.id,
+                    {
+                        'type': MessageType.STATUS_UPDATE,
+                        'userId': self.userId,
+                        'status': "Online",
+                        'isResponse': False
+                    })
 
             try:
                 if not self.table_service.exists('Messages'):
@@ -44,88 +66,196 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 if not self.table_service.exists('Messages'):
                     raise
 
-            self.msgs = await sync_to_async(self.get_history)()
-
-            await self.accept()
-
-            for msg in self.msgs:
-                await self.chat_message(msg)
         except Exception:
-            handleException(sys.exc_info(),"connecting to socket.")
+            handleException(sys.exc_info(), "connecting to socket.")
+    
+    # Takes in a message object
+    def sendNotifications(self, message):
+        groupId = int(message['PartitionKey'])
+        stringMessage = message['message']
+        piquedGroup = PiquedGroup.objects.filter(group_id=groupId).first()
 
+        # Getting muted users dict
+        try:
+            mutedUsers = json.loads(piquedGroup.muted_users)
+        except:
+            mutedUsers = {}
 
-    def get_history(self, msgs_since=datetime.now(timezone.utc) - timedelta(days=30)):
-        filter = "PartitionKey eq '" + str(self.groupId) + "' and deleted eq 0"
-        msgs = self.table_service.query_entities('Messages', filter=filter)
-        return msgs
+        group = piquedGroup.group
+        
+        users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
+        for user in users:
+            # If mutedUsers[user.id] < 0, it is muted indefinitely
+            if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
+                continue
+            sendToAllUserDevices(user, group.name, stringMessage)
+            
+    def get_groups(self):
+        groups = Group.objects.filter(user__id__exact=self.userId)
+        return list(groups.all())
 
     async def disconnect(self, close_code):
-        # Leave room group
-        await self.channel_layer.group_discard(
-            self.channelGroupName,
-            self.channel_name
-        )
+        for groupId in self.groupIds:
+            # Leave channel group for each group user is in
+            await self.channel_layer.group_send(
+                "chat_%s" % groupId,
+                {
+                    'type': MessageType.STATUS_UPDATE,
+                    'userId': self.userId,
+                    'status': "Offline",
+                    'isResponse': False
+                })
+            await self.channel_layer.group_discard(
+                'chat_%s' % groupId,
+                self.channel_name
+            )
 
-    # Receive message from WebSocket
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            message = text_data_json['message']
-            files = text_data_json['files'] # Files are urls
-            userId = text_data_json['userId']
-            timestamp = datetime.now(timezone.utc)
-            rowKey = str(int(timestamp.timestamp() * 10000000))
-
-            msg = {
-                'PartitionKey': str(self.groupId),
-                'RowKey': rowKey,
-                'message': message,
-                'files': files,
-                'deleted': 0,
-                'userId': int(userId),
-                'seen': str(self.userId) + " ",
-                'createdAt': timestamp}
-            print(f"Received Message for {userId} in group {self.groupId}: {msg}")
-            self.table_service.insert_entity('Messages', msg)
+            message_type = text_data_json['type']
 
             # Send message to room group
-            await self.channel_layer.group_send(
-                self.channelGroupName,
-                {
-                    'type': 'chat_message',
+            if message_type == MessageType.GET_HISTORY:
+                await self.get_history({
+                    'partitionKey':  text_data_json['partitionKey'],
+                })
+            elif message_type == MessageType.CHAT_MESSAGE:
+                createdAt = datetime.now(timezone.utc)
+                partitionKey = text_data_json['partitionKey']
+                rowKey = str(int(createdAt.timestamp() * 10000000))
+                message = text_data_json['message']
+                files = text_data_json['files']  # Files are urls
+                userId = text_data_json['userId']
+                seen = text_data_json["seen"]
+
+                msg = {
+                    'PartitionKey': partitionKey,
+                    'RowKey': rowKey,
                     'message': message,
                     'files': files,
+                    'deleted': 0,
                     'userId': userId,
-                    'createdAt': timestamp.astimezone(),
-                    'PartitionKey':  str(self.groupId),
-                    'RowKey': rowKey,
-                    'seen': str(self.userId) + " "
+                    'seen': seen,
+                    'createdAt': createdAt
                 }
-            )
-        except Exception:
-            handleException(sys.exc_info(),"socket receiving data from client.")
 
-    # Receive message from room group
+                self.table_service.insert_entity('Messages', msg)
+
+                await self.channel_layer.group_send(
+                    "chat_%s" % partitionKey,
+                    {
+                        'type': message_type,
+                        'PartitionKey': partitionKey,
+                        'RowKey': rowKey,
+                        'message': message,
+                        'files': files,
+                        'userId': userId,
+                        'seen': seen,
+                        'createdAt': createdAt.astimezone(),
+                    }
+                )
+                
+                # Send firebase notifications
+                await sync_to_async(self.sendNotifications)(msg)
+
+            elif message_type == MessageType.SEEN_MESSAGE:
+                partitionKey = text_data_json['partitionKey']
+
+                await self.channel_layer.group_send(
+                    "chat_%s" % partitionKey, {
+                        'type': MessageType.SEEN_MESSAGE,
+                        'partitionKey': partitionKey,
+                        'rowKey':  text_data_json['rowKey'],
+                        'seen':  text_data_json['seen'],
+                    })
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving data from client.")
+
+    # Function handlers to receive message from room group based on message type
+    async def get_history(self, event):
+        try:
+            partitionKey = event['partitionKey']
+            messages = self.table_service.query_entities(
+                'Messages', filter="PartitionKey eq '%s' and deleted eq 0" % partitionKey)
+            serializable_messages = []
+
+            for message in messages:
+                serializable_messages.append({
+                    'partitionKey': message["PartitionKey"],
+                    'rowKey': message["RowKey"],
+                    'message': message['message'],
+                    'files': message['files'],
+                    'userId': message['userId'],
+                    'seen': message['seen'],
+                    'createdAt': str(message["createdAt"]),
+                })
+
+            await self.history_messages({'type': MessageType.GET_HISTORY, 'messages': serializable_messages})
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'get_history' from socket_group (channel layer).")
+
+    async def history_messages(self, event):
+        try:
+            await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'messages': event['messages'],
+            }))
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'history_messages' from socket_group (channel layer).")
+
     async def chat_message(self, event):
         try:
-            seen = event['seen']
-            if str(self.userId) not in seen.split():
-                seen += str(self.userId) + " "
-                msg = {'PartitionKey': event["PartitionKey"], 
-                    'RowKey': event["RowKey"],
-                    'seen': seen
-                }
-                self.table_service.merge_entity('Messages', msg)
-
-            # Send message to WebSocket
             await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'partitionKey': event["PartitionKey"],
+                'rowKey': event["RowKey"],
                 'message': event['message'],
                 'files': event['files'],
                 'userId': event['userId'],
-                'timestamp': str(event["createdAt"]),
-                'partitionKey': event["PartitionKey"],
-                'rowKey': event["RowKey"],
-                'seen': seen
+                'seen': event['seen'],
+                'createdAt': str(event["createdAt"]),
             }))
         except Exception:
-            handleException(sys.exc_info(),"socket recieving message from socket_group (channel layer).")
+            handleException(
+                sys.exc_info(), "socket receiving message type 'chat_message' from socket_group (channel layer).")
+
+    async def seen_message(self, event):
+        try:
+            self.table_service.merge_entity('Messages', {
+                'PartitionKey': event["partitionKey"],
+                'RowKey': event["rowKey"],
+                'seen': event['seen']
+            })
+
+            await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'partitionKey': event["partitionKey"],
+                'rowKey': event["rowKey"],
+                'seen': event['seen'],
+            }))
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'seen_message' from socket_group (channel layer).")
+
+    async def status_update(self, event):
+        try:
+            await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'status': event["status"],
+                'userId': event["userId"],
+            }))
+            if (not event["isResponse"]):
+                for groupId in self.groupIds:
+                    await self.channel_layer.group_send("chat_%s" % groupId, {
+                        'type': MessageType.STATUS_UPDATE,
+                        'status': event["status"],
+                        'userId': self.userId,
+                        'isResponse': True
+                    })
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'status_update' from socket_group (channel layer).")

@@ -7,6 +7,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
+import { HOME_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -50,12 +51,14 @@ const InitDetails = () => {
           interests: [],
         }}
         onSubmit={async (values) => {
+          values.interests?.map((x) => x.id)
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
             program: values.program?.id,
             courses: values.courses?.map((x) => x.id),
+            interests: userInterests
           });
-          router.push("/home");
+          router.push(HOME_PATH);
         }}
         validationSchema={validationSchema}
       >
@@ -118,10 +121,10 @@ const InitDetails = () => {
                       id="interests"
                       placeholder="Interests"
                       options={interests}
-                      value={getUser().interests}
+                      value={userInterests}
                       onChange={(e, values) => {
                         setFieldValue("interests", values)
-                        console.log(testref.current)
+                        setUserInterests(values)
                       }
                       }
                       renderInput={(params) => (
@@ -135,6 +138,7 @@ const InitDetails = () => {
                         />
                       )}
                       getOptionLabel={(option) => `${option.name}`}
+                      getOptionSelected={(option, value) => option.id === value.id}
                     />
                   </Grid>
                 </Grid>
