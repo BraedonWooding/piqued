@@ -6,6 +6,7 @@ from django.shortcuts import render
 from groups.models import Group, PiquedGroup
 from groups.serializers import PiquedGroupSerializer
 from info.models import Course, Program
+from info.serializers import CourseSerializer, ProgramSerializer
 from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework.decorators import action, api_view
@@ -80,6 +81,8 @@ class TranscriptViewSet(ViewSet):
         if not programObj:
             print("invalid program") # replace with response
 
+        programResponse = list(programObj)[0]
+
         interestsToReturn = []
 
         programInterest = Interest.objects.filter(name=programObj[0].name)
@@ -93,6 +96,8 @@ class TranscriptViewSet(ViewSet):
         courseObj = Course.objects.filter(course_code__in=courseList)
         if not courseObj:
             print("invalid course set")
+
+        coursesResponse = list(courseObj)
 
         # grab courses interest
         courseInterests = Interest.objects.filter(name__in=[c.course_code for c in courseObj])
@@ -145,10 +150,13 @@ class TranscriptViewSet(ViewSet):
 
         group_serializer = PiquedGroupSerializer(groupsToReturn, many=True)
         interest_serializer = InterestSerializer(interestsToReturn, many=True)
+        program_serializer = ProgramSerializer(programResponse)
+        course_serializer = CourseSerializer(coursesResponse,many=True)
 
         return Response({
-            'groups':group_serializer.data,
-            'interests':interest_serializer.data
+            # 'groups':group_serializer.data,
+            # 'interests':interest_serializer.data,
+            'programs': program_serializer.data,
+            'courses': course_serializer.data
         })
         # return Response('good')
-
