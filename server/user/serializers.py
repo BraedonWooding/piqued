@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from groups.models import PiquedGroup
-from groups.serializers import GroupSerializer, PiquedGroupSerializer
+from groups.serializers import PiquedGroupSerializer
 from info.serializers import CourseSerializer, ProgramSerializer
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
@@ -26,9 +26,10 @@ class PiquedUserSerializer(serializers.Serializer):
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
     date_of_birth = serializers.DateField()
-    interests = InterestSerializer(many=True)
-    program = ProgramSerializer()
-    courses = CourseSerializer(many=True)
+    fcm_tokens = serializers.CharField(required=False)
+    interests = InterestSerializer(many=True, required=False)
+    program = ProgramSerializer(required=False)
+    courses = CourseSerializer(many=True, required=False)
 
     def get_groups_created(self, obj: PiquedUser):
         return [x.id for x in obj.groups_created.all()]

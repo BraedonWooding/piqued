@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField
+  TextField,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -22,7 +22,7 @@ import { EmojiPicker } from "components/Elements/EmojiPicker";
 import { GifPicker } from "components/Elements/GifPicker";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
-import { DragEvent, FC, useEffect, useRef, useState } from "react";
+import React, { DragEvent, FC, useEffect, useRef, useState } from "react";
 import Measure from "react-measure";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
@@ -30,8 +30,10 @@ import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types"
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
+import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
 import { FileStatusBar } from "./FileStatusBar";
+import { MuteButton } from "./MuteButton";
 import { ScrollableMsgs } from "./ScrollableMsgs";
 
 interface ChatProps {
@@ -52,6 +54,17 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const scrollableRef = useRef<Measure>();
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
+
+  const handleGroupHover = (index) => {
+    setGroupHover(index);
+  };
+  const handleGroupLeave = () => {
+    setGroupHover(null);
+  };
   const [timer, setTimer] = useState<NodeJS.Timeout>(null);
   const username = `${activeUser.first_name} ${activeUser.last_name}`;
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -65,7 +78,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   };
 
   const uploadFiles = async () => {
-    const urls: { url: string, type: string }[] = [];
+    const urls: { url: string; type: string }[] = [];
     for (let i = 0; i < selectedFiles.length; i++) {
       const formData = new FormData();
       formData.append("file", selectedFiles[i]);
@@ -116,7 +129,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               rowKey,
               message,
               // @HACK: Backward support for single files
-              files: (typeof(files) === "string" && (files as string).includes("[")) ? JSON.parse(files) : [{url: files as unknown as string}].filter(f => f && f.url && f.url.trim()),
+              files:
+                typeof files === "string" && (files as string).includes("[")
+                  ? JSON.parse(files)
+                  : [{ url: (files as unknown) as string }].filter((f) => f && f.url && f.url.trim()),
               userId,
               seen,
               createdAt: new Date(createdAt),
@@ -136,7 +152,10 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               rowKey,
               message,
               // @HACK: Backward support for single files
-              files: (typeof(files) === "string" && (files as string).includes("[")) ? JSON.parse(files) : [{url: files as unknown as string}].filter(f => f && f.url && f.url.trim()),
+              files:
+                typeof files === "string" && (files as string).includes("[")
+                  ? JSON.parse(files)
+                  : [{ url: (files as unknown) as string }].filter((f) => f && f.url && f.url.trim()),
               userId,
               seen,
               createdAt: new Date(createdAt),
@@ -193,7 +212,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         })
       );
 
-      setCurrentUsers(currentGroup.user_set.map((u) => String(u.id)));
+      setCurrentUsers([...currentGroupRef.current.user_set.map((u) => String(u.id))]);
 
       return () => {
         chatMsgsRef.current = [];
@@ -222,28 +241,30 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   useEffect(() => {
     // chunk msgs together if sent within a minute from the same person
     // write the profile picture in there as well
-    const user_map = {};
-    currentGroup.user_set.map((u) => (user_map[u.id] = u));
-    var current_msg_set: ChatMsgType[] = [];
-    var newest_msg: null | ChatMsgType = null;
-    var all_msgs: [User, ChatMsgType[]][] = [];
-    chatMsgs.map((m) => {
-      if (
-        newest_msg === null ||
-        (m.userId === newest_msg.userId && (m.createdAt.getTime() - newest_msg.createdAt.getTime()) / 1000 < 60)
-      ) {
-        // if over same minute
-        current_msg_set.push(m);
-        newest_msg = m;
-      } else {
-        all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
-        current_msg_set = [m];
-        newest_msg = m;
-      }
-    });
-    if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+    if (currentGroup) {
+      const user_map = {};
+      currentGroup.user_set.map((u) => (user_map[u.id] = u));
+      var current_msg_set: ChatMsgType[] = [];
+      var newest_msg: null | ChatMsgType = null;
+      var all_msgs: [User, ChatMsgType[]][] = [];
+      chatMsgs.map((m) => {
+        if (
+          newest_msg === null ||
+          (m.userId === newest_msg.userId && (m.createdAt.getTime() - newest_msg.createdAt.getTime()) / 1000 < 60)
+        ) {
+          // if over same minute
+          current_msg_set.push(m);
+          newest_msg = m;
+        } else {
+          all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+          current_msg_set = [m];
+          newest_msg = m;
+        }
+      });
+      if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
 
-    setChunkedMsgs(all_msgs);
+      setChunkedMsgs(all_msgs);
+    }
   }, [currentGroupRef.current, chatMsgs]);
 
   return (
@@ -287,11 +308,14 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             (group, index) =>
               (!group.expired_at || Date.now() > group.expired_at.getTime()) && (
                 <ListItem
+                  onMouseOver={(e) => handleGroupHover(index)}
+                  onMouseLeave={(e) => handleGroupLeave()}
                   key={"Group-" + group.id}
                   disabled={deactive}
                   className={clsx({ [classes.currentGroup]: group.id === currentGroup.id })}
                   button
                   onClick={() => {
+                    setCurrentGroup(group);
                     group.has_unseen_messages = false;
                     currentGroupRef.current = group;
                     setUserGroups([...userGroupsRef.current]);
@@ -325,6 +349,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                       Leave
                     </Button>
                   ) : null}
+                  {groupHover === index ? <MuteButton userId={activeUser.id} groupId={group.id} /> : null}
                 </ListItem>
               )
           )}
@@ -341,24 +366,26 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         onDragLeave={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
         onDrop={fileDrop}
       >
-        <List style={{paddingTop: 0}} className={classes.messageArea}>
+        <List style={{ paddingTop: 0 }} className={classes.messageArea}>
           <ScrollableMsgs ref={scrollableRef}>
             {(() => {
               const lastSeenSet = chatMsgs[chatMsgs.length - 1]?.seen.split(" ") || [];
               const lastSeen = currentUsers.every((i) => lastSeenSet.includes(i));
               let earliestSeenMsg: number | null = null;
-
-              const lastSeenSetUsers = currentGroup.user_set
-                .filter((x) => x.id != activeUser.id && lastSeenSet.includes(String(x.id)))
-                .map((x) => x.first_name);
               let lastSeenUsers = "Seen by ";
-              lastSeenUsers += Array.from(new Set(lastSeenSetUsers)).slice(0, 3).join(", ");
-              if (lastSeenSetUsers.length == 0) {
-                lastSeenUsers = "Sent";
-              } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
-                lastSeenUsers = "Seen by everyone";
-              } else if (lastSeenSetUsers.length > 3) {
-                lastSeenUsers += `and ${lastSeenSetUsers.length - 3} others`;
+
+              if (currentGroup) {
+                const lastSeenSetUsers = currentGroup.user_set
+                  .filter((x) => x.id != activeUser.id && lastSeenSet.includes(String(x.id)))
+                  .map((x) => x.first_name);
+                lastSeenUsers += Array.from(new Set(lastSeenSetUsers)).slice(0, 3).join(", ");
+                if (lastSeenSetUsers.length == 0) {
+                  lastSeenUsers = "Sent";
+                } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
+                  lastSeenUsers = "Seen by everyone";
+                } else if (lastSeenSetUsers.length > 3) {
+                  lastSeenUsers += `and ${lastSeenSetUsers.length - 3} others`;
+                }
               }
 
               if (!lastSeen) {
@@ -511,7 +538,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       </Grid>
       <Grid item xs className={classes.borderLeft500}>
         <Button
-          onClick={() => {
+          onClick={async () => {
+            await removeToken(); // Removing FCM token from database. Ensure this finishes before popping user and token
             popUser();
             popToken();
             router.push(LOGIN_PATH);
