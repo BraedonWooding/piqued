@@ -20,6 +20,7 @@ const InitDetails = () => {
   const [degrees, setDegrees] = useState([]);
   const [interests, setInterests] = useState([]);
   const router = useRouter();
+  const [scrapedCourses, setScrapedCourses] = useState([])
 
   useEffect(() => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
@@ -87,6 +88,7 @@ const InitDetails = () => {
                       id="courses"
                       placeholder="Courses"
                       options={courses}
+                      value={courses}
                       onChange={(e, values) => setFieldValue("courses", values)}
                       renderInput={(params) => (
                         <TextField
