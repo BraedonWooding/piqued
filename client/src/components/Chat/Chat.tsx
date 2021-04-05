@@ -34,6 +34,8 @@ import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { FileStatusBar } from "./FileStatusBar";
 import { MediaRender } from "./MediaRender";
+import { removeToken } from '../../firebase'
+import { MuteButton } from "./MuteButton";
 
 interface ChatProps {
   activeUser: User;
@@ -53,6 +55,17 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const currentGroupRef = useRef(currentGroup);
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
+
+  const handleGroupHover = (index) => {
+    setGroupHover(index);
+  };
+  const handleGroupLeave = () => {
+    setGroupHover(null);
+  };
   const [timer, setTimer] = useState<NodeJS.Timeout>(null);
   const lastMessageRef = useRef<HTMLDivElement>();
   const username = `${activeUser.first_name} ${activeUser.last_name}`;
@@ -263,11 +276,14 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map((group, index) => (
             <ListItem
+              onMouseOver={ (e) => handleGroupHover(index) }
+              onMouseLeave={ (e) => handleGroupLeave() }
               key={"Group-" + group.id}
               disabled={deactive}
               className={clsx({ [classes.currentGroup]: group.id === currentGroup.id })}
               button
               onClick={() => {
+                setCurrentGroup(group);
                 group.has_unseen_messages = false;
                 currentGroupRef.current = group;
                 setUserGroups([...userGroupsRef.current]);
@@ -300,6 +316,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   <ExitToAppSharp />
                   Leave
                 </Button>
+              ) : null}
+              {groupHover === index ? (
+                <MuteButton
+                  userId={activeUser.id}
+                  groupId={group.id}
+                />
               ) : null}
             </ListItem>
           ))}
@@ -450,7 +472,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
       </Grid>
       <Grid item xs={1} className={classes.borderLeft500}>
         <Button
-          onClick={() => {
+          onClick={async () => {
+            await removeToken(); // Removing FCM token from database. Ensure this finishes before popping user and token
             popUser();
             popToken();
             router.push(LOGIN_PATH);
