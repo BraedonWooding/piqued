@@ -356,7 +356,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               if (lastSeenSetUsers.length == 0) {
                 lastSeenUsers = "Sent";
               } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
-                lastSeenUsers += "everyone";
+                lastSeenUsers = "Seen by everyone";
               } else if (lastSeenSetUsers.length > 3) {
                 lastSeenUsers += `and ${lastSeenSetUsers.length - 3} others`;
               }
@@ -369,7 +369,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                     const users = x.seen?.split(" ") || [];
                     return currentUsers.every((i) => users.includes(i));
                   });
-                  if (msg !== undefined) {
+                  if (msg) {
                     earliestSeenMsg = i;
                     break;
                   }

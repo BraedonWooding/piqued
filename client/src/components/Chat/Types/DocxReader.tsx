@@ -11,6 +11,7 @@ export const DocxReader: FC<TypeAdapterProps> = ({ url, type, onLoad }: TypeAdap
         width="100%"
         src={"https://view.officeapps.live.com/op/embed.aspx?wdDownloadButton=True&src=" + url}
         frameBorder="0"
+        onLoad={() => onLoad(url, type)}
       ></iframe>
     </ResizableBox>
   );

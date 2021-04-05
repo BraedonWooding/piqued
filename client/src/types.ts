@@ -32,12 +32,6 @@ export interface ChatMsg {
   seen: string;
 }
 
-declare global {
-  interface Window {
-    pdfjsLib: any;
-  }
-}
-
 export enum Status {
   ONLINE = "Online",
   OFFLINE = "Offline",
