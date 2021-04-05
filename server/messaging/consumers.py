@@ -10,6 +10,10 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth.models import Group
+from groups.models import PiquedGroup
+from user.models import PiquedUser
+from firebase_notifications.notificationSend import sendToAllUserDevices
+from asgiref.sync import sync_to_async
 
 
 def handleException(e, loc):
@@ -64,7 +68,28 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
         except Exception:
             handleException(sys.exc_info(), "connecting to socket.")
+    
+    # Takes in a message object
+    def sendNotifications(self, message):
+        groupId = int(message['PartitionKey'])
+        stringMessage = message['message']
+        piquedGroup = PiquedGroup.objects.filter(group_id=groupId).first()
 
+        # Getting muted users dict
+        try:
+            mutedUsers = json.loads(piquedGroup.muted_users)
+        except:
+            mutedUsers = {}
+
+        group = piquedGroup.group
+        
+        users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
+        for user in users:
+            # If mutedUsers[user.id] < 0, it is muted indefinitely
+            if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
+                continue
+            sendToAllUserDevices(user, group.name, stringMessage)
+            
     def get_groups(self):
         groups = Group.objects.filter(user__id__exact=self.userId)
         return list(groups.all())
@@ -130,6 +155,10 @@ class GroupConsumer(AsyncWebsocketConsumer):
                         'createdAt': createdAt.astimezone(),
                     }
                 )
+                
+                # Send firebase notifications
+                await sync_to_async(self.sendNotifications)(msg)
+
             elif message_type == MessageType.SEEN_MESSAGE:
                 partitionKey = text_data_json['partitionKey']
 

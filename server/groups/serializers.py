@@ -31,9 +31,9 @@ class PiquedGroupSerializer(serializers.Serializer):
         queryset=Group.objects.all(), message="This group name is taken.")])
     id = serializers.IntegerField(source='group.id', read_only=True)
     user_set = serializers.SerializerMethodField()
-    interests = InterestSerializer(many=True)
-    created_by = SimplifiedUserSerializer()
-    expired_at = serializers.DateField()
+    interests = InterestSerializer(many=True, required=False)
+    created_by = SimplifiedUserSerializer(required=False)
+    expired_at = serializers.DateField(required=False)
 
     def update(self, instance: PiquedGroup, validated_data):
         name = validated_data["group"]["name"]

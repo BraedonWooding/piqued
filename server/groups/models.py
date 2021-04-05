@@ -16,6 +16,8 @@ class PiquedGroup(models.Model):
     created_by: ForeignKey = models.ForeignKey(
         PiquedUser, on_delete=models.SET_NULL, related_name="groups_created", null=True, blank=True)
     expired_at: DateField = models.DateField(null=True)
+    # Dictionary of muted users stored as a string
+    muted_users = models.CharField(max_length=2000, default="", blank=True)
 
     def __str__(self):
-        return self.user.__str__()
+        return self.group.__str__()
