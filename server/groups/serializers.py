@@ -14,21 +14,26 @@ class SimplifiedUserSerializer(serializers.Serializer):
     profile_picture = serializers.ImageField(required=False, allow_null=True)
     id = serializers.IntegerField(source='user.id', read_only=True)
 
+
 class GroupSerializer(serializers.Serializer):
     user_set = serializers.SerializerMethodField()
     id = serializers.IntegerField()
     name = serializers.CharField()
 
     def get_user_set(self, obj: Group):
-        users = PiquedUser.objects.filter(user_id__in = [u.id for u in obj.user_set.all()])
+        users = PiquedUser.objects.filter(
+            user_id__in=[u.id for u in obj.user_set.all()])
         return [SimplifiedUserSerializer(pu).data for pu in users.all()]
+
 
 class PiquedGroupSerializer(serializers.Serializer):
     name = serializers.CharField(source='group.name', validators=[UniqueValidator(
         queryset=Group.objects.all(), message="This group name is taken.")])
     id = serializers.IntegerField(source='group.id', read_only=True)
+    user_set = serializers.SerializerMethodField()
     interests = InterestSerializer(many=True)
     created_by = SimplifiedUserSerializer()
+    expired_at = serializers.DateField()
 
     def update(self, instance: PiquedGroup, validated_data):
         name = validated_data["group"]["name"]
@@ -52,3 +57,8 @@ class PiquedGroupSerializer(serializers.Serializer):
             group=group, created_by=piquedUser)
         piquedUser.user.groups.add(piquedGroup.group)
         return piquedGroup
+
+    def get_user_set(self, obj: PiquedGroup):
+        users = PiquedUser.objects.filter(
+            user_id__in=[u.id for u in obj.group.user_set.all()])
+        return [SimplifiedUserSerializer(pu).data for pu in users.all()]

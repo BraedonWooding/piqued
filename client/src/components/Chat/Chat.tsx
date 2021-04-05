@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -23,18 +23,16 @@ import { GifPicker } from "components/Elements/GifPicker";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
 import { DragEvent, FC, useEffect, useRef, useState } from "react";
+import Measure from "react-measure";
 //@ts:ignore
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
 import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
-import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
-import { FileStatusBar } from "./FileStatusBar";
-import { MediaRender } from "./MediaRender";
 import { ChatMessage } from "./ChatMessage";
+import { FileStatusBar } from "./FileStatusBar";
 import { ScrollableMsgs } from "./ScrollableMsgs";
-import Measure from "react-measure";
 
 interface ChatProps {
   activeUser: User | null;
@@ -43,7 +41,6 @@ interface ChatProps {
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
   const router = useRouter();
-
   const [userGroups, setUserGroups] = useState<Group[]>(activeUser.groups);
   const [chatMsgs, setChatMsgs] = useState<ChatMsgType[]>([]);
   const [message, setMessage] = useState("");
