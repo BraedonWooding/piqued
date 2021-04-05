@@ -23,20 +23,14 @@ export const MediaRender: FC<MediaRenderProps> = ({ url, type, onLoad }: MediaRe
       url.endsWith("GIF");
     var isVideo: boolean = url.endsWith("mp4") || url.endsWith("MP4");
     var ext = url.substring(url.lastIndexOf(".") + 1).toLowerCase();
-    type = isImage
-      ? `image/${ext}`
-      : isVideo
-      ? "video/mp4"
-      : "application/octet-stream";
+    type = isImage ? `image/${ext}` : isVideo ? "video/mp4" : "application/octet-stream";
   }
 
-  let TypeAdapter = TypeMap[type]
-    || TypeMap[type.substring(0, type.indexOf("/"))]
-    || DefaultTypeAdapter;
+  let TypeAdapter = TypeMap[type] || TypeMap[type.substring(0, type.indexOf("/"))] || DefaultTypeAdapter;
 
-  if (type == "application/octet-stream") {
+  if (TypeAdapter == DefaultTypeAdapter) {
     const filename = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
-    if (SupportedCodeExtensions.some(c => filename.match(c))) {
+    if (SupportedCodeExtensions.some((c) => filename.match(c))) {
       TypeAdapter = CodeRenderer;
       type = filename;
     }

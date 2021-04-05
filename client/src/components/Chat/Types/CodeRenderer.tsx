@@ -1,6 +1,8 @@
 import { FC, useEffect, useState } from "react";
 import { TypeAdapterProps } from ".";
 
+import dynamic from "next/dynamic";
+
 import axios from "axios";
 
 export const CodeRenderer: FC<TypeAdapterProps> = ({ url, type, onLoad }: TypeAdapterProps) => {
@@ -31,8 +33,10 @@ export const CodeRenderer: FC<TypeAdapterProps> = ({ url, type, onLoad }: TypeAd
     <AceEditor
       theme={theme}
       mode={type}
+      width="100%"
       value={text}
       readOnly={true}
+      onChange={() => onLoad(url, type)}
       name="unique"
       editorProps={{ $blockScrolling: true }}
     />

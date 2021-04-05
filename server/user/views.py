@@ -37,7 +37,7 @@ class UserViewSet(ModelViewSet):
         If provided 'user_id' is "self" then return the current user.
         """
         if kwargs.get('user_id') == 'self':
-            user = self.get_queryset().get(user=1)
+            user = self.get_queryset().get(user=request.user.id)
             if user:
                 return Response(PiquedUserSerializer(user).data)
             else:

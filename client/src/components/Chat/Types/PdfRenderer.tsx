@@ -2,11 +2,10 @@ import { FC, useEffect, useRef, useState } from "react";
 import { TypeAdapterProps } from ".";
 import "types";
 import PDFObject from "pdfobject";
-import { Resizable, ResizableBox } from 'react-resizable';
+import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 
 export const PdfRenderer: FC<TypeAdapterProps> = ({ url, type, onLoad }: TypeAdapterProps) => {
-  const PDF = window.pdfjsLib;
   const pdfViewerRef = useRef();
 
   useEffect(() => {
@@ -17,7 +16,7 @@ export const PdfRenderer: FC<TypeAdapterProps> = ({ url, type, onLoad }: TypeAda
       PDFJS_URL: "/web/viewer.html",
     };
 
-    if (pdfViewerRef?.current) PDFObject.embed(url + "?saveName=Named.pdf", pdfViewerRef.current, options);
+    if (pdfViewerRef?.current) PDFObject.embed(url, pdfViewerRef.current, options);
   }, [url, pdfViewerRef.current]);
 
   return (
