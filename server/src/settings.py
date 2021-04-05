@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'interests.apps.InterestsConfig',
     'info.apps.InfoConfig',
-    'groups.apps.GroupsConfig'
+    'groups.apps.GroupsConfig',
 ]
 
 MIDDLEWARE = [
@@ -109,9 +109,18 @@ WSGI_APPLICATION = 'src.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'sql_server.pyodbc',
+        'NAME': 'piqued',
+        'USER': 'superadmin',
+        'PASSWORD': 'PWD',
+        'HOST': 'HOST',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'FreeTDS' if os.name == 'posix' else 'ODBC Driver 17 for SQL Server',
+            'unicode_results': True,
+            'host_is_server': True,
+        },
+    },
 }
 
 # Azure
@@ -143,6 +152,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
