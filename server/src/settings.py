@@ -108,23 +108,19 @@ WSGI_APPLICATION = 'src.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'sql_server.pyodbc',
-    #     'NAME': 'piqued',
-    #     'USER': 'superadmin',
-    #     'PASSWORD': 'PWD',
-    #     'HOST': 'HOST',
-    #     'PORT': '1433',
-    #     'OPTIONS': {
-    #         'driver': 'ODBC Driver 17 for SQL Server',
-    #         'unicode_results': True,
-    #         'host_is_server': True,
-    #     },
-    # },
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'sql_server.pyodbc',
+        'NAME': 'piqued',
+        'USER': 'superadmin',
+        'PASSWORD': 'PWD',
+        'HOST': 'HOST',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'unicode_results': True,
+            'host_is_server': True,
+        },
+    },
 }
 
 # Azure
