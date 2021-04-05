@@ -2,7 +2,7 @@ import { Avatar, Box, Button, Container, Grid, makeStyles, Theme, Typography } f
 import { FileCopyRounded } from "@material-ui/icons";
 import axios from "axios";
 import { useStyles } from "components/Common/FormikUI";
-import { NavButtonLink } from "components/Common/Link";
+import { MyLink } from "components/Common/Link";
 import { TranscriptPicker } from "components/Elements/TranscriptPicker";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
@@ -10,7 +10,9 @@ import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { User } from "types";
 import { lookupCurrentUser } from "util/auth/user";
-import { HOME_PATH } from "util/constants";
+import { MANUAL_DETAIL_INPUT_PATH } from "util/constants";
+
+// add props for return link
 
 const TranscriptUpload = () => {
 
@@ -19,6 +21,7 @@ const TranscriptUpload = () => {
   const [selectedTranscript, setTranscript] = useState<File>(null);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     lookupCurrentUser()
@@ -32,7 +35,8 @@ const TranscriptUpload = () => {
         onSubmit={async () => {
           const formData = new FormData();
           formData.append("transcript", selectedTranscript);
-          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/transcript/upload/", formData);
+          var resp = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/transcript/upload/", formData);
+          setSubmitted(true);
         }}
       >
         {({ isSubmitting }) => (
@@ -44,18 +48,35 @@ const TranscriptUpload = () => {
                 </Avatar>
                 <Typography variant="h5">Upload Your Transcript</Typography>
                 &nbsp;
-                <TranscriptPicker transcriptSelect={setTranscript} />
+                <Typography>
+                  By uploading your UNSW Academic Transcript/Statement,
+                  we can recommend groups relevant to your study to help
+                  you connect with your peers
+                </Typography>
                 &nbsp;
-                <Grid container spacing={1}>
-                  <Grid item xs={12} className={customClasses.interfaceButtons}>
+                &nbsp;
+                <Grid container spacing={4}>
+                  <Grid item xs={12} className={customClasses.centeredObject}>
+                    <TranscriptPicker transcriptSelect={setTranscript} />
+                  </Grid>
+                  <Grid item xs={12} className={customClasses.centeredObject}>
                     <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
                       Upload
                     </Button>
                   </Grid>
-                  <Grid item xs={12} className={customClasses.interfaceButtons}>
-                    <NavButtonLink href={HOME_PATH} color="primary" variant="contained">
-                      Cancel
-                    </NavButtonLink>
+                  <Grid item xs={12}>
+                    {submitted ? (
+                      // do groups list here
+                      <Typography>
+                        test
+                      </Typography>
+                    ) : (
+                      <MyLink href={MANUAL_DETAIL_INPUT_PATH} className={customClasses.centeredObject}>
+                        <Typography>
+                          Don't have a transcript on hand? Skip to manual input
+                        </Typography>
+                      </MyLink>
+                    )}
                   </Grid>
                 </Grid>
               </Box>
@@ -68,7 +89,7 @@ const TranscriptUpload = () => {
 };
 
 const createStyles = makeStyles((theme: Theme) => ({
-  interfaceButtons: { display: "flex", justifyContent: "center" },
+  centeredObject: { display: "flex", justifyContent: "center" },
   error: { color: theme.palette.error.main },
 }));
 
