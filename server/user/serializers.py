@@ -1,19 +1,21 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from groups.models import PiquedGroup
-from groups.serializers import PiquedGroupSerializer
+from groups.serializers import GroupSerializer, PiquedGroupSerializer
+from info.serializers import CourseSerializer, ProgramSerializer
+from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from .models import PiquedUser
 
 
-class PiquedUserSerializer(serializers.ModelSerializer):
+class PiquedUserSerializer(serializers.Serializer):
     username = serializers.CharField(source='user.username', validators=[UniqueValidator(
         queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
-    groups = serializers.SerializerMethodField()
-    groups_created = PiquedGroupSerializer(many=True, read_only=True)
+    groups = GroupSerializer(source='user.groups', many=True, read_only=True)
+    groups_created = serializers.SerializerMethodField(read_only=True)
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.EmailField(source='user.email')
     profile_picture = serializers.ImageField(required=False, allow_null=True)
@@ -23,6 +25,13 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         required=True,
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
+    date_of_birth = serializers.DateField()
+    interests = InterestSerializer(many=True)
+    program = ProgramSerializer()
+    courses = CourseSerializer(many=True)
+
+    def get_groups_created(self, obj: PiquedUser):
+        return [x.id for x in obj.groups_created.all()]
 
     def get_groups(self, obj: PiquedUser):
         groups = PiquedGroup.objects.filter(
@@ -54,8 +63,3 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         del validated_data['user']
         del user['password']
         return PiquedUser.objects.create(**validated_data, user=get_user_model().objects.create(**user, password=password))
-
-    class Meta:
-        model = PiquedUser
-        fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id', 'groups',
-                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created')
