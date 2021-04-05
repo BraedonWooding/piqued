@@ -11,3 +11,4 @@ wheel
 azure-cosmosdb-table
 Pillow
 pyodbc
+firebase-admin
