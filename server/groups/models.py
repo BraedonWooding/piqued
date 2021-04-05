@@ -16,4 +16,4 @@ class PiquedGroup(models.Model):
         PiquedUser, on_delete=models.SET_NULL, related_name="groups_created", null=True, blank=True)
 
     def __str__(self):
-        return self.user.__str__()
+        return self.group.__str__()
