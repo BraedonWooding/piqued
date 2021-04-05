@@ -7,7 +7,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
-import { HOME_PATH } from "util/constants";
+import { HOME_PATH, SCRAPED_COURSES, SCRAPED_PROGRAMS } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -20,7 +20,9 @@ const InitDetails = () => {
   const [degrees, setDegrees] = useState([]);
   const [interests, setInterests] = useState([]);
   const router = useRouter();
-  const [scrapedCourses, setScrapedCourses] = useState([])
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [selectedPrograms, setSelectedPrograms] = useState([]);
+
 
   useEffect(() => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
@@ -32,7 +34,12 @@ const InitDetails = () => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/interests/").then((resp) => {
       setInterests(resp.data);
     });
+    setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
+    setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
   }, []);
+
+  console.log(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)));
+  console.log(JSON.parse(localStorage.getItem(SCRAPED_COURSES)));
 
   return (
     <FullyCenteredLayout>
@@ -62,10 +69,15 @@ const InitDetails = () => {
                     <Autocomplete
                       id="program"
                       placeholder="program"
-                      onChange={(e, value) => setFieldValue("program", value)}
+                      value={selectedPrograms}
+                      onChange={(e, values) => {
+                        setFieldValue("program", values);
+                        setSelectedPrograms(values);
+                        console.log(values);
+                      }}
                       options={degrees}
                       renderInput={(params) => <TextField {...params} variant="outlined" label="Degree" required />}
-                      getOptionLabel={(option) => option.name}
+                      getOptionLabel={(option) => `${option.name}`}
                     />
                   </Grid>
                   <Grid item xs={12}>
@@ -88,8 +100,11 @@ const InitDetails = () => {
                       id="courses"
                       placeholder="Courses"
                       options={courses}
-                      value={courses}
-                      onChange={(e, values) => setFieldValue("courses", values)}
+                      value={selectedCourses}
+                      onChange={(e, values) => {
+                        setFieldValue("courses", values);
+                        setSelectedCourses(values);
+                      }}
                       renderInput={(params) => (
                         <TextField
                           {...params}

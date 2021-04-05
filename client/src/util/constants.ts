@@ -11,3 +11,5 @@ export const MANUAL_DETAIL_INPUT_PATH = "/user/details/init"
 /* local storage item names */
 export const TOKEN = "auth-token";
 export const USER = "user";
+export const SCRAPED_PROGRAMS = "scraped-programs"
+export const SCRAPED_COURSES = "scraped-courses"
