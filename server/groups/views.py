@@ -1,12 +1,9 @@
-from django.contrib.auth.models import Group
 from django.http import HttpResponse
-from django.shortcuts import render
 from rest_framework import filters, permissions
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 
-from .permission import IsCreatable
-from .serializers import GroupSerializer, PiquedGroup, PiquedGroupSerializer
+from .serializers import PiquedGroup, PiquedGroupSerializer
 
 
 class PiquedGroupViewSet(ModelViewSet):
@@ -14,7 +11,7 @@ class PiquedGroupViewSet(ModelViewSet):
     queryset = PiquedGroup.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'group_id'
-    filter_backends = [filters.SearchFilter,]
+    filter_backends = [filters.SearchFilter, ]
     search_fields = ['group__name']
 
     @action(detail=True, methods=['delete'])

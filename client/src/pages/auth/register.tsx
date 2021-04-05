@@ -67,7 +67,7 @@ const Register = () => {
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
             ...other,
             date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
-            username: username,
+            username: username
           });
           await authenticateToken({ password: other.password, username });
           var usr = await lookupCurrentUser();

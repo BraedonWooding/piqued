@@ -1,15 +1,15 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Group
 from groups.serializers import GroupSerializer, PiquedGroupSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from interests.serializers import InterestSerializer
 
 from .models import PiquedUser
+from interests.models import Interest
 
 
 class PiquedUserSerializer(serializers.ModelSerializer):
-    from interests.serializers import InterestSerializer
     username = serializers.CharField(source='user.username', validators=[UniqueValidator(
         queryset=get_user_model().objects.all(), message="This username is taken.")])
     first_name = serializers.CharField(source='user.first_name')
@@ -24,9 +24,10 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         required=True,
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
-    interests = InterestSerializer(many=True, read_only=True)
+    interests = InterestSerializer(many=True, required=False)
 
     def update(self, instance: PiquedUser, validated_data):
+        print(validated_data)
         if 'user' in validated_data:
             user = validated_data['user']
             del validated_data['user']
@@ -36,6 +37,15 @@ class PiquedUserSerializer(serializers.ModelSerializer):
             user_courses = validated_data['courses']
             instance.courses.set(user_courses)
             del validated_data['courses']
+        if 'interests' in validated_data:
+            user_interests = validated_data['interests']
+            a = []
+            for i in user_interests:
+                intrst = Interest.objects.get(name=i['name'])
+                a.append(intrst.id)
+            print(a)
+            instance.interests.set(a)
+            del validated_data['interests']
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -55,4 +65,5 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedUser
         fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id', 'groups',
-                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created')
+                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created', 'fcm_tokens')
+
