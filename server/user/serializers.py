@@ -3,8 +3,10 @@ from django.contrib.auth.hashers import make_password
 from groups.serializers import GroupSerializer, PiquedGroupSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from interests.serializers import InterestSerializer
 
 from .models import PiquedUser
+from interests.models import Interest
 
 
 class PiquedUserSerializer(serializers.ModelSerializer):
@@ -22,6 +24,8 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         required=True,
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
+    interests = InterestSerializer(many=True, required=False, read_only=True)
+    interests_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='interests', queryset=Interest.objects.all())
 
     def update(self, instance: PiquedUser, validated_data):
         if 'user' in validated_data:
@@ -33,6 +37,10 @@ class PiquedUserSerializer(serializers.ModelSerializer):
             user_courses = validated_data['courses']
             instance.courses.set(user_courses)
             del validated_data['courses']
+        if 'interests' in validated_data:
+            user_interests = validated_data['interests']
+            instance.interests.set(user_interests)
+            del validated_data['interests']
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -52,4 +60,5 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedUser
         fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id', 'groups',
-                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created', 'fcm_tokens')
+                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created', 'fcm_tokens', 'interests_id')
+
