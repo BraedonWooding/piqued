@@ -56,7 +56,7 @@ const InitDetails = () => {
             year: values.year,
             program: values.program?.id,
             courses: values.courses?.map((x) => x.id),
-            interests: userInterests
+            interests_id: userInterests?.map((x) => x.id)
           });
           router.push(HOME_PATH);
         }}
