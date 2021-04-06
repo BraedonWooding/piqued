@@ -7,7 +7,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
-import { HOME_PATH } from "util/constants";
+import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -38,27 +38,27 @@ const InitDetails = () => {
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests)
-    //setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
-    //setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
+    setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
+    setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
   }, []);
 
   const addToGroups = (groups) => {
-    //groups.map(async g => {
-    //  await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + g.id + "/add_user/");
-    //});
+    groups.map(async g => {
+      await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + g.id + "/add_user/");
+    });
   };
 
   const updateRecommendedGroups = () => {
-    //var userSelectedGroups = [];
-    //var groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS));
-    //var prog = selectedPrograms;
-    //groups.map(g => {
-    //  selectedCourses.filter(c => g.name.includes(c.course_code)).length !== 0 ? userSelectedGroups.push(g) : null;
-    //  if (prog != undefined) {
-    //    prog.name.includes(g.name) ? userSelectedGroups.push(g) : null;
-    //  }
-    //});
-    //addToGroups(userSelectedGroups);
+    var userSelectedGroups = [];
+    var groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS));
+    var prog = selectedPrograms;
+    groups.map(g => {
+      selectedCourses.filter(c => g.name.includes(c.course_code)).length !== 0 ? userSelectedGroups.push(g) : null;
+      if (prog != undefined) {
+        prog.name.includes(g.name) ? userSelectedGroups.push(g) : null;
+      }
+    });
+    addToGroups(userSelectedGroups);
   };
 
   return (
