@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import FacebookLogin from 'react-facebook-login';
 import { authenticateToken } from "util/auth/token";
 import { lookupCurrentUser } from "util/auth/user";
-import { LOGIN_PATH } from "util/constants";
+import { LOGIN_PATH, UPLOAD_TRANSCRIPT_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -33,8 +33,6 @@ const Register = () => {
   const [FB_interests, setFBInterests] = useState<String[]>();
 
   const responseFacebook = (response, setFieldValue) => {
-    console.log(response);
-    console.log(response["likes"]["data"])
     setFieldValue("first_name", response["first_name"])
     setFieldValue("last_name", response["last_name"])
     setFieldValue("email", response["first_name"][0].toLowerCase() + "." + response["last_name"].toLowerCase() + "@student.unsw.edu.au")
@@ -60,10 +58,7 @@ const Register = () => {
           confirmPassword: "",
         }}
         onSubmit={async ({ confirmPassword, ...other }) => {
-          console.log(other)
           const { date_of_birth, email: username, } = other;
-          console.log(other)
-          console.log(username)
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
             ...other,
             date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
@@ -76,9 +71,9 @@ const Register = () => {
             userId: usr["id"]
           });
           var usr = await lookupCurrentUser();
-          router.push("/user/details/init");
+          //router.push("/user/details/init");
           //await lookupCurrentUser();
-          //router.push(UPLOAD_TRANSCRIPT_PATH);
+          router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
       >
