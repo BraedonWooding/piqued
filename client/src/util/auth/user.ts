@@ -11,7 +11,9 @@ export const popUser = () => {
   return tmp;
 };
 
-export const setUser = (user: User) => localStorage.setItem(USER, JSON.stringify(user));
+export const setUser = (user: User) => {
+  localStorage.setItem(USER, JSON.stringify(user));
+}
 
 export const lookupCurrentUser = async () => {
   try {

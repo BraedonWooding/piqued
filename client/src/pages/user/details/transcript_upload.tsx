@@ -24,6 +24,9 @@ const TranscriptUpload = () => {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
+    localStorage.setItem(SCRAPED_PROGRAMS, JSON.stringify([]));
+    localStorage.setItem(SCRAPED_COURSES, JSON.stringify([]));
+    localStorage.setItem(SCRAPED_GROUPS, JSON.stringify([]))
     lookupCurrentUser()
       .then(u => setUser(u));
   }, []);
