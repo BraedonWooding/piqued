@@ -24,10 +24,10 @@ class PiquedUserSerializer(serializers.ModelSerializer):
         required=True,
     )
     id = serializers.IntegerField(source='user.id', read_only=True)
-    interests = InterestSerializer(many=True, required=False)
+    interests = InterestSerializer(many=True, required=False, read_only=True)
+    interests_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='interests', queryset=Interest.objects.all())
 
     def update(self, instance: PiquedUser, validated_data):
-        print(validated_data)
         if 'user' in validated_data:
             user = validated_data['user']
             del validated_data['user']
@@ -39,12 +39,7 @@ class PiquedUserSerializer(serializers.ModelSerializer):
             del validated_data['courses']
         if 'interests' in validated_data:
             user_interests = validated_data['interests']
-            a = []
-            for i in user_interests:
-                intrst = Interest.objects.get(name=i['name'])
-                a.append(intrst.id)
-            print(a)
-            instance.interests.set(a)
+            instance.interests.set(user_interests)
             del validated_data['interests']
 
         for key, value in validated_data.items():
@@ -65,5 +60,5 @@ class PiquedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PiquedUser
         fields = ('date_of_birth', 'profile_picture', 'username', 'password', 'id', 'groups',
-                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created', 'fcm_tokens')
+                  'email', 'first_name', 'last_name', 'interests', 'program', 'courses', 'groups_created', 'fcm_tokens', 'interests_id')
 
