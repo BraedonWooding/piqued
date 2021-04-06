@@ -10,7 +10,7 @@ import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { authenticateToken } from "util/auth/token";
 import { lookupCurrentUser } from "util/auth/user";
-import { LOGIN_PATH } from "util/constants";
+import { LOGIN_PATH, UPLOAD_TRANSCRIPT_PATH } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -50,7 +50,7 @@ const Register = () => {
           });
           await authenticateToken({ password: other.password, username });
           await lookupCurrentUser();
-          router.push("/user/details/init");
+          router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
       >
