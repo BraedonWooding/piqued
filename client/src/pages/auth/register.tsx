@@ -77,6 +77,8 @@ const Register = () => {
           });
           var usr = await lookupCurrentUser();
           router.push("/user/details/init");
+          //await lookupCurrentUser();
+          //router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
       >
