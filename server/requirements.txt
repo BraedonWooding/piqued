@@ -13,3 +13,6 @@ Pillow
 pyodbc
 PyPDF2
 firebase-admin
+textblob
+fuzzywuzzy
+nltk

@@ -10,9 +10,9 @@ from .models import Course, Program
 class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
-        fields = ('program_code', 'name', 'faculty', 'id', 'duration_years', 'desc')
+        fields = ('program_code', 'name', 'id')
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
-        fields = ('course_code', 'course_name', 'faculty', 'school', 'id', 'course_level', 'terms', 'desc')
+        fields = ('course_code', 'course_name', 'id')
