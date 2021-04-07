@@ -5,7 +5,7 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Group } from "types";
 import { getUser, lookupCurrentUser, setUser } from "util/auth/user";
 import { CREATE_GROUP_PATH, HOME_PATH } from "util/constants";

@@ -3,6 +3,7 @@ export interface Group {
   name: string;
   id: number;
   user_set: User[];
+  expired_at: Date | null;
   has_unseen_messages: boolean;
 }
 
@@ -26,7 +27,7 @@ export interface ChatMsg {
   partitionKey: string;
   rowKey: string;
   message: string;
-  files: string;
+  files: {url: string, type: string}[];
   userId: number;
   createdAt: Date;
   seen: string;

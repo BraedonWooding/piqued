@@ -5,7 +5,7 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
 import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS } from "util/constants";
 import * as yup from "yup";
@@ -19,12 +19,14 @@ const InitDetails = () => {
   const [courses, setCourses] = useState([]);
   const [degrees, setDegrees] = useState([]);
   const [interests, setInterests] = useState([]);
+  const [userInterests, setUserInterests] = useState([]);
   const router = useRouter();
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [selectedPrograms, setSelectedPrograms] = useState(null);
 
 
   useEffect(() => {
+
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
       setCourses(resp.data);
     });
@@ -32,8 +34,10 @@ const InitDetails = () => {
       setDegrees(resp.data);
     });
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/interests/").then((resp) => {
+      console.log(resp)
       setInterests(resp.data);
     });
+    setUserInterests(getUser().interests)
     if (localStorage.getItem(SCRAPED_COURSES) !== null) {
       setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
       setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
@@ -64,16 +68,20 @@ const InitDetails = () => {
   return (
     <FullyCenteredLayout>
       <Formik
+        enableReinitialize
         initialValues={{
           program: null,
           year: 1,
           courses: [],
+          interests: [],
         }}
         onSubmit={async (values) => {
+          values.interests?.map((x) => x.id)
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
             program: values.program?.id,
             courses: values.courses?.map((x) => x.id),
+            interests_id: userInterests?.map((x) => x.id)
           });
           updateRecommendedGroups();
           router.push(HOME_PATH);
@@ -90,11 +98,11 @@ const InitDetails = () => {
                     <Autocomplete
                       id="program"
                       placeholder="program"
-                      value={selectedPrograms}
-                      onChange={(e, values) => {
-                        setFieldValue("program", values);
+                      onChange={(e, value) => {
+                        setFieldValue("program", value)
                         setSelectedPrograms(values);
                       }}
+                      value={selectedPrograms}
                       options={degrees}
                       renderInput={(params) => <TextField {...params} variant="outlined" label="Degree" required />}
                       getOptionLabel={(option) => `${option.name}`}
@@ -144,6 +152,12 @@ const InitDetails = () => {
                       id="interests"
                       placeholder="Interests"
                       options={interests}
+                      value={userInterests}
+                      onChange={(e, values) => {
+                        setFieldValue("interests", values)
+                        setUserInterests(values)
+                      }
+                      }
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -155,6 +169,7 @@ const InitDetails = () => {
                         />
                       )}
                       getOptionLabel={(option) => `${option.name}`}
+                      getOptionSelected={(option, value) => option.id === value.id}
                     />
                   </Grid>
                 </Grid>
@@ -168,7 +183,7 @@ const InitDetails = () => {
           </Form>
         )}
       </Formik>
-    </FullyCenteredLayout>
+    </FullyCenteredLayout >
   );
 };
 
