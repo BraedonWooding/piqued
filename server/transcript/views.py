@@ -13,12 +13,14 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from user.models import PiquedUser
+from datetime import date
 
 
-def createPiquedGroupHelper(groupname, interest, userCreated):
+def createPiquedGroupHelper(groupname, interest, userCreated, expiry=None):
     group = Group.objects.create(name=groupname)
+    print(expiry)
     piquedGroup = PiquedGroup.objects.create(
-        group=group, created_by=userCreated)
+        group=group, created_by=userCreated, expired_at=expiry)
     piquedGroup.interests.add(interest)
     piquedGroup.save()
     return piquedGroup
@@ -130,7 +132,7 @@ class TranscriptViewSet(ViewSet):
         # create course Piqued groups that don't already exist
         for c in courseTupleList:
             if c[0] not in [g.group.name for g in courseGroups]:
-                piquedGroup = createPiquedGroupHelper(c[0],c[1], adminUser)
+                piquedGroup = createPiquedGroupHelper(c[0],c[1], adminUser, expiry=date(2021,6,1))
                 groupsToReturn.append(piquedGroup)
 
         # serialize
