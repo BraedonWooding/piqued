@@ -4,7 +4,8 @@ django-cors-headers
 django-filter
 django-mssql-backend
 djangorestframework
-djangorestframework-simplejwt
+djangorestframework-simplejwt==4.4
+PyJWT==1.7.1
 Markdown
 channels
 wheel
@@ -16,3 +17,6 @@ firebase-admin
 textblob
 fuzzywuzzy
 nltk
+gunicorn
+celery
+daphne
