@@ -13,10 +13,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt import views as jwt_views
+
+from src import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +34,4 @@ urlpatterns = [
     path('token/', jwt_views.TokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh')
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
