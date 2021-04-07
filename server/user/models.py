@@ -20,7 +20,7 @@ class PiquedUser(models.Model):
         Course, related_name='users', blank=True)
     program: ForeignKey = models.ForeignKey(
         Program, related_name='users', on_delete=models.CASCADE, null=True, default=None, blank=True)
-    fcm_tokens = models.CharField(max_length=200, default="", blank=True)
+    fcm_tokens = models.CharField(max_length=2000, default="", blank=True)
 
     def __str__(self):
         return self.user.__str__()
