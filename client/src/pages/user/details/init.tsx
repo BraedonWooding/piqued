@@ -38,8 +38,10 @@ const InitDetails = () => {
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests)
-    setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
-    setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
+    if (localStorage.getItem(SCRAPED_COURSES) !== null) {
+      setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
+      setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
+    }
   }, []);
 
   const addToGroups = (groups) => {
@@ -49,16 +51,18 @@ const InitDetails = () => {
   };
 
   const updateRecommendedGroups = () => {
-    var userSelectedGroups = [];
-    var groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS));
-    var prog = selectedPrograms;
-    groups.map(g => {
-      selectedCourses.filter(c => g.name.includes(c.course_code)).length !== 0 ? userSelectedGroups.push(g) : null;
-      if (prog != undefined) {
-        prog.name.includes(g.name) ? userSelectedGroups.push(g) : null;
-      }
-    });
-    addToGroups(userSelectedGroups);
+    if (localStorage.getItem(SCRAPED_GROUPS) !== null) {
+      var userSelectedGroups = [];
+      var groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS));
+      var prog = selectedPrograms;
+      groups.map(g => {
+        selectedCourses.filter(c => g.name.includes(c.course_code)).length !== 0 ? userSelectedGroups.push(g) : null;
+        if (prog != undefined) {
+          prog.name.includes(g.name) ? userSelectedGroups.push(g) : null;
+        }
+      });
+      addToGroups(userSelectedGroups);
+    }
   };
 
   return (
