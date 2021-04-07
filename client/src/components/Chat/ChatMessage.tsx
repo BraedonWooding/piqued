@@ -1,14 +1,13 @@
-import { FC } from "react";
-import cx from "clsx";
-import Grid from "@material-ui/core/Grid";
-import Avatar from "@material-ui/core/Avatar";
-import Typography from "@material-ui/core/Typography";
-
-import { ChatMsg as ChatMsgType, Group, User } from "types";
 import { createMuiTheme, makeStyles } from "@material-ui/core";
+import Avatar from "@material-ui/core/Avatar";
 import { red } from "@material-ui/core/colors";
-import { MediaRender } from "./MediaRender";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import cx from "clsx";
+import { FC } from "react";
+import { ChatMsg as ChatMsgType, User } from "types";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
+import { MediaRender } from "./MediaRender";
 
 interface ChatProps {
   msgs: ChatMsgType[];
@@ -47,6 +46,7 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
     }
     return "";
   };
+
   return (
     <Grid container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"}>
       {side === "left" && (
