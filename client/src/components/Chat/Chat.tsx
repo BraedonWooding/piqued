@@ -91,7 +91,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroupRef.current) return;
     else if (!chatSocket) {
       setRetry(false);
-      const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
+      const newChatSocket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
       newChatSocket.onopen = () => {
         setDeactive(false);
