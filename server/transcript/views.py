@@ -1,5 +1,6 @@
 import io
 import re
+from datetime import date
 
 import PyPDF2
 from django.shortcuts import render
@@ -13,7 +14,6 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from user.models import PiquedUser
-from datetime import date
 
 
 def createPiquedGroupHelper(groupname, interest, userCreated, expiry=None):
@@ -62,7 +62,7 @@ def scrape_courses(file):
     for i in range(pdfReader.numPages):
         pageText = pdfReader.getPage(i).extractText()
         if (term + " " + year) in pageText:
-            return find_enrolment_info(pageText, term, year)
+            return find_enrolment_info(pageText + (pdfReader.getPage(i + 1).extractText() if i < pdfReader.numPages - 1 else ""), term, year)
 
 class TranscriptViewSet(ViewSet):
     queryset=PiquedGroup.objects.all()
