@@ -54,9 +54,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const scrollableRef = useRef<Measure>();
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [emojiOpen, setEmojiOpen] = useState(false);
   const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
 
   const handleGroupHover = (index) => {
@@ -585,7 +582,7 @@ const useStyles = makeStyles((theme) => ({
   alignSelfRight: { textAlign: "right" },
   name: { marginLeft: "48px" },
   searchBox: { padding: 10 },
-  chatBox: { padding: 10, height: "10vh" },
+  chatBox: { padding: 10, height: "9.5vh" },
   currentGroup: { border: "2px solid black" },
   hide: { visibility: "hidden" },
   slimButton: { padding: 5 },
