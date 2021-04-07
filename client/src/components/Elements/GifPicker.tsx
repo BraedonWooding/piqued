@@ -2,7 +2,7 @@ import { GiphyFetch } from "@giphy/js-fetch-api";
 import { IGif } from "@giphy/js-types";
 import { Grid } from "@giphy/react-components";
 import { ClickAwayListener, makeStyles, TextField } from "@material-ui/core";
-import React, { FC, useState } from "react";
+import { FC, useState } from "react";
 //@ts:ignore
 import GifLogo from "react-svg-loader!assets/icons/gif.svg";
 

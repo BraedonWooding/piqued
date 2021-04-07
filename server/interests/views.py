@@ -1,10 +1,11 @@
 from rest_framework.viewsets import ModelViewSet
+
+from .graph_serializer import InterestGraphSerializer
+from .models import Interest
+from .serializers import InterestSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Interest
 from user.models import PiquedUser
-from .serializers import InterestSerializer
-from .graphSerializer import InterestGraphSerializer
 from rest_framework.decorators import api_view
 
 from textblob import TextBlob
