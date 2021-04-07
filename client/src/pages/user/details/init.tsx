@@ -7,7 +7,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
-import { HOME_PATH } from "util/constants";
+import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -19,9 +19,14 @@ const InitDetails = () => {
   const [courses, setCourses] = useState([]);
   const [degrees, setDegrees] = useState([]);
   const [interests, setInterests] = useState([]);
+  const [userInterests, setUserInterests] = useState([]);
   const router = useRouter();
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [selectedPrograms, setSelectedPrograms] = useState(null);
+
 
   useEffect(() => {
+
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
       setCourses(resp.data);
     });
@@ -29,24 +34,52 @@ const InitDetails = () => {
       setDegrees(resp.data);
     });
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/interests/").then((resp) => {
+      console.log(resp)
       setInterests(resp.data);
     });
+    setUserInterests(getUser().interests)
+    setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)))
+    setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)))
   }, []);
+
+  const addToGroups = (groups) => {
+    groups.map(async g => {
+      await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + g.id + "/add_user/");
+    });
+  };
+
+  const updateRecommendedGroups = () => {
+    var userSelectedGroups = [];
+    var groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS));
+    var prog = selectedPrograms;
+    groups.map(g => {
+      selectedCourses.filter(c => g.name.includes(c.course_code)).length !== 0 ? userSelectedGroups.push(g) : null;
+      if (prog != undefined) {
+        prog.name.includes(g.name) ? userSelectedGroups.push(g) : null;
+      }
+    });
+    addToGroups(userSelectedGroups);
+  };
 
   return (
     <FullyCenteredLayout>
       <Formik
+        enableReinitialize
         initialValues={{
           program: null,
           year: 1,
           courses: [],
+          interests: [],
         }}
         onSubmit={async (values) => {
+          values.interests?.map((x) => x.id)
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
             program: values.program?.id,
             courses: values.courses?.map((x) => x.id),
+            interests_id: userInterests?.map((x) => x.id)
           });
+          updateRecommendedGroups();
           router.push(HOME_PATH);
         }}
         validationSchema={validationSchema}
@@ -61,10 +94,14 @@ const InitDetails = () => {
                     <Autocomplete
                       id="program"
                       placeholder="program"
-                      onChange={(e, value) => setFieldValue("program", value)}
+                      onChange={(e, value) => {
+                        setFieldValue("program", value)
+                        setSelectedPrograms(values);
+                      }}
+                      value={selectedPrograms}
                       options={degrees}
                       renderInput={(params) => <TextField {...params} variant="outlined" label="Degree" required />}
-                      getOptionLabel={(option) => option.name}
+                      getOptionLabel={(option) => `${option.name}`}
                     />
                   </Grid>
                   <Grid item xs={12}>
@@ -87,7 +124,11 @@ const InitDetails = () => {
                       id="courses"
                       placeholder="Courses"
                       options={courses}
-                      onChange={(e, values) => setFieldValue("courses", values)}
+                      value={selectedCourses}
+                      onChange={(e, values) => {
+                        setFieldValue("courses", values);
+                        setSelectedCourses(values);
+                      }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -95,7 +136,6 @@ const InitDetails = () => {
                           label="Courses"
                           inputProps={{
                             ...params.inputProps,
-                            required: values.courses.length === 0,
                           }}
                         />
                       )}
@@ -108,6 +148,12 @@ const InitDetails = () => {
                       id="interests"
                       placeholder="Interests"
                       options={interests}
+                      value={userInterests}
+                      onChange={(e, values) => {
+                        setFieldValue("interests", values)
+                        setUserInterests(values)
+                      }
+                      }
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -119,6 +165,7 @@ const InitDetails = () => {
                         />
                       )}
                       getOptionLabel={(option) => `${option.name}`}
+                      getOptionSelected={(option, value) => option.id === value.id}
                     />
                   </Grid>
                 </Grid>
@@ -132,7 +179,7 @@ const InitDetails = () => {
           </Form>
         )}
       </Formik>
-    </FullyCenteredLayout>
+    </FullyCenteredLayout >
   );
 };
 

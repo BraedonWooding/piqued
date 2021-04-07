@@ -11,4 +11,8 @@ wheel
 azure-cosmosdb-table
 Pillow
 pyodbc
+PyPDF2
 firebase-admin
+textblob
+fuzzywuzzy
+nltk

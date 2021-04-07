@@ -6,8 +6,10 @@ from info.serializers import CourseSerializer, ProgramSerializer
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from interests.serializers import InterestSerializer
 
 from .models import PiquedUser
+from interests.models import Interest
 
 
 class PiquedUserSerializer(serializers.Serializer):
@@ -38,6 +40,8 @@ class PiquedUserSerializer(serializers.Serializer):
         groups = PiquedGroup.objects.filter(
             group__user__id__exact=obj.user_id).all()
         return [PiquedGroupSerializer(pg).data for pg in groups.all()]
+    interests = InterestSerializer(many=True, required=False, read_only=True)
+    interests_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='interests', queryset=Interest.objects.all())
 
     def update(self, instance: PiquedUser, validated_data):
         if 'user' in validated_data:
@@ -49,6 +53,10 @@ class PiquedUserSerializer(serializers.Serializer):
             user_courses = validated_data['courses']
             instance.courses.set(user_courses)
             del validated_data['courses']
+        if 'interests' in validated_data:
+            user_interests = validated_data['interests']
+            instance.interests.set(user_interests)
+            del validated_data['interests']
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
