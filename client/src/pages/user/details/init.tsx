@@ -5,7 +5,7 @@ import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { FullyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getUser } from "util/auth/user";
 import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS } from "util/constants";
 import * as yup from "yup";

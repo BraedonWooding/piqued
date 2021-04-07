@@ -19,8 +19,9 @@ export const lookupCurrentUser = async () => {
   try {
     const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/users/self/");
     setUser(res.data);
-    return res.data;
+    return res.data as User;
   } catch {
-    useRouter().push(LOGIN_PATH);
+    const router = useRouter();
+    if (router.pathname !== LOGIN_PATH) router.push(LOGIN_PATH);
   }
 };

@@ -6,7 +6,7 @@ import { LOGIN_PATH } from "./constants";
 axios.interceptors.request.use(
   async (ctx) => {
     const token = getToken();
-    if (token && token.access) ctx.headers.Authorization = `Bearer ${token.access}`;
+    if (token && token.access && ctx?.url?.includes(process.env.NEXT_PUBLIC_API_URL)) ctx.headers.Authorization = `Bearer ${token.access}`;
     return ctx;
   },
   (err) => Promise.reject(err)
@@ -22,8 +22,7 @@ axios.interceptors.response.use(
         return axios(originalRequest);
       } catch {
         // any failure we go back to login
-        const router = useRouter();
-        router.push(LOGIN_PATH);
+        window.location.replace(LOGIN_PATH);
       }
     } else {
       throw err;
