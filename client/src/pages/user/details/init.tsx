@@ -37,27 +37,31 @@ const InitDetails = () => {
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests);
-    setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)));
-    setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)));
+    if (localStorage.getItem(SCRAPED_COURSES)) {
+      setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)));
+      setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)));
+    }
   }, []);
 
   const updateRecommendedGroups = () => {
-    const userSelectedGroups: Group[] = [];
-    const groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS)) as Group[];
+    if (localStorage.getItem(SCRAPED_GROUPS)) {
+      const userSelectedGroups: Group[] = [];
+      const groups = JSON.parse(localStorage.getItem(SCRAPED_GROUPS)) as Group[];
 
-    groups.forEach((g) => {
-      selectedCourses.forEach((c) => {
-        if (g.name.includes(c.course_code)) userSelectedGroups.push(g);
-      });
-      if (!userSelectedGroups.includes(g))
-        selectedPrograms.forEach((p) => {
-          if (p.name.includes(g.name)) userSelectedGroups.push(g);
+      groups.forEach((g) => {
+        selectedCourses.forEach((c) => {
+          if (g.name.includes(c.course_code)) userSelectedGroups.push(g);
         });
-    });
+        if (!userSelectedGroups.includes(g))
+          selectedPrograms.forEach((p) => {
+            if (p.name.includes(g.name)) userSelectedGroups.push(g);
+          });
+      });
 
-    userSelectedGroups.map(async (g) => {
-      await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + g.id + "/add_user/");
-    });
+      userSelectedGroups.map(async (g) => {
+        await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + g.id + "/add_user/");
+      });
+    }
   };
 
   return (
