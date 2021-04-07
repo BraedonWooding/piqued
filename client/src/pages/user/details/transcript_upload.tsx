@@ -1,8 +1,7 @@
-import { Avatar, Box, Button, Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import { Avatar, Box, Button, Container, Grid, Link, makeStyles, Theme, Typography } from "@material-ui/core";
 import { FileCopyRounded } from "@material-ui/icons";
 import axios from "axios";
 import { useStyles } from "components/Common/FormikUI";
-import { MyLink } from "components/Common/Link";
 import { TranscriptPicker } from "components/Elements/TranscriptPicker";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
@@ -22,6 +21,13 @@ const TranscriptUpload = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [submitted, setSubmitted] = useState(false);
+
+  const skipTranscript = () => {
+    localStorage.removeItem(SCRAPED_PROGRAMS)
+    localStorage.removeItem(SCRAPED_COURSES);
+    localStorage.removeItem(SCRAPED_GROUPS);
+  }
+
 
   useEffect(() => {
     lookupCurrentUser()
@@ -68,11 +74,11 @@ const TranscriptUpload = () => {
                     </Button>
                   </Grid>
                   <Grid item xs={12}>
-                    <MyLink href={MANUAL_DETAIL_INPUT_PATH} className={customClasses.centeredObject}>
+                    <Link href={MANUAL_DETAIL_INPUT_PATH} className={customClasses.centeredObject} onClick={skipTranscript}>
                       <Typography>
                         Don't have a transcript on hand? Skip to manual input
                       </Typography>
-                    </MyLink>
+                    </Link>
                   </Grid>
                 </Grid>
               </Box>
