@@ -303,7 +303,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map(
             (group, index) =>
-              (!group.expired_at || (new Date() > new Date(group.expired_at))) && (
+              (!group.expired_at || (new Date() < new Date(group.expired_at))) && (
                 <ListItem
                   onMouseOver={(e) => handleGroupHover(index)}
                   onMouseLeave={(e) => handleGroupLeave()}
