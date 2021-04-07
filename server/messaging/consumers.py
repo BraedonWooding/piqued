@@ -85,6 +85,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
         
         users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
         for user in users:
+            # Do not send to self
+            if str(user.user.id) == str(self.userId):
+                continue 
             # If mutedUsers[user.id] < 0, it is muted indefinitely
             if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
                 continue
