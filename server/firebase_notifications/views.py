@@ -1,14 +1,18 @@
+import json
+from datetime import datetime, timedelta, timezone
+
 from django.shortcuts import render
+from django.views.decorators.cache import never_cache
+from groups.models import PiquedGroup
+from groups.serializers import PiquedGroupSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from user.models import PiquedUser
 from user.serializers import PiquedUserSerializer
-from groups.models import PiquedGroup
-from groups.serializers import PiquedGroupSerializer
-from datetime import datetime, timedelta, timezone
-import json
+
 
 @api_view(['POST'])
+@never_cache
 def add_fcm_tokens(request):
     fcm_token = request.data['fcm_token']
     try:
@@ -25,10 +29,11 @@ def add_fcm_tokens(request):
 
         serialiser.update(piquedUser, validated_data)
         return Response()
-    except e:
+    except:
         return Response(status=500)
 
 @api_view(['POST'])
+@never_cache
 def remove_fcm_tokens(request):
     fcm_token = request.data['fcm_token']
     try:
@@ -39,10 +44,11 @@ def remove_fcm_tokens(request):
         new_tokens_string = ' '.join(tokens_arr) # Create new FCM tokens string
         piquedUser.fcm_tokens = new_tokens_string
         return Response("Token successfully removed")
-    except e:
+    except:
         return Response(status=500)
     
 @api_view(['POST'])
+@never_cache
 def mute(request):
     try:
         userId = request.user.id
@@ -69,6 +75,7 @@ def mute(request):
         return Response(status=500)
 
 @api_view(['POST'])
+@never_cache
 def unmute(request):
     try:
         userId = request.user.id
