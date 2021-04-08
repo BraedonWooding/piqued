@@ -116,7 +116,7 @@ DATABASES = {
         'HOST': 'HOST',
         'PORT': '1433',
         'OPTIONS': {
-            'driver': 'FreeTDS' if os.name == 'posix' else 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 17 for SQL Server',
             'unicode_results': True,
             'host_is_server': True,
         },
@@ -174,6 +174,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Adding Channels
 ASGI_APPLICATION = 'src.asgi.application'
@@ -184,5 +185,7 @@ CHANNEL_LAYERS = {
 }
 
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'DOMAIN',
+    'DOMAIN'
 ]

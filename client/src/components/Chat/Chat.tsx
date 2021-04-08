@@ -54,9 +54,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const scrollableRef = useRef<Measure>();
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [emojiOpen, setEmojiOpen] = useState(false);
   const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
 
   const handleGroupHover = (index) => {
@@ -94,7 +91,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (!currentGroupRef.current) return;
     else if (!chatSocket) {
       setRetry(false);
-      const newChatSocket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
+      const newChatSocket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
       newChatSocket.onopen = () => {
         setDeactive(false);
@@ -306,7 +303,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map(
             (group, index) =>
-              (!group.expired_at || Date.now() > group.expired_at.getTime()) && (
+              (!group.expired_at || (new Date() < new Date(group.expired_at))) && (
                 <ListItem
                   onMouseOver={(e) => handleGroupHover(index)}
                   onMouseLeave={(e) => handleGroupLeave()}
@@ -585,7 +582,7 @@ const useStyles = makeStyles((theme) => ({
   alignSelfRight: { textAlign: "right" },
   name: { marginLeft: "48px" },
   searchBox: { padding: 10 },
-  chatBox: { padding: 10, height: "10vh" },
+  chatBox: { padding: 10, height: "9.5vh" },
   currentGroup: { border: "2px solid black" },
   hide: { visibility: "hidden" },
   slimButton: { padding: 5 },
