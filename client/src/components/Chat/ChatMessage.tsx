@@ -48,7 +48,7 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
   };
 
   return (
-    <Grid container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"}>
+    <Grid style={{paddingTop: 30}} container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"}>
       {side === "left" && (
         <Typography className={classes.name}>
           {user?.first_name} {user?.last_name}
