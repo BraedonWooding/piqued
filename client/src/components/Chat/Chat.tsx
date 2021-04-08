@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -268,7 +268,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     <Grid container component={Paper} className={classes.chatSection}>
       <Grid item xl={2} md={3} lg={2} xs={3} sm={3} className={classes.borderRight500}>
         <Grid container spacing={1} alignItems="center">
-          <Grid item xs={5}>
+          <Grid item xs={8}>
             <List>
               <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
@@ -285,7 +285,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={7} style={{ textAlign: "right", paddingRight: "10px" }}>
+          <Grid item xs={4} style={{ textAlign: "right", paddingRight: "10px" }}>
             <Button
               style={{ maxWidth: "70%" }}
               onClick={() => {
