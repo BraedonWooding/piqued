@@ -83,10 +83,12 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
                     )}
                   </div>
                 )}
-                <Grid container justify={side === "right" ? "flex-end" : "flex-start"} alignItems="flex-start">
-                  {msg.files.map((file) => (
-                    <MediaRender url={file.url} type={file.type} onLoad={onMediaLoad} />
-                  ))}
+                <Grid container justify={side === "right" ? "flex-end" : "flex-start"} alignItems={side === "right" ? "flex-end" : "flex-start"}>
+                  <Grid container style={{marginRight: 15}} direction="column" spacing={2} justify={side === "right" ? "flex-end" : "flex-start"} alignItems={side === "right" ? "flex-end" : "flex-start"}>
+                    {msg.files.map((file) => (
+                      <MediaRender url={file.url} type={file.type} onLoad={onMediaLoad} />
+                    ))}
+                  </Grid>
                   {side === "right" && msg.files && !msg.message && (
                     <EditDeleteChatMsgButton
                       initialMessage={msg.message}
