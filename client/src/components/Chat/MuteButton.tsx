@@ -22,7 +22,7 @@ export const MuteButton: FC<MuteButtonProps> = ({ userId, groupId }) => {
         axios.post(process.env.NEXT_PUBLIC_API_URL + "/mute/", {
             "group_id":groupId,
             "minutes":interval
-        }).catch((err) => {
+        }).then(() => setMuteDialogOpen(false)).catch((err) => {
             console.log('An error occurred while muting. ', err);
         });
     }
@@ -31,7 +31,7 @@ export const MuteButton: FC<MuteButtonProps> = ({ userId, groupId }) => {
         // Send request to unmute
         axios.post(process.env.NEXT_PUBLIC_API_URL + "/unmute/", {
             "group_id":groupId
-        }).catch((err) => {
+        }).then(() => setMuteDialogOpen(false)).catch((err) => {
             console.log('An error occurred while unmuting. ', err);
         });
     }
