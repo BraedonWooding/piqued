@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField
+  TextField,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -268,7 +268,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     <Grid container component={Paper} className={classes.chatSection}>
       <Grid item xl={2} md={3} lg={2} xs={3} sm={3} className={classes.borderRight500}>
         <Grid container spacing={1} alignItems="center">
-          <Grid item xs={8}>
+          <Grid item xs={6}>
             <List>
               <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
@@ -285,14 +285,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={4} style={{ textAlign: "right", paddingRight: "10px" }}>
+          <Grid item xs={6} style={{ textAlign: "right", paddingRight: "10px" }}>
             <Button
-              style={{ maxWidth: "70%" }}
               onClick={() => {
                 router.push(SEARCH_GROUPS_PATH);
               }}
               color="primary"
-              variant="text"
+              variant="outlined"
             >
               <SearchRounded />
               Search
@@ -303,7 +302,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map(
             (group, index) =>
-              (!group.expired_at || (new Date() < new Date(group.expired_at))) && (
+              (!group.expired_at || new Date() < new Date(group.expired_at)) && (
                 <ListItem
                   onMouseOver={(e) => handleGroupHover(index)}
                   onMouseLeave={(e) => handleGroupLeave()}
@@ -372,9 +371,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               let lastSeenUsers = "Seen by ";
 
               if (currentGroup) {
-                const lastSeenSetUsers = currentGroup.user_set
-                  .filter((x) => lastSeenSet.includes(String(x.id)))
-                lastSeenUsers += Array.from(new Set(lastSeenSetUsers.filter(x => x.id != activeUser.id).map(x => x.first_name))).slice(0, 3).join(", ");
+                const lastSeenSetUsers = currentGroup.user_set.filter((x) => lastSeenSet.includes(String(x.id)));
+                lastSeenUsers += Array.from(
+                  new Set(lastSeenSetUsers.filter((x) => x.id != activeUser.id).map((x) => x.first_name))
+                )
+                  .slice(0, 3)
+                  .join(", ");
                 if (lastSeenSetUsers.length == 0) {
                   lastSeenUsers = "Sent";
                 } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
