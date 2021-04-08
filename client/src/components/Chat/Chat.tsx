@@ -233,7 +233,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           })
         );
     }
-  }, [chatSocket?.readyState, chatMsgsRef.current]);
+  }, [chatSocket?.readyState, chatMsgs]);
 
   useEffect(() => {
     // chunk msgs together if sent within a minute from the same person
@@ -303,7 +303,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <List className={classes.userList}>
           {userGroups.map(
             (group, index) =>
-              (!group.expired_at || Date.now() > group.expired_at.getTime()) && (
+              (!group.expired_at || (new Date() < new Date(group.expired_at))) && (
                 <ListItem
                   onMouseOver={(e) => handleGroupHover(index)}
                   onMouseLeave={(e) => handleGroupLeave()}
@@ -373,9 +373,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
               if (currentGroup) {
                 const lastSeenSetUsers = currentGroup.user_set
-                  .filter((x) => x.id != activeUser.id && lastSeenSet.includes(String(x.id)))
-                  .map((x) => x.first_name);
-                lastSeenUsers += Array.from(new Set(lastSeenSetUsers)).slice(0, 3).join(", ");
+                  .filter((x) => lastSeenSet.includes(String(x.id)))
+                lastSeenUsers += Array.from(new Set(lastSeenSetUsers.filter(x => x.id != activeUser.id).map(x => x.first_name))).slice(0, 3).join(", ");
                 if (lastSeenSetUsers.length == 0) {
                   lastSeenUsers = "Sent";
                 } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
