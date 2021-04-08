@@ -66,14 +66,11 @@ const Register = () => {
           });
           await authenticateToken({ password: other.password, username });
           var usr = await lookupCurrentUser();
-          console.log(FB_interests);
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
             interests: FB_interests,
             userId: usr["id"]
           });
           var usr = await lookupCurrentUser();
-          //router.push("/user/details/init");
-          //await lookupCurrentUser();
           router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
