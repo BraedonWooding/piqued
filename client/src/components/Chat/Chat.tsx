@@ -266,8 +266,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
 
   return (
     <Grid container component={Paper} className={classes.chatSection}>
-      <Grid item xl={2} md={3} lg={2} xs={3} sm={3} className={classes.borderRight500}>
-        <Grid container spacing={1} alignItems="center">
+      <Grid item xl={2} md={3} lg={3} xs={3} sm={3} className={classes.borderRight500}>
+        <Grid container alignItems="center">
           <Grid item xs={6}>
             <List>
               <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
@@ -285,18 +285,16 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Grid item xs={6} style={{ textAlign: "right", paddingRight: "10px" }}>
-            <Button
-              onClick={() => {
-                router.push(SEARCH_GROUPS_PATH);
-              }}
-              color="primary"
-              variant="outlined"
-            >
-              <SearchRounded />
-              Search
-            </Button>
-          </Grid>
+          <Button
+            onClick={() => {
+              router.push(SEARCH_GROUPS_PATH);
+            }}
+            color="primary"
+            variant="outlined"
+          >
+            <SearchRounded />
+            Search
+          </Button>
         </Grid>
         <Divider />
         <List className={classes.userList}>
