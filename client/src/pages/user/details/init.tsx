@@ -52,7 +52,7 @@ const InitDetails = () => {
         selectedCourses.forEach((c) => {
           if (g.name.includes(c.course_code)) userSelectedGroups.push(g);
         });
-        if (!userSelectedGroups.includes(g))
+        if (selectedPrograms && !userSelectedGroups.includes(g))
           selectedPrograms.forEach((p) => {
             if (p.name.includes(g.name)) userSelectedGroups.push(g);
           });
