@@ -30,7 +30,7 @@ const validationSchema = yup.object({
 const Register = () => {
   const classes = useStyles();
   const router = useRouter();
-  const [FB_interests, setFBInterests] = useState<String[]>();
+  const [FB_interests, setFBInterests] = useState<String[]>([]);
 
   const responseFacebook = (response, setFieldValue) => {
     setFieldValue("first_name", response["first_name"])
@@ -71,8 +71,6 @@ const Register = () => {
             userId: usr["id"]
           });
           var usr = await lookupCurrentUser();
-          //router.push("/user/details/init");
-          //await lookupCurrentUser();
           router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
