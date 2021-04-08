@@ -30,7 +30,7 @@ const validationSchema = yup.object({
 const Register = () => {
   const classes = useStyles();
   const router = useRouter();
-  const [FB_interests, setFBInterests] = useState<String[]>();
+  const [FB_interests, setFBInterests] = useState<String[]>([]);
 
   const responseFacebook = (response, setFieldValue) => {
     setFieldValue("first_name", response["first_name"])
@@ -66,6 +66,7 @@ const Register = () => {
           });
           await authenticateToken({ password: other.password, username });
           var usr = await lookupCurrentUser();
+          console.log(FB_interests);
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
             interests: FB_interests,
             userId: usr["id"]
