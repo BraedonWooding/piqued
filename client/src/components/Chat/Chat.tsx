@@ -378,7 +378,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 lastSeenUsers += Array.from(new Set(lastSeenSetUsers)).slice(0, 3).join(", ");
                 if (lastSeenSetUsers.length == 0) {
                   lastSeenUsers = "Sent";
-                } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
+                } else if (lastSeenSetUsers.length == currentGroup.user_set.length - 1) {
                   lastSeenUsers = "Seen by everyone";
                 } else if (lastSeenSetUsers.length > 3) {
                   lastSeenUsers += `and ${lastSeenSetUsers.length - 3} others`;
