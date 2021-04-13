@@ -2,6 +2,7 @@ from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from user.models import PiquedUser
+from interests.models import Interest
 
 from .models import Group, PiquedGroup
 
@@ -46,15 +47,21 @@ class PiquedGroupSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+    interests_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='interests', queryset=Interest.objects.all())
+
     def create(self, validated_data):
         groupname = validated_data["group"]["name"]
+        interests = validated_data['interests']
         user = self.context['request'].user
         piquedUser = PiquedUser.objects.get(user_id=user.id)
 
-        # TODO interests
         group = Group.objects.create(name=groupname)
         piquedGroup = PiquedGroup.objects.create(
             group=group, created_by=piquedUser)
+
+        piquedGroup.interests.set(interests)
+        piquedGroup.save()
+        
         piquedUser.user.groups.add(piquedGroup.group)
         return piquedGroup
 
