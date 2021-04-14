@@ -25,6 +25,12 @@ class GroupSerializer(serializers.Serializer):
             user_id__in=[u.id for u in obj.user_set.all()])
         return [SimplifiedUserSerializer(pu).data for pu in users.all()]
 
+class SimplifiedPiquedGroupSerializer(serializers.Serializer):
+    name = serializers.CharField(source='group.name', validators=[UniqueValidator(
+        queryset=Group.objects.all(), message="This group name is taken.")])
+    id = serializers.IntegerField(source='group.id', read_only=True)
+    interests = InterestSerializer(many=True, required=False)
+    expired_at = serializers.DateField(required=False)
 
 class PiquedGroupSerializer(serializers.Serializer):
     name = serializers.CharField(source='group.name', validators=[UniqueValidator(

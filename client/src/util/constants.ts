@@ -4,6 +4,7 @@ export const REGISTER_PATH = "/auth/register/";
 export const HOME_PATH = "/home/";
 export const FORGOT_PASSWORD_PATH = "/auth/forgot-password/";
 export const SEARCH_GROUPS_PATH = "/groups/search/";
+export const DISCOVER_PATH = "/groups/discover/";
 export const CREATE_GROUP_PATH = "/groups/create/";
 export const UPLOAD_TRANSCRIPT_PATH = "/user/details/transcript_upload/";
 export const MANUAL_DETAIL_INPUT_PATH = "/user/details/init/";
