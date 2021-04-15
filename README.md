@@ -1,5 +1,7 @@
 # Piqued - Making YourUNSW a little less lonely
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/75966aeb-e8fb-4e0e-81f9-525737f864f0/deploy-status)](https://app.netlify.com/sites/frosty-jepsen-14c9ba/deploys)
+
 ## Help! How do I run this?
 
 - Install the 'standalone' azure database emulator from here: https://go.microsoft.com/fwlink/?linkid=717179&clcid=0x409
