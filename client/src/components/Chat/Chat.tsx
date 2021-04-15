@@ -290,7 +290,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               router.push(SEARCH_GROUPS_PATH);
             }}
             color="primary"
-            variant="outlined"
+            variant="text"
           >
             <SearchRounded />
             Search
