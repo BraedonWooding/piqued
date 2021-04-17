@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Interest
 from user.models import PiquedUser
+from groups.models import PiquedGroup
 from .serializers import InterestSerializer
 from .graphSerializer import InterestGraphSerializer
 from rest_framework.decorators import api_view
@@ -57,3 +58,30 @@ def addInterests(request):
         print("NLP Failure")
 
     return Response({"status": "success"})
+
+@api_view(['POST'])
+def recommendGroups(request):
+
+    # Get user interests
+    user = PiquedUser.objects.get(user=request.user)
+    interests = user.interests.all()
+
+    # Get all groups with physics as an interest
+    grps = PiquedGroup.objects.filter(interests__in=interests)
+
+    # Determine similarity
+    similarity = list()
+    for g in grps:
+        grp_interest = g.interests.all()
+        c = grp_interest.intersection(interests).count()
+        total = grp_interest.count()
+        sim = float(c/total)
+        similarity.append((g.id, sim))
+
+    # Sort and return the recommended groups
+    similarity.sort(key = lambda x:x[1], reverse=True)
+    return Response({"recommended": [i for i,_ in similarity]})
+
+@api_view(['GET'])
+def getChessEngine(request):
+    return Response({"status": "Checkmate"})

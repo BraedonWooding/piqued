@@ -4,7 +4,7 @@ from rest_framework import views
 from rest_framework.routers import DefaultRouter
 from . import views
 
-from .views import InterestGraphViewSet, InterestViewSet, addInterests
+from .views import InterestGraphViewSet, InterestViewSet, addInterests, recommendGroups, getChessEngine
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -13,5 +13,7 @@ router.register(r'interest-graph', InterestGraphViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('addInterests/', views.addInterests)
+    path('addInterests/', views.addInterests),
+    path('recommendGroups/', views.recommendGroups),
+    path('getChessEngine/', views.getChessEngine)
 ]
