@@ -1,12 +1,18 @@
-import { Grid, Paper, Typography } from "@material-ui/core";
+import { Avatar, Box, Container, Grid, Typography } from "@material-ui/core";
+import { SearchTwoTone } from "@material-ui/icons";
 import axios from "axios";
 import { useStyles } from "components/Common/FormikUI";
+import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import React, { useEffect, useState } from "react";
 
+const addItemToUser = () => {
+
+};
+
 export const Discover = () => {
-  const classes = useStyles();
+  const formikClasses = useStyles();
   const [popularGroups, setPopularGroups] = useState([]);
-  const [popularInterets, setPopularInterests] = useState([]);
+  const [popularInterests, setPopularInterests] = useState([]);
 
   useEffect(() => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/groups/popular/").then((resp) => {
@@ -21,47 +27,64 @@ export const Discover = () => {
 
   }, []);
 
-  console.log(popularGroups);
-  console.log(popularInterets);
+  // console.log(popularGroups);
+  // console.log(popularInterests);
 
   return (
-    < Grid container component={Paper} >
-      <Grid item xs={12}>
-        <Typography>
-          Discover
-        </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          Popular Interests
-        </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          / Interest list /
-      </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          Popular Groups
-      </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          / Group list /
-      </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          Recommended Groups
-      </Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          / recommended list /
-      </Typography>
-      </Grid>
-    </Grid >
+    <HorizontallyCenteredLayout>
+      <Container component="main" maxWidth="sm">
+        <Box className={formikClasses.card}>
+
+          < Grid container>
+            <Grid item xs={12}>
+              <Avatar>
+                <SearchTwoTone />
+              </Avatar>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="h5">
+                Discover
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography>
+                Popular Interests
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+
+            </Grid>
+            <Grid item xs={12}>
+              <Typography>
+                Popular Groups
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              {/* {popularGroups.map((x, index) => {
+
+                <DiscoverItem
+                  itemId={x.id}
+                  actionText="Join"
+                  itemText={x.name}
+                  itemIndex={index}
+                  joinCallback={addItemToUser}
+                />
+              })} */}
+            </Grid>
+            <Grid item xs={12}>
+              <Typography>
+                Recommended Groups
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography>
+                / recommended list /
+              </Typography>
+            </Grid>
+          </Grid >
+        </Box>
+      </Container>
+    </HorizontallyCenteredLayout >
   )
 };
 
