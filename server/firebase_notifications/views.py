@@ -55,7 +55,7 @@ def mute(request):
         groupId = request.data['group_id']
         minutes = request.data['minutes'] # Client sends how many minutes in the future we want to set the expiry for
         expiry = datetime.now(timezone.utc) + timedelta(minutes=minutes)
-        group =PiquedGroup.objects.all().filter(group_id=groupId).first()
+        group = PiquedGroup.objects.all().filter(group_id=groupId).first()
         # Convert string to dict
         if group.muted_users:
             mutedUsers = json.loads(group.muted_users)
@@ -80,7 +80,7 @@ def unmute(request):
     try:
         userId = request.user.id
         groupId = request.data['group_id']
-        group =PiquedGroup.objects.all().filter(group_id=groupId).first()
+        group = PiquedGroup.objects.all().filter(group_id=groupId).first()
         # Convert string to dict
         if group.muted_users:
             mutedUsers = json.loads(group.muted_users)
