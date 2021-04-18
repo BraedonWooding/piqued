@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -29,7 +29,7 @@ import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
-import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
+import { DISCOVER_PATH, LOGIN_PATH } from "util/constants";
 import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
 import { FileStatusBar } from "./FileStatusBar";
@@ -289,13 +289,13 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <Button
               style={{ maxWidth: "70%" }}
               onClick={() => {
-                router.push(SEARCH_GROUPS_PATH);
+                router.push(DISCOVER_PATH);
               }}
               color="primary"
               variant="text"
             >
               <SearchRounded />
-              Search
+              Discover
             </Button>
           </Grid>
         </Grid>
