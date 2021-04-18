@@ -90,8 +90,8 @@ const DiscoverInterests = () => {
                         }}
                       >
                         <Add />
-                      Add
-                    </Button>
+                        Add
+                      </Button>
                     </Grid>
                   </Grid>
                 ))}

@@ -87,7 +87,7 @@ const DiscoverGroups = () => {
                       }}
                     >
                       <Add />
-                        Join
+                      Join
                     </Button>
                   </Grid>
                 </Grid>
@@ -100,7 +100,7 @@ const DiscoverGroups = () => {
             variant="text"
             onClick={() => router.push(SEARCH_GROUPS_PATH)}>
             <Search />
-              Search Groups
+            Search Groups
           </Button>
           <Button
             color="primary"
