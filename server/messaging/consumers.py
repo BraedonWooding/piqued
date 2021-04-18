@@ -68,7 +68,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
         except Exception:
             handleException(sys.exc_info(), "connecting to socket.")
-    
+
     # Takes in a message object
     def sendNotifications(self, message):
         groupId = int(message['PartitionKey'])
@@ -82,31 +82,31 @@ class GroupConsumer(AsyncWebsocketConsumer):
             mutedUsers = {}
 
         group = piquedGroup.group
-        
+
         users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
         for user in users:
             # Do not send to self
             if str(user.user.id) == str(self.userId):
-                continue 
+                continue
             # If mutedUsers[user.id] < 0, it is muted indefinitely
             if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
                 continue
             sendToAllUserDevices(user, group.name, stringMessage)
-            
+
     def get_groups(self):
         groups = Group.objects.filter(user__id__exact=self.userId)
         return list(groups.all())
 
     async def disconnect(self, close_code):
         for groupId in self.groupIds:
-            # Leave channel group for each group user is in
+            # Leave channel group for each group user is in and send as response because we don't want a reply
             await self.channel_layer.group_send(
                 f"chat_{groupId}",
                 {
                     'type': MessageType.STATUS_UPDATE,
                     'userId': self.userId,
                     'status': "Offline",
-                    'isResponse': False
+                    'isResponse': True
                 })
             await self.channel_layer.group_discard(
                 f"chat_{groupId}",
@@ -158,7 +158,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                         'createdAt': createdAt.astimezone(),
                     }
                 )
-                
+
                 # Send firebase notifications
                 await sync_to_async(self.sendNotifications)(msg)
 
@@ -255,7 +255,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 for groupId in self.groupIds:
                     await self.channel_layer.group_send(f"chat_{groupId}", {
                         'type': MessageType.STATUS_UPDATE,
-                        'status': event["status"],
+                        'status': "Online",
                         'userId': self.userId,
                         'isResponse': True
                     })
