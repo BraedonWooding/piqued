@@ -33,6 +33,7 @@ class PiquedGroupViewSet(ModelViewSet):
         userToAdd.save()
         return HttpResponse("{} added to group".format(userToAdd.username))
 
+    # return all piqued groups the user is not in, in descending order
     @action(detail=False, methods=['get'])
     def popular(self, request):
         user = self.request.user

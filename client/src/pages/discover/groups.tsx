@@ -13,7 +13,6 @@ const DiscoverGroups = () => {
   const router = useRouter();
   const itemClasses = itemStyles();
   const [popularGroups, setPopularGroups] = useState([]);
-  const [popularInterests, setPopularInterests] = useState([]);
   const [recommendedGroups, setRecommendedGroups] = useState([]);
 
   useEffect(() => {
@@ -24,12 +23,7 @@ const DiscoverGroups = () => {
       setPopularGroups(resp.data)
     });
 
-    axios.get(process.env.NEXT_PUBLIC_API_URL + "/interest-graph/popular/").then((resp) => {
-      setPopularInterests(resp.data)
-    });
-
     // TODO: add get request for recommended groups
-
 
   }, []);
 
