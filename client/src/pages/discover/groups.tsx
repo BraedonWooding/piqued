@@ -51,7 +51,7 @@ const DiscoverGroups = () => {
           {popularGroups.slice(0, 4).map((x, index) => (
             <Grid container spacing={1} key={index}>
               <Grid item xs={9} className={itemClasses.titleContainer}>
-                <Typography className={itemClasses.textStyle}>{x.name}</Typography>
+                <Typography>{x.name}</Typography>
               </Grid>
               <Grid item xs={3} className={itemClasses.joinGroupArea}>
                 <Button
@@ -75,7 +75,7 @@ const DiscoverGroups = () => {
             <Grid container >
               {recommendedGroups.slice(0, 4).map((x, index) => (
                 <Grid container spacing={1} key={index} >
-                  <Grid item xs={9} className={itemClasses.centered}>
+                  <Grid item xs={9} className={itemClasses.titleContainer}>
                     <Typography>{x.name}</Typography>
                   </Grid>
                   <Grid item xs={3} className={itemClasses.joinGroupArea}>
@@ -118,14 +118,7 @@ const itemStyles = makeStyles(() => ({
   centered: { display: "flex", alignItems: "center" },
   joinGroupArea: { display: "flex", justifyContent: "flex-end" },
   titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", wordBreak: "break-all", overflowWrap: 'break-word', wordWrap: "break-word", },
-  textStyle: {
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    display: "-webkit-box",
-    webkitLineClamp: 3,
-    webkitBoxOrient: "vertical",
-    maxHeight: "3.6em"
-  },
+
 }));
 
 export default DiscoverGroups;

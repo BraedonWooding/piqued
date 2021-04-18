@@ -25,8 +25,9 @@ class InterestGraphViewSet(ModelViewSet):
     @action(detail=False, methods=['get'])
     def popular(self, request):
         user = PiquedUser.objects.get(user_id=self.request.user.id)
-        userInterests = user.interests.all()
-        popularInterests = Interest.objects.exclude(id__in=userInterests)
+        # userInterests = user.interests.all()
+        popularInterests = Interest.objects.all()
+        # popularInterests = Interest.objects.exclude(id__in=userInterests)
         popularInterests = popularInterests.annotate(num_users=Count('users')).order_by('-num_users')
         return Response(InterestSerializer(list(popularInterests), many=True).data)
 
