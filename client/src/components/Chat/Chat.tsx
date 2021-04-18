@@ -29,7 +29,7 @@ import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
-import { DISCOVER_PATH, LOGIN_PATH } from "util/constants";
+import { DISCOVER_ROOT_PATH, LOGIN_PATH } from "util/constants";
 import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
 import { FileStatusBar } from "./FileStatusBar";
@@ -289,7 +289,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             <Button
               style={{ maxWidth: "70%" }}
               onClick={() => {
-                router.push(DISCOVER_PATH);
+                router.push(DISCOVER_ROOT_PATH);
               }}
               color="primary"
               variant="text"

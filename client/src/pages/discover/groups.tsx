@@ -5,10 +5,10 @@ import { useStyles } from "components/Common/FormikUI";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import { getUser, lookupCurrentUser, setUser } from "util/auth/user";
-import { HOME_PATH, SEARCH_GROUPS_PATH } from "util/constants";
+import { lookupCurrentUser, setUser } from "util/auth/user";
+import { DISCOVER_ROOT_PATH, SEARCH_GROUPS_PATH } from "util/constants";
 
-const Discover = () => {
+const DiscoverGroups = () => {
   const formikClasses = useStyles();
   const router = useRouter();
   const itemClasses = itemStyles();
@@ -42,65 +42,31 @@ const Discover = () => {
             <SearchTwoTone />
           </Avatar>
           <Typography variant="h5">
-            Discover
+            Discover Groups
           </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <Grid item xs={12} style={{ display: "flex", justifyContent: "center" }}>
-                <Typography variant="h6">
-                  Popular Interests
-                </Typography>
-              </Grid>
-              {popularInterests.slice(0, 4).map((x, index) => (
-                <Grid container spacing={1} key={index}>
-                  <Grid item xs={9} className={itemClasses.centered}>
-                    <Typography>{x.name}</Typography>
-                  </Grid>
-                  <Grid item xs={3} className={itemClasses.joinGroupArea}>
-                    <Button
-                      onClick={async () => {
-                        await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
-                          interests_id: [x.id]
-                        });
-                        popularInterests.splice(index, 1);
-                        setPopularInterests([...popularInterests]);
-                      }}
-                    >
-                      <Add />
-                      Add
-                    </Button>
-                  </Grid>
-                </Grid>
-              ))}
-            </Grid>
-            <Grid item xs={6}>
-              <Grid item xs={12} style={{ display: "flex", justifyContent: "center" }}>
-                <Typography variant="h6" className={itemClasses.centered}>
-                  Popular Groups
-                </Typography>
-              </Grid>
-              {popularGroups.slice(0, 4).map((x, index) => (
-                <Grid container spacing={1} key={index}>
-                  <Grid item xs={9} className={itemClasses.titleContainer}>
-                    <Typography className={itemClasses.textStyle}>{x.name}</Typography>
-                  </Grid>
-                  <Grid item xs={3} className={itemClasses.joinGroupArea}>
-                    <Button
-                      onClick={async () => {
-                        await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
-                        popularGroups.splice(index, 1);
-                        setPopularGroups([...popularGroups]);
-                      }}
-                    >
-                      <Add />
-                      Join
-                    </Button>
-                  </Grid>
-                </Grid>
-              ))}
-            </Grid>
-          </Grid>
           &nbsp;
+          <Typography variant="h6" className={itemClasses.centered}>
+            Popular Groups
+          </Typography>
+          {popularGroups.slice(0, 4).map((x, index) => (
+            <Grid container spacing={1} key={index}>
+              <Grid item xs={9} className={itemClasses.titleContainer}>
+                <Typography className={itemClasses.textStyle}>{x.name}</Typography>
+              </Grid>
+              <Grid item xs={3} className={itemClasses.joinGroupArea}>
+                <Button
+                  onClick={async () => {
+                    await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
+                    popularGroups.splice(index, 1);
+                    setPopularGroups([...popularGroups]);
+                  }}
+                >
+                  <Add />
+                  Join
+                </Button>
+              </Grid>
+            </Grid>
+          ))}
           &nbsp;
           <Typography variant="h6">
             Recommended Groups
@@ -139,7 +105,7 @@ const Discover = () => {
           <Button
             color="primary"
             variant="text"
-            onClick={() => router.push(HOME_PATH)}>
+            onClick={() => router.push(DISCOVER_ROOT_PATH)}>
             Cancel
           </Button>
         </Box>
@@ -162,4 +128,4 @@ const itemStyles = makeStyles(() => ({
   },
 }));
 
-export default Discover;
+export default DiscoverGroups;
