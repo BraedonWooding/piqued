@@ -14,7 +14,7 @@ const Discover = () => {
   const itemClasses = itemStyles();
   const [popularGroups, setPopularGroups] = useState([]);
   const [popularInterests, setPopularInterests] = useState([]);
-  const [recommendedGroups, setRecommendGroups] = useState([]);
+  const [recommendedGroups, setRecommendedGroups] = useState([]);
 
   useEffect(() => {
     lookupCurrentUser()
@@ -107,7 +107,7 @@ const Discover = () => {
           </Typography>
           <Grid item xs={6} style={{ display: "flex", alignItems: "center" }}>
             <Grid container >
-              {popularGroups.slice(0, 4).map((x, index) => (
+              {recommendedGroups.slice(0, 4).map((x, index) => (
                 <Grid container spacing={1} key={index} >
                   <Grid item xs={9} className={itemClasses.centered}>
                     <Typography>{x.name}</Typography>
@@ -116,7 +116,8 @@ const Discover = () => {
                     <Button
                       onClick={async () => {
                         await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
-                        // remove from popular interests
+                        recommendedGroups.splice(index, 1);
+                        setRecommendedGroups([...recommendedGroups]);
                       }}
                     >
                       <Add />
