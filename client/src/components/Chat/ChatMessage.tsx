@@ -64,7 +64,7 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
           {msgs.map((msg, i) => {
             return (
               // eslint-disable-next-line react/no-array-index-key
-              <div key={i} className={classes[`${side}Row`]}>
+              <div key={msg.rowKey} className={classes[`${side}Row`]}>
                 {msg.message && (
                   <div>
                     <Typography align={"left"} className={cx(classes.msg, classes[side], attachClass(i))}>
@@ -85,8 +85,8 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
                 )}
                 <Grid container justify={side === "right" ? "flex-end" : "flex-start"} alignItems={side === "right" ? "flex-end" : "flex-start"}>
                   <Grid container style={{marginRight: 15}} direction="column" spacing={2} justify={side === "right" ? "flex-end" : "flex-start"} alignItems={side === "right" ? "flex-end" : "flex-start"}>
-                    {msg.files.map((file) => (
-                      <MediaRender url={file.url} type={file.type} onLoad={onMediaLoad} />
+                    {msg.files.map((file, i) => (
+                      <MediaRender key={msg.rowKey + "-file-" + i} url={file.url} type={file.type} onLoad={onMediaLoad} />
                     ))}
                   </Grid>
                   {side === "right" && msg.files && !msg.message && (
