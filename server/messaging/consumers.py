@@ -5,15 +5,15 @@ import traceback
 from datetime import datetime, timezone
 from enum import Enum
 
+from asgiref.sync import sync_to_async
 from azure.cosmosdb.table.tableservice import TableService
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth.models import Group
+from firebase_notifications.notificationSend import sendToAllUserDevices
 from groups.models import PiquedGroup
 from user.models import PiquedUser
-from firebase_notifications.notificationSend import sendToAllUserDevices
-from asgiref.sync import sync_to_async
 
 
 def handleException(e, loc):
@@ -46,11 +46,11 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 self.groupIds.append(group.id)
                 # Join channel group for each group user is in
                 await self.channel_layer.group_add(
-                    'chat_%s' % group.id,
+                    f'chat_{group.id}',
                     self.channel_name
                 )
                 await self.channel_layer.group_send(
-                    "chat_%s" % group.id,
+                    f"chat_{group.id}",
                     {
                         'type': MessageType.STATUS_UPDATE,
                         'userId': self.userId,
@@ -85,6 +85,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
         
         users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
         for user in users:
+            # Do not send to self
+            if str(user.user.id) == str(self.userId):
+                continue 
             # If mutedUsers[user.id] < 0, it is muted indefinitely
             if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
                 continue
@@ -98,7 +101,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         for groupId in self.groupIds:
             # Leave channel group for each group user is in
             await self.channel_layer.group_send(
-                "chat_%s" % groupId,
+                f"chat_{groupId}",
                 {
                     'type': MessageType.STATUS_UPDATE,
                     'userId': self.userId,
@@ -106,7 +109,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'isResponse': False
                 })
             await self.channel_layer.group_discard(
-                'chat_%s' % groupId,
+                f"chat_{groupId}",
                 self.channel_name
             )
 
@@ -143,7 +146,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 self.table_service.insert_entity('Messages', msg)
 
                 await self.channel_layer.group_send(
-                    "chat_%s" % partitionKey,
+                    f"chat_{partitionKey}",
                     {
                         'type': message_type,
                         'PartitionKey': partitionKey,
@@ -163,7 +166,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 partitionKey = text_data_json['partitionKey']
 
                 await self.channel_layer.group_send(
-                    "chat_%s" % partitionKey, {
+                    f"chat_{partitionKey}", {
                         'type': MessageType.SEEN_MESSAGE,
                         'partitionKey': partitionKey,
                         'rowKey':  text_data_json['rowKey'],
@@ -178,7 +181,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         try:
             partitionKey = event['partitionKey']
             messages = self.table_service.query_entities(
-                'Messages', filter="PartitionKey eq '%s' and deleted eq 0" % partitionKey)
+                'Messages', filter=f"PartitionKey eq '{partitionKey}' and deleted eq 0")
             serializable_messages = []
 
             for message in messages:
@@ -250,7 +253,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             }))
             if (not event["isResponse"]):
                 for groupId in self.groupIds:
-                    await self.channel_layer.group_send("chat_%s" % groupId, {
+                    await self.channel_layer.group_send(f"chat_{groupId}", {
                         'type': MessageType.STATUS_UPDATE,
                         'status': event["status"],
                         'userId': self.userId,

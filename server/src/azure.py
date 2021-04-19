@@ -31,21 +31,23 @@ class AzureStorage(Storage):
             self._blob_service.create_container(public_access='blob')
         except ResourceExistsError:
             pass
+        return self._blob_service
 
     def _open(self, name, mode='rb'):
         data = self.blob_service.get_blob_client(name)
         return ContentFile(data.download_blob().content_as_bytes())
 
-    def _save(self, name, content):
+    def _save(self, name, content, content_type=None, nice_name=None):
+        if nice_name == None: nice_name = name
         content.open(mode="rb")
         data = content.read()
-        content_type = mimetypes.guess_type(name)[0]
-        self.blob_service.upload_blob(name, data, overwrite=True, blob_type='BlockBlob', content_settings=ContentSettings(content_type=content_type))
-        return name
-    
-    def upload_content(self, name, content):
-        self._save(name, content)
-    
+        if content_type == None: content_type = mimetypes.guess_type(name)[0]
+        self.blob_service.upload_blob(name, data, overwrite=True, blob_type='BlockBlob', content_settings=ContentSettings(content_type=content_type, content_disposition=f'attachment; filename="{nice_name}"'))
+        return self.blob_service.get_blob_client(name).url
+
+    def upload_content(self, name, content, content_type=None, nice_name=None):
+        return self._save(name, content, content_type, nice_name)
+
     def download_as_text(self, name, encoding="UTF-8"):
         data = self.blob_service.get_blob_client(name)
         return data.download_blob().content_as_text(encoding=encoding)

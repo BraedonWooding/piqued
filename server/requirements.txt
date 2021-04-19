@@ -5,6 +5,7 @@ django-filter
 django-mssql-backend
 djangorestframework
 djangorestframework-simplejwt
+PyJWT==1.7.1
 Markdown
 channels
 wheel
@@ -16,3 +17,6 @@ firebase-admin
 textblob
 fuzzywuzzy
 nltk
+gunicorn
+daphne
+uvicorn

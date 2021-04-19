@@ -32,7 +32,8 @@ TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;Ac
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ***REMOVED*** "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ***REMOVED***
+                 "localhost", "127.0.0.1", "admin.DOMAIN"]
 
 mimetypes.add_type("text/css", ".css", True)
 mimetypes.add_type("text/html", ".html", True)
@@ -53,7 +54,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'interests.apps.InterestsConfig',
     'info.apps.InfoConfig',
-    'groups.apps.GroupsConfig'
+    'groups.apps.GroupsConfig',
 ]
 
 MIDDLEWARE = [
@@ -152,6 +153,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
@@ -171,6 +175,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Adding Channels
 ASGI_APPLICATION = 'src.asgi.application'
@@ -181,5 +186,9 @@ CHANNEL_LAYERS = {
 }
 
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'DOMAIN',
+    'DOMAIN',
+    'DOMAIN',
+    'DOMAIN'
 ]

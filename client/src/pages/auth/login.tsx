@@ -7,7 +7,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import { authenticateToken } from "util/auth/token";
 import { lookupCurrentUser } from "util/auth/user";
-import { FORGOT_PASSWORD_PATH, REGISTER_PATH } from "util/constants";
+import { FORGOT_PASSWORD_PATH, HOME_PATH, REGISTER_PATH } from "util/constants";
 
 const Login = () => {
   const classes = useStyles();
@@ -19,8 +19,8 @@ const Login = () => {
         onSubmit={async (values, { setSubmitting, setErrors }) => {
           try {
             await authenticateToken(values);
-            await lookupCurrentUser();
-            router.push("/home");
+            const user = await lookupCurrentUser();
+            if (user) router.push(HOME_PATH);
           } catch (e) {
             setSubmitting(false);
             setErrors({

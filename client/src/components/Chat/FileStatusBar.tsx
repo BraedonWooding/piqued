@@ -10,10 +10,10 @@ interface FileStatusBarProps {
 export const FileStatusBar: FC<FileStatusBarProps> = ({ files, removeFile }) => {
   const classes = useStyles();
   return (
-    <Grid>
+    <Grid container className={classes.container}>
       {files.map((file, index) => (
-        <Box display="flex" key={index}>
-          <Typography>{file.name}</Typography>
+        <Box display="flex" alignItems="center" key={index}>
+          <Typography style={{ userSelect: "none" }}>{file.name}</Typography>
           <IconButton className={classes.noPadding} size="small" onClick={() => removeFile(file)}>
             <CloseOutlined />
           </IconButton>
@@ -25,4 +25,5 @@ export const FileStatusBar: FC<FileStatusBarProps> = ({ files, removeFile }) => 
 
 const useStyles = makeStyles(() => ({
   noPadding: { padding: 0 },
+  container: { overflowY: "auto", height: "60%" },
 }));

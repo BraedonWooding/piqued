@@ -1,5 +1,6 @@
 import io
 import re
+from datetime import date
 
 import PyPDF2
 from django.shortcuts import render
@@ -15,10 +16,11 @@ from rest_framework.viewsets import ViewSet
 from user.models import PiquedUser
 
 
-def createPiquedGroupHelper(groupname, interest, userCreated):
+def createPiquedGroupHelper(groupname, interest, userCreated, expiry=None):
     group = Group.objects.create(name=groupname)
+    print(expiry)
     piquedGroup = PiquedGroup.objects.create(
-        group=group, created_by=userCreated)
+        group=group, created_by=userCreated, expired_at=expiry)
     piquedGroup.interests.add(interest)
     piquedGroup.save()
     return piquedGroup
@@ -60,7 +62,7 @@ def scrape_courses(file):
     for i in range(pdfReader.numPages):
         pageText = pdfReader.getPage(i).extractText()
         if (term + " " + year) in pageText:
-            return find_enrolment_info(pageText, term, year)
+            return find_enrolment_info(pageText + (pdfReader.getPage(i + 1).extractText() if i < pdfReader.numPages - 1 else ""), term, year)
 
 class TranscriptViewSet(ViewSet):
     queryset=PiquedGroup.objects.all()
@@ -130,7 +132,7 @@ class TranscriptViewSet(ViewSet):
         # create course Piqued groups that don't already exist
         for c in courseTupleList:
             if c[0] not in [g.group.name for g in courseGroups]:
-                piquedGroup = createPiquedGroupHelper(c[0],c[1], adminUser)
+                piquedGroup = createPiquedGroupHelper(c[0],c[1], adminUser, expiry=date(2021,6,1))
                 groupsToReturn.append(piquedGroup)
 
         # serialize
