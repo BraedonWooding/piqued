@@ -1,6 +1,7 @@
 import nltk
+from django.db.models import Count
 from fuzzywuzzy import fuzz, process
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from textblob import TextBlob
@@ -20,6 +21,12 @@ class InterestGraphViewSet(ModelViewSet):
     # everyone can 'add' to the graph and modify stuff they own
     serializer_class = InterestGraphSerializer
     queryset = Interest.objects.all()
+
+    @action(detail=False, methods=['get'])
+    def popular(self, request):
+        popularInterests = Interest.objects.filter(users__isnull=False)
+        popularInterests = popularInterests.annotate(num_users=Count('users')).filter(num_users__gt=0).order_by('-num_users')
+        return Response(InterestSerializer(list(popularInterests), many=True).data)
 
 nltk.download('punkt')
 nltk.download('brown')
