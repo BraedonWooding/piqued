@@ -9,7 +9,7 @@ import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { User } from "types";
 import { lookupCurrentUser } from "util/auth/user";
-import { MANUAL_DETAIL_INPUT_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS as SCRAPED_PROGRAM } from "util/constants";
+import { MANUAL_DETAIL_INPUT_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAM } from "util/constants";
 
 // add props for return link
 
