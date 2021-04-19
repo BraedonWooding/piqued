@@ -2,6 +2,7 @@ from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from user.models import PiquedUser
+from interests.models import Interest
 
 from .models import Group, PiquedGroup
 
@@ -25,6 +26,12 @@ class GroupSerializer(serializers.Serializer):
             user_id__in=[u.id for u in obj.user_set.all()])
         return [SimplifiedUserSerializer(pu).data for pu in users.all()]
 
+class SimplifiedPiquedGroupSerializer(serializers.Serializer):
+    name = serializers.CharField(source='group.name', validators=[UniqueValidator(
+        queryset=Group.objects.all(), message="This group name is taken.")])
+    id = serializers.IntegerField(source='group.id', read_only=True)
+    interests = InterestSerializer(many=True, required=False)
+    expired_at = serializers.DateField(required=False)
 
 class PiquedGroupSerializer(serializers.Serializer):
     name = serializers.CharField(source='group.name', validators=[UniqueValidator(
@@ -46,15 +53,21 @@ class PiquedGroupSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+    interests_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='interests', queryset=Interest.objects.all())
+
     def create(self, validated_data):
         groupname = validated_data["group"]["name"]
+        interests = validated_data['interests']
         user = self.context['request'].user
         piquedUser = PiquedUser.objects.get(user_id=user.id)
 
-        # TODO interests
         group = Group.objects.create(name=groupname)
         piquedGroup = PiquedGroup.objects.create(
             group=group, created_by=piquedUser)
+
+        piquedGroup.interests.set(interests)
+        piquedGroup.save()
+        
         piquedUser.user.groups.add(piquedGroup.group)
         return piquedGroup
 

@@ -13,7 +13,7 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField,
+  TextField
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -29,7 +29,7 @@ import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
 import { popUser } from "util/auth/user";
-import { LOGIN_PATH, SEARCH_GROUPS_PATH } from "util/constants";
+import { DISCOVER_ROOT_PATH, LOGIN_PATH } from "util/constants";
 import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
 import { FileStatusBar } from "./FileStatusBar";
@@ -285,16 +285,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               </ListItem>
             </List>
           </Grid>
-          <Button
-            onClick={() => {
-              router.push(SEARCH_GROUPS_PATH);
-            }}
-            color="primary"
-            variant="text"
-          >
-            <SearchRounded />
-            Search
-          </Button>
+          <Grid item xs={7} style={{ textAlign: "right", paddingRight: "10px" }}>
+            <Button
+              style={{ maxWidth: "70%" }}
+              onClick={() => {
+                router.push(DISCOVER_ROOT_PATH);
+              }}
+              color="primary"
+              variant="text"
+            >
+              <SearchRounded />
+              Discover
+            </Button>
+          </Grid>
         </Grid>
         <Divider />
         <List className={classes.userList}>

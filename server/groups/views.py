@@ -1,9 +1,12 @@
+from django.db.models import Count
 from django.http import HttpResponse
 from rest_framework import filters, permissions
 from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from .serializers import PiquedGroup, PiquedGroupSerializer
+from .serializers import (Group, PiquedGroup, PiquedGroupSerializer,
+                          SimplifiedPiquedGroupSerializer)
 
 
 class PiquedGroupViewSet(ModelViewSet):
@@ -29,3 +32,10 @@ class PiquedGroupViewSet(ModelViewSet):
         userToAdd.groups.add(piquedGroup.group.id)
         userToAdd.save()
         return HttpResponse("{} added to group".format(userToAdd.username))
+
+    # return all piqued groups the user is not in, in descending order
+    @action(detail=False, methods=['get'])
+    def popular(self, request):
+        popularGroups = PiquedGroup.objects.filter(group__user__isnull=False)
+        popularGroups = popularGroups.annotate(num_users=Count('group__user')).filter(num_users__gt=0).order_by('-num_users')
+        return Response(SimplifiedPiquedGroupSerializer(list(popularGroups), many=True).data)
