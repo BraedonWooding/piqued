@@ -73,7 +73,7 @@ def createPopularGroups(request):
     #usrs = PiquedUser.objects.filter(interests__in = interests)
 
     # Generate all possible combinations of the users interests (to a cap)
-    maxCombinations = 3
+    maxCombinations = 2
     combinationsList = list()
     for i in range(maxCombinations):
         comb = combinations(list(interests), i + 1)
@@ -83,10 +83,21 @@ def createPopularGroups(request):
     # This isn't the nicest(or fastest) approach, but its the best I could figure out.
     requiredSimilarUsers = 3
     groupsToMake = []
+    print(len(combinationsList))
     for c in combinationsList:
-        similarUsers = reduce(lambda qs, pk: qs.filter(interests=pk), c, PiquedUser.objects.all())
-        if len(similarUsers) >= requiredSimilarUsers:
+        similarUsers = PiquedUser.objects
+        for i in c:
+            similarUsers = similarUsers.filter(interests__exact = i)
+            #print(i)
+        #print(similarUsers.query)
+        #similarUsers = PiquedUser.objects.filter(interests__overlap = c)
+        #similarUsers = reduce(lambda qs, pk: qs.filter(interests=pk), c, PiquedUser.objects.all())
+        print(1)
+        if similarUsers.count() >= requiredSimilarUsers:
             groupsToMake.append(c)
+            
+
+    return Response()
 
     # For each group that needs making, determine if the group already exists
     for g in groupsToMake:
@@ -111,11 +122,11 @@ def createPopularGroups(request):
                 continue
 
             # Create the group
-            group = Group.objects.create(name=name.title())
-            piquedGroup = PiquedGroup.objects.create(
-                group=group, created_by=user)
-            piquedGroup.interests.set(g)
-            user.user.groups.add(piquedGroup.group)
+            #group = Group.objects.create(name=name.title())
+            #piquedGroup = PiquedGroup.objects.create(
+            #    group=group, created_by=user)
+            #piquedGroup.interests.set(g)
+            #user.user.groups.add(piquedGroup.group)
 
     return Response()
 
