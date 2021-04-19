@@ -23,7 +23,7 @@ const InitDetails = () => {
   const [interests, setInterests] = useState([]);
   const [userInterests, setUserInterests] = useState([]);
   const [selectedCourses, setSelectedCourses] = useState([]);
-  const [selectedPrograms, setSelectedPrograms] = useState();
+  const [selectedPrograms, setSelectedPrograms] = useState(null);
 
   useEffect(() => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
@@ -83,7 +83,7 @@ const InitDetails = () => {
           values.courses?.map((x) => x.id);
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
-            program_id: [values.program?.id],
+            program_id: [selectedPrograms?.id],
             courses_id: selectedCourses.map((x) => x.id),
             interests_id: userInterests.map((x) => x.id),
           });
