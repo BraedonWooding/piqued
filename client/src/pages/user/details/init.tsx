@@ -78,8 +78,8 @@ const InitDetails = () => {
           values.interests?.map((x) => x.id);
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
-            program: values.program?.id,
-            courses: values.courses.map((x) => x.id),
+            program_id: values.program?.id,
+            courses_id: values.courses.map((x) => x.id),
             interests_id: userInterests.map((x) => x.id),
           });
           updateRecommendedGroups();

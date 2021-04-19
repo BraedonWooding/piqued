@@ -3,6 +3,7 @@ from django.contrib.auth.hashers import make_password
 from groups.models import PiquedGroup
 from groups.serializers import PiquedGroupSerializer
 from info.serializers import CourseSerializer, ProgramSerializer
+from info.models import Course, Program
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -42,6 +43,8 @@ class PiquedUserSerializer(serializers.Serializer):
         return [PiquedGroupSerializer(pg).data for pg in groups.all()]
     interests = InterestSerializer(many=True, required=False, read_only=True)
     interests_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='interests', queryset=Interest.objects.all())
+    courses_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='courses', queryset=Course.objects.all())
+    program_id = serializers.PrimaryKeyRelatedField(many=True, required=False, write_only=True, source='programs', queryset=Program.objects.all())
 
     def update(self, instance: PiquedUser, validated_data):
         if 'user' in validated_data:
