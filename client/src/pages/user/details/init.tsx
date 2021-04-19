@@ -23,7 +23,7 @@ const InitDetails = () => {
   const [interests, setInterests] = useState([]);
   const [userInterests, setUserInterests] = useState([]);
   const [selectedCourses, setSelectedCourses] = useState([]);
-  const [selectedPrograms, setSelectedPrograms] = useState(null);
+  const [selectedPrograms, setSelectedPrograms] = useState();
 
   useEffect(() => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
@@ -37,8 +37,13 @@ const InitDetails = () => {
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests);
+
     if (localStorage.getItem(SCRAPED_COURSES)) {
       setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)));
+    }
+
+    if (localStorage.getItem(SCRAPED_PROGRAMS)) {
+      console.log(localStorage.getItem(SCRAPED_PROGRAMS));
       setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)));
     }
   }, []);
@@ -52,10 +57,9 @@ const InitDetails = () => {
         selectedCourses.forEach((c) => {
           if (g.name.includes(c.course_code)) userSelectedGroups.push(g);
         });
-        if (selectedPrograms && !userSelectedGroups.includes(g))
-          selectedPrograms.forEach((p) => {
-            if (p.name.includes(g.name)) userSelectedGroups.push(g);
-          });
+        if (selectedPrograms && !userSelectedGroups.includes(g)) {
+          if (selectedPrograms.name.includes(g.name)) userSelectedGroups.push(g);
+        }
       });
 
       userSelectedGroups.map(async (g) => {
@@ -76,10 +80,11 @@ const InitDetails = () => {
         }}
         onSubmit={async (values) => {
           values.interests?.map((x) => x.id);
+          values.courses?.map((x) => x.id);
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
-            program_id: values.program?.id,
-            courses_id: values.courses.map((x) => x.id),
+            program_id: [values.program?.id],
+            courses_id: selectedCourses.map((x) => x.id),
             interests_id: userInterests.map((x) => x.id),
           });
           updateRecommendedGroups();
@@ -99,7 +104,7 @@ const InitDetails = () => {
                       placeholder="program"
                       onChange={(e, value) => {
                         setFieldValue("program", value);
-                        setSelectedPrograms(values);
+                        setSelectedPrograms(value);
                       }}
                       value={selectedPrograms}
                       options={degrees}
