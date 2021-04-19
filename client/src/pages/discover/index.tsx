@@ -1,4 +1,4 @@
-import { Avatar, Box, Container, Grid, Typography } from "@material-ui/core";
+import { Avatar, Box, Button, Container, Grid, Typography } from "@material-ui/core";
 import { SearchTwoTone } from "@material-ui/icons";
 import { useStyles } from "components/Common/FormikUI";
 import { MyLink } from "components/Common/Link";
@@ -33,18 +33,20 @@ const Discover = () => {
           &nbsp;
           <Grid container>
             <Grid item xs={6} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <MyLink href={DISCOVER_GROUPS_PATH}>
-                <Typography>
-                  Groups
-                </Typography>
-              </MyLink>
+              <Button
+                color="primary"
+                variant="contained"
+                href={DISCOVER_GROUPS_PATH}>
+                Groups
+              </Button>
             </Grid>
             <Grid item xs={6} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <MyLink href={DISCOVER_INTERESTS_PATH}>
-                <Typography>
-                  Interests
-                </Typography>
-              </MyLink>
+              <Button
+                color="primary"
+                variant="contained"
+                href={DISCOVER_INTERESTS_PATH}>
+                Interests
+              </Button>
             </Grid>
             &nbsp;
             <Grid item xs={12} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
