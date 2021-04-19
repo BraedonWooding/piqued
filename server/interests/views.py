@@ -24,9 +24,8 @@ class InterestGraphViewSet(ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def popular(self, request):
-        user = PiquedUser.objects.get(user_id=self.request.user.id)
-        popularInterests = Interest.objects.all()
-        popularInterests = popularInterests.annotate(num_users=Count('users')).order_by('-num_users')
+        popularInterests = Interest.objects.filter(users__isnull=False)
+        popularInterests = popularInterests.annotate(num_users=Count('users')).filter(num_users__gt=0).order_by('-num_users')
         return Response(InterestSerializer(list(popularInterests), many=True).data)
 
 nltk.download('punkt')

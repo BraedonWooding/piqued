@@ -36,8 +36,6 @@ class PiquedGroupViewSet(ModelViewSet):
     # return all piqued groups the user is not in, in descending order
     @action(detail=False, methods=['get'])
     def popular(self, request):
-        user = self.request.user
-        userGroups = user.groups.all()
-        popularGroups = PiquedGroup.objects.exclude(group__in=userGroups)
-        popularGroups = popularGroups.annotate(num_users=Count('group__user')).order_by('-num_users')
+        popularGroups = PiquedGroup.objects.filter(group__user__isnull=False)
+        popularGroups = popularGroups.annotate(num_users=Count('group__user')).filter(num_users__gt=0).order_by('-num_users')
         return Response(SimplifiedPiquedGroupSerializer(list(popularGroups), many=True).data)
