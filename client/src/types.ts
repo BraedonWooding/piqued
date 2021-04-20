@@ -21,6 +21,7 @@ export interface User {
   groups: Group[];
   groups_created: Group[];
   status: Status;
+  shortcuts: string;
 }
 
 export interface ChatMsg {

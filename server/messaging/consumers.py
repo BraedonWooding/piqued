@@ -93,6 +93,11 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 continue
             sendToAllUserDevices(user, group.name, stringMessage)
 
+    def get_shortcuts(self):
+        user = PiquedUser.objects.filter(user__id__exact=self.userId)[0]
+        shortcuts = json.loads(user.shortcuts)
+        return shortcuts
+            
     def get_groups(self):
         groups = Group.objects.filter(user__id__exact=self.userId)
         return list(groups.all())
@@ -131,6 +136,17 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 files = text_data_json['files']  # Files are urls
                 userId = text_data_json['userId']
                 seen = text_data_json["seen"]
+
+                # Check for user-defined text shortcuts
+                shortcuts = await sync_to_async(self.get_shortcuts)()
+                for shortcut in shortcuts:
+                    if str(message) in shortcut[0]: # shortcut[0] is the shortcut string
+                        message = ""
+                        files = json.loads(files)
+                        file_to_add = shortcut[1] #shortcut[1] is the image url
+                        type_to_add = shortcut[3] #shortcut[3] is the type extension
+                        files.append({"url": file_to_add, "type": "image/" + type_to_add})
+                        files = json.dumps(files)
 
                 msg = {
                     'PartitionKey': partitionKey,

@@ -35,10 +35,13 @@ import { ChatMessage } from "./ChatMessage";
 import { FileStatusBar } from "./FileStatusBar";
 import { MuteButton } from "./MuteButton";
 import { ScrollableMsgs } from "./ScrollableMsgs";
+import { GiphyFetch } from "@giphy/js-fetch-api";
 
 interface ChatProps {
   activeUser: User | null;
 }
+
+const API_KEY = "c6Hr9L8EZfXoZtKCliUeRiEtefKxL04j";
 
 export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const classes = useStyles();
@@ -55,6 +58,66 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
   const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
+  const giphy = new GiphyFetch(API_KEY);
+
+  /*
+  Parses a message to see if it is a text shortcut.
+  If it is, handles accordingly and returns true.
+  Otherwise returns false to let other code handle sending the message as normal
+  */
+  const handleIfShortcut = async (message: string, files) => {
+    message = message.trim();
+    // Image/gif text shortcuts only valid if they are the only thing in the message
+    // An image/gif interspersed with a sentence doesn't really make sense
+    var file: { url: string, type: string};
+    var isShortcut: boolean = false;
+    if (message == "/piqued") {
+      isShortcut = true;
+      file = {
+        url: "/favicon.ico",
+        type: "image/png"
+      }
+    } else if (message.startsWith("/gif-")) {
+      isShortcut = true;
+      message = message.slice(5);
+      if (message == "") { // If message is just "/gif-", return false
+        return false;
+      }
+      const gifArray = await giphy.search(message, {limit: 1});
+      if (gifArray.data.length <= 0) {
+        return false;
+      }
+      const gif = gifArray.data[0];
+      file = {
+        url: `https://i.giphy.com/media/${gif.id}/200w.gif`,
+        type: "image/gif"
+      }
+    } else if (message == "/adam" ||
+      message == "/braedon" ||
+      message == "/jimmy" ||
+      message == "/matthew" ||
+      message == "/nicholas") {
+      isShortcut = true;
+      file = {
+        url: message.concat(".jpg"),
+        type: "image/jpg"
+      };
+    }
+    if (isShortcut) {
+      files.push(file);
+      chatSocket.send(
+        JSON.stringify({
+          type: MessageType.CHAT_MESSAGE,
+          message: "",
+          files: JSON.stringify(files),
+          partitionKey: currentGroup.id.toString(),
+          userId: activeUser.id,
+          seen: activeUser.id.toString(),
+          createdAt: new Date(),
+        }));
+    }
+    return isShortcut ? true : false;
+  }
 
   const handleGroupHover = (index) => {
     setGroupHover(index);
@@ -475,18 +538,20 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               const el = document.querySelector("#send-logo") as HTMLElement;
               el.classList.add(classes.fly);
               setTimeout(() => el.classList.remove(classes.fly), 2000);
-
-              chatSocket.send(
-                JSON.stringify({
-                  type: MessageType.CHAT_MESSAGE,
-                  message,
-                  files: JSON.stringify(files),
-                  partitionKey: currentGroup.id.toString(),
-                  userId: activeUser.id,
-                  seen: activeUser.id.toString(),
-                  createdAt: new Date(),
-                })
-              );
+              const isShortcut: boolean = await handleIfShortcut(message, files);
+              if (!isShortcut) {
+                chatSocket.send(
+                  JSON.stringify({
+                    type: MessageType.CHAT_MESSAGE,
+                    message,
+                    files: JSON.stringify(files),
+                    partitionKey: currentGroup.id.toString(),
+                    userId: activeUser.id,
+                    seen: activeUser.id.toString(),
+                    createdAt: new Date(),
+                  })
+                );
+              }
               setMessage("");
               setSelectedFiles([]);
             }

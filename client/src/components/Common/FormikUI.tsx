@@ -5,7 +5,9 @@ import {
   makeStyles,
   OutlinedInputProps,
   TextField,
+  Button,
 } from "@material-ui/core";
+import { blue } from "@material-ui/core/colors";
 import { FieldHookConfig, useField } from "formik";
 import { FC, ReactNode } from "react";
 
@@ -80,6 +82,13 @@ export const useStyles = makeStyles((theme) => ({
       width: "100%",
     },
   },
+  shortcutImage: {
+    width: "40px",
+    height: "40px",
+    "&:hover": {
+      border: "2px solid #3578E5",
+    },
+  },
   avatar: {
     width: "200px",
     height: "200px",
@@ -134,5 +143,8 @@ export const useStyles = makeStyles((theme) => ({
   },
   margin: {
     margin: theme.spacing(1),
-  }
+  },
+  smallMargin: {
+    margin: theme.spacing(0.5),
+  },
 }));
