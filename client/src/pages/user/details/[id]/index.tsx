@@ -31,16 +31,12 @@ const UserDetails = () => {
   const [activeUser, setActiveUser] = useState<User | null>();
   const [isActiveUser, setIsActiveUser] = useState<boolean>(false);
   const [shortcuts, setShortcuts] = useState([["", "", uuidv4(), ""]]);
-  const [showAddButton, setShowAddButton] = useState(false);
 
   useEffect(() => {
     if (Number.isInteger(Number(id)) && !user) {
       const user = getUser();
       setActiveUser(user);
       const shortcutObject = JSON.parse(user.shortcuts);
-      // if (Object.keys(shortcutObject).length > 0) {
-      setShowAddButton(true);
-      // }
       setShortcuts(shortcutObject);
       setImg(user.profile_picture);
       setIsActiveUser(user.id == Number(id));
@@ -195,21 +191,21 @@ const UserDetails = () => {
                   format="dd/MM/yyyy"
                   value={values.date_of_birth}
                   onChange={(value: Date) => setFieldValue("date_of_birth", value)}
-                /> 
-                &nbsp;
-                {
-                  shortcuts.map((array, index) => ( 
-                      <ShortcutCreator key={array[2]} id={array[2]} initialUrl={array[1]} initialShortcut={array[0]} index={index} onSave={ handleShortcutSave } onDelete={ handleDeleteShortcut }/>
-                  ))
-                }
-                {
-                  showAddButton ? <Button onClick={ handleAddShortcut }>Add shortcut</Button> : null
-                }
+                />
                 &nbsp;
                 {isActiveUser ? (
-                  <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
-                    Save
-                  </Button>
+                  <div>
+                    {
+                      shortcuts.map((array, index) => ( 
+                        <ShortcutCreator key={array[2]} id={array[2]} initialUrl={array[1]} initialShortcut={array[0]} index={index} onSave={ handleShortcutSave } onDelete={ handleDeleteShortcut }/>
+                      ))
+                    }
+                    <Button onClick={ handleAddShortcut }>Add shortcut</Button>
+                    <br/>
+                    <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
+                      Save
+                    </Button>
+                  </div>
                 ) : (
                   <Button onClick={() => router.push("/home")} color="primary" variant="contained">
                     Go back to Home
