@@ -23,7 +23,9 @@ const DiscoverGroups = () => {
       setPopularGroups(resp.data)
     });
 
-    // TODO: add get request for recommended groups
+    axios.post(process.env.NEXT_PUBLIC_API_URL + "/recommendGroups/").then((resp) => {
+      setRecommendedGroups(resp.data)
+    });
 
   }, []);
 
@@ -75,9 +77,21 @@ const DiscoverGroups = () => {
                   <Grid item xs={3} className={itemClasses.joinGroupArea}>
                     <Button
                       onClick={async () => {
-                        await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
-                        recommendedGroups.splice(index, 1);
-                        setRecommendedGroups([...recommendedGroups]);
+                        if (x.existing === true) {
+                          await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
+                          popularGroups.splice(index, 1);
+                          setPopularGroups([...popularGroups]);
+                        } else {
+                          const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/createGroup/`, {
+                            group: x
+                          });
+                          console.log(response.data.id)
+                          await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + response.data.id + "/add_user/");
+                          popularGroups.splice(index, 1);
+                          setPopularGroups([...popularGroups]);
+                        }
+
+
                       }}
                     >
                       <Add />

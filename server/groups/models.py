@@ -20,4 +20,4 @@ class PiquedGroup(models.Model):
     muted_users = models.CharField(max_length=2000, default="", blank=True)
 
     def __str__(self):
-        return self.group.__str__()
+        return str(self.group.name)
