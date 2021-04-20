@@ -15,9 +15,6 @@ interface DiscoverGroupsProps {
 export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopularGroups, recommendedGroups, setRecommendedGroups }) => {
   const itemClasses = itemStyles();
   const [addedGroups, setAddedGroups] = useState<Group[]>([]);
-  const [searchResults, setGroupResults] = useState<Group[]>([]);
-  const searchClasses = searchStyles();
-  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const updateGroupLists = () => {
     setPopularGroups(popularGroups.filter(p => addedGroups.filter(a => a.id == p.id).length == 0));
