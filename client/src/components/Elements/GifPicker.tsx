@@ -1,6 +1,6 @@
-import { GiphyFetch } from "@giphy/js-fetch-api";
-import { IGif } from "@giphy/js-types";
-import { Grid } from "@giphy/react-components";
+import { GiphyFetch } from "f-giphy-pfft-js-fetch-api";
+import { IGif } from "f-giphy-pfft-js-types";
+import { Grid } from "f-giphy-pfft-react-components";
 import { ClickAwayListener, makeStyles, TextField } from "@material-ui/core";
 import { FC, useState } from "react";
 //@ts:ignore
@@ -20,10 +20,14 @@ export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
   const [search, setSearch] = useState<string | null>(null);
 
   const fetchMoreGifs = (offset: number) => {
-    if (search?.trim()) {
-      return giphy.search(search, { offset, limit: 10 });
-    } else {
-      return giphy.trending({ offset, limit: 10 });
+    try {
+      if (search?.trim()) {
+        return giphy.search(search, { offset, limit: 10 });
+      } else {
+        return giphy.trending({ offset, limit: 10 });
+      }
+    } catch {
+      return null;
     }
   };
 
@@ -61,7 +65,13 @@ export const GifPicker: FC<GifPickerProps> = ({ sendGif }) => {
               }}
               hideAttribution={true}
               noLink={true}
-              fetchGifs={fetchMoreGifs}
+              fetchGifs={async (offset) => {
+                try {
+                  return fetchMoreGifs(offset);
+                } catch {
+                  return null;
+                }
+              }}
               width={225}
               columns={2}
               gutter={6}

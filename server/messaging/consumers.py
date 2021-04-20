@@ -11,7 +11,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth.models import Group
-from firebase_notifications.notificationSend import sendToAllUserDevices
+from firebase_notifications.notification_send import send_to_all_user_devices
 from groups.models import PiquedGroup
 from user.models import PiquedUser
 
@@ -23,13 +23,12 @@ def handleException(e, loc):
     print("\n\n--------\nError in " + loc + "\n" + str(exc_value) +
           "\nTraceback: " + str(traceback.format_exception(exc_type, exc_value, exc_tb)))
 
-
 class MessageType(str, Enum):
     GET_HISTORY = "get_history",
     CHAT_MESSAGE = "chat_message",
     SEEN_MESSAGE = "seen_message",
-    STATUS_UPDATE = "status_update"
-
+    STATUS_UPDATE = "status_update",
+    MESSAGE_UPDATE = "message_update"
 
 class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -42,9 +41,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
 
-            for group in await database_sync_to_async(self.get_groups)():
+            # Join channel group for each group user is in
+            for group in await database_sync_to_async(lambda: list(Group.objects.filter(user__id__exact=self.userId).all()))():
                 self.groupIds.append(group.id)
-                # Join channel group for each group user is in
                 await self.channel_layer.group_add(
                     f'chat_{group.id}',
                     self.channel_name
@@ -58,6 +57,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                         'isResponse': False
                     })
 
+            # create messaging table if it doesn't exist
             try:
                 if not self.table_service.exists('Messages'):
                     self.table_service.create_table('Messages')
@@ -70,9 +70,9 @@ class GroupConsumer(AsyncWebsocketConsumer):
             handleException(sys.exc_info(), "connecting to socket.")
 
     # Takes in a message object
-    def sendNotifications(self, message):
+    def send_notifications(self, message):
         groupId = int(message['PartitionKey'])
-        stringMessage = message['message']
+        message = message['message']
         piquedGroup = PiquedGroup.objects.filter(group_id=groupId).first()
 
         # Getting muted users dict
@@ -82,20 +82,19 @@ class GroupConsumer(AsyncWebsocketConsumer):
             mutedUsers = {}
 
         group = piquedGroup.group
-
         users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
+
         for user in users:
             # Do not send to self
             if str(user.user.id) == str(self.userId):
                 continue
-            # If mutedUsers[user.id] < 0, it is muted indefinitely
-            if str(user.user.id) in mutedUsers and (mutedUsers[str(user.user.id)] < 0 or datetime.now(timezone.utc) < datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)):
-                continue
-            sendToAllUserDevices(user, group.name, stringMessage)
 
-    def get_groups(self):
-        groups = Group.objects.filter(user__id__exact=self.userId)
-        return list(groups.all())
+            # If mutedUsers[user.id] < 0, it is muted indefinitely
+            if str(user.user.id) not in mutedUsers \
+                or (mutedUsers[str(user.user.id)] >= 0 \
+                    and datetime.now(timezone.utc) >= datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)\
+                ):
+                send_to_all_user_devices(user, group.name, message)
 
     async def disconnect(self, close_code):
         for groupId in self.groupIds:
@@ -160,7 +159,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 )
 
                 # Send firebase notifications
-                await sync_to_async(self.sendNotifications)(msg)
+                await sync_to_async(self.send_notifications)(msg)
 
             elif message_type == MessageType.SEEN_MESSAGE:
                 partitionKey = text_data_json['partitionKey']
@@ -172,6 +171,27 @@ class GroupConsumer(AsyncWebsocketConsumer):
                         'rowKey':  text_data_json['rowKey'],
                         'seen':  text_data_json['seen'],
                     })
+            elif message_type == MessageType.MESSAGE_UPDATE:
+                entity = self.table_service.get_entity('Messages', text_data_json['partitionKey'], text_data_json['rowKey'])
+                if entity is not None and entity and entity["userId"] != self.userId:
+                    # trying to update a message they didn't send (bad human)
+                    # just ignore
+                    return
+
+                if text_data_json['updateType'] == 'edited':
+                    entity["message"] = text_data_json["modification"]
+                    self.table_service.merge_entity('Messages', entity)
+                elif text_data_json['updateType'] == 'deleted':
+                    self.table_service.delete_entity('Messages', text_data_json['partitionKey'], text_data_json['rowKey'])
+                else:
+                    handleException(
+                        sys.exc_info(), "Invalid type: " + str(text_data_json['type']))
+                    return
+                
+                await self.channel_layer.group_send(
+                    f"chat_{text_data_json['partitionKey']}",
+                    text_data_json
+                )
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving data from client.")
@@ -243,6 +263,13 @@ class GroupConsumer(AsyncWebsocketConsumer):
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'seen_message' from socket_group (channel layer).")
+
+    async def message_update(self, event):
+        try:
+            self.send(text_data=json.dumps(event))
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'status_update' from socket_group (channel layer).")
 
     async def status_update(self, event):
         try:
