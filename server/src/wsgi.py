@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/howto/deployment/wsgi/
 
 import os
 
-import messaging.routing
+import messaging.urls
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.wsgi import get_wsgi_application
@@ -22,7 +22,7 @@ application = ProtocolTypeRouter({
     "http": get_wsgi_application(),
     "websocket": AuthMiddlewareStack(
             URLRouter(
-                messaging.routing.websocket_urlpatterns
+                messaging.urls.urlpatterns
             )
         ),
 })

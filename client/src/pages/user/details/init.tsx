@@ -33,7 +33,6 @@ const InitDetails = () => {
       setDegrees(resp.data);
     });
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/interests/").then((resp) => {
-      console.log(resp);
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests);
