@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Group } from "types";
 import { getUser } from "util/auth/user";
-import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS } from "util/constants";
+import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAM } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -23,7 +23,7 @@ const InitDetails = () => {
   const [interests, setInterests] = useState([]);
   const [userInterests, setUserInterests] = useState([]);
   const [selectedCourses, setSelectedCourses] = useState([]);
-  const [selectedPrograms, setSelectedPrograms] = useState(null);
+  const [selectedProgram, setSelectedProgram] = useState(null);
 
   useEffect(() => {
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/info/courses/").then((resp) => {
@@ -36,9 +36,13 @@ const InitDetails = () => {
       setInterests(resp.data);
     });
     setUserInterests(getUser().interests);
+
     if (localStorage.getItem(SCRAPED_COURSES)) {
       setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)));
-      setSelectedPrograms(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)));
+    }
+
+    if (localStorage.getItem(SCRAPED_PROGRAM)) {
+      setSelectedProgram(JSON.parse(localStorage.getItem(SCRAPED_PROGRAM)));
     }
   }, []);
 
@@ -51,10 +55,9 @@ const InitDetails = () => {
         selectedCourses.forEach((c) => {
           if (g.name.includes(c.course_code)) userSelectedGroups.push(g);
         });
-        if (selectedPrograms && !userSelectedGroups.includes(g))
-          selectedPrograms.forEach((p) => {
-            if (p.name.includes(g.name)) userSelectedGroups.push(g);
-          });
+        if (selectedProgram && !userSelectedGroups.includes(g)) {
+          if (selectedProgram.name.includes(g.name)) userSelectedGroups.push(g);
+        }
       });
 
       userSelectedGroups.map(async (g) => {
@@ -75,10 +78,11 @@ const InitDetails = () => {
         }}
         onSubmit={async (values) => {
           values.interests?.map((x) => x.id);
+          values.courses?.map((x) => x.id);
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
-            program: values.program?.id,
-            courses: values.courses.map((x) => x.id),
+            program_id: selectedProgram?.id,
+            courses_id: selectedCourses.map((x) => x.id),
             interests_id: userInterests.map((x) => x.id),
           });
           updateRecommendedGroups();
@@ -98,9 +102,9 @@ const InitDetails = () => {
                       placeholder="program"
                       onChange={(e, value) => {
                         setFieldValue("program", value);
-                        setSelectedPrograms(values);
+                        setSelectedProgram(value);
                       }}
-                      value={selectedPrograms}
+                      value={selectedProgram}
                       options={degrees}
                       renderInput={(params) => <TextField {...params} variant="outlined" label="Degree" required />}
                       getOptionLabel={(option) => `${option.name}`}

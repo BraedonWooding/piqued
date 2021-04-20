@@ -148,7 +148,7 @@ class TranscriptViewSet(ViewSet):
 
         # send
         return Response({
-            'programs': program_serializer.data,
+            'program': program_serializer.data,
             'courses': course_serializer.data,
             'groups': group_serializer.data
         })
