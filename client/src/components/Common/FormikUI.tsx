@@ -89,6 +89,7 @@ export const useStyles = makeStyles((theme) => ({
       border: "2px solid #3578E5",
     },
   },
+  error: { color: theme.palette.error.main },
   avatar: {
     width: "200px",
     height: "200px",

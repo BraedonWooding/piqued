@@ -6,7 +6,7 @@ from user.serializers import PiquedUserSerializer
 cred = credentials.Certificate("firebase_notifications/serviceAccountKey.json")
 default_app = firebase_admin.initialize_app(cred)
 
-def sendToAllUserDevices(piquedUser, groupname, stringMessage):
+def send_to_all_user_devices(piquedUser, groupname, stringMessage):
     registration_tokens = piquedUser.fcm_tokens.split()
     message = messaging.MulticastMessage(
         data={

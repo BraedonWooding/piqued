@@ -1,6 +1,6 @@
 #!/bin/bash
 # Prepare log files and start outputting logs to stdout
-export LANG=C.UTF-8
+export LANG="en_US.UTF-8"
 export LC_ALL=C.UTF-8
 export DJANGO_SETTINGS_MODULE=src.settings
 

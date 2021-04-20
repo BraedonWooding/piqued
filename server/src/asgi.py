@@ -17,7 +17,7 @@ from django.core.asgi import get_asgi_application
 
 app = get_asgi_application()
 
-import messaging.routing
+import messaging.urls
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 
@@ -27,7 +27,7 @@ application = ProtocolTypeRouter({
     "http": app,
     "websocket": AuthMiddlewareStack(
             URLRouter(
-                messaging.routing.websocket_urlpatterns
+                messaging.urls.urlpatterns
             )
         ),
 })

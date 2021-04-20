@@ -1,9 +1,9 @@
-# messaging/urls.py
-from django.urls import path
-from rest_framework.views import APIView
-from . import views
+# messaging/routing.py
+from django.urls import re_path
+
+from . import consumers
 
 urlpatterns = [
-    path('delete/', views.delete),
-    path('edit/', views.edit)
+    re_path(r'ws/messaging/(?P<userId>\w+)/$',
+            consumers.GroupConsumer.as_asgi()),
 ]

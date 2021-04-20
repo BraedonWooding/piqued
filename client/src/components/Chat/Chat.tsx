@@ -13,7 +13,8 @@ import {
   ListItemText,
   makeStyles,
   Paper,
-  TextField
+  TextField,
+  Typography,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -32,10 +33,11 @@ import { popUser } from "util/auth/user";
 import { DISCOVER_ROOT_PATH, LOGIN_PATH } from "util/constants";
 import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
+import { ChatMessages } from "./ChatMessages";
 import { FileStatusBar } from "./FileStatusBar";
 import { MuteButton } from "./MuteButton";
 import { ScrollableMsgs } from "./ScrollableMsgs";
-import { GiphyFetch } from "@giphy/js-fetch-api";
+import { GiphyFetch } from "f-giphy-pfft-js-fetch-api";
 
 interface ChatProps {
   activeUser: User | null;
@@ -54,7 +56,6 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   const chatMsgsRef = useRef(chatMsgs);
   const userGroupsRef = useRef(userGroups);
   const currentGroupRef = useRef(currentGroup);
-  const scrollableRef = useRef<Measure>();
   const [deactive, setDeactive] = useState(false);
   const [retry, setRetry] = useState(false);
   const [groupHover, setGroupHover] = useState(null); // Stores index of hovered group
@@ -255,6 +256,23 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               setUserGroups([...userGroupsRef.current]);
             }
           }
+        } else if (parsedData.type === MessageType.MESSAGE_UPDATE) {
+          const { partitionKey, rowKey, modification, update_type } = parsedData;
+          if (partitionKey == currentGroup.id) {
+            if (update_type === "edited") {
+              const msg = chatMsgsRef.current.find((x) => x.rowKey == rowKey);
+              msg.message = modification;
+              setChatMsgs([...chatMsgsRef.current]);
+            } else if (update_type === "deleted") {
+              const index = chatMsgsRef.current.findIndex((x) => x.rowKey == rowKey);
+              if (index >= 0 && index < chatMsgsRef.current.length) {
+                chatMsgsRef.current.splice(index, 1);
+                setChatMsgs([...chatMsgsRef.current]);
+              }
+            } else {
+              console.error("invalid update type: " + update_type);
+            }
+          }
         }
       };
 
@@ -333,7 +351,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <Grid container alignItems="center">
           <Grid item xs={6}>
             <List>
-              <ListItem button onClick={() => router.push("/user/details/" + activeUser.id)}>
+              <ListItem button key={'user'} onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
                   <Badge
                     overlap="circle"
@@ -413,6 +431,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 </ListItem>
               )
           )}
+          {(!userGroups || userGroups.length == 0) && (
+            <Typography style={{ marginLeft: 15 }}>
+              You aren't in any groups!  You can search for some through the "Search" button
+            </Typography>
+          )}
         </List>
       </Grid>
       <Grid
@@ -426,109 +449,24 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         onDragLeave={(e: React.DragEvent<HTMLInputElement>) => e.preventDefault()}
         onDrop={fileDrop}
       >
-        <List style={{ paddingTop: 0 }} className={classes.messageArea}>
-          <ScrollableMsgs ref={scrollableRef}>
-            {(() => {
-              const lastSeenSet = chatMsgs[chatMsgs.length - 1]?.seen.split(" ") || [];
-              const lastSeen = currentUsers.every((i) => lastSeenSet.includes(i));
-              let earliestSeenMsg: number | null = null;
-              let lastSeenUsers = "Seen by ";
-
-              if (currentGroup) {
-                const lastSeenSetUsers = currentGroup.user_set.filter((x) => lastSeenSet.includes(String(x.id)));
-                lastSeenUsers += Array.from(
-                  new Set(lastSeenSetUsers.filter((x) => x.id != activeUser.id).map((x) => x.first_name))
-                )
-                  .slice(0, 3)
-                  .join(", ");
-                if (lastSeenSetUsers.length == 0) {
-                  lastSeenUsers = "Sent";
-                } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
-                  lastSeenUsers = "Seen by everyone";
-                } else if (lastSeenSetUsers.length > 3) {
-                  lastSeenUsers += `and ${lastSeenSetUsers.length - 3} others`;
-                }
-              }
-
-              if (!lastSeen) {
-                // hasn't been seen by all members so we should show the previous message that has
-                for (let i = chunkedMsgs.length - 2; i >= 0; i--) {
-                  let [_, chatMsgs] = chunkedMsgs[i];
-                  const msg = chatMsgs.find((x) => {
-                    const users = x.seen?.split(" ") || [];
-                    return currentUsers.every((i) => users.includes(i));
-                  });
-                  if (msg) {
-                    earliestSeenMsg = i;
-                    break;
-                  }
-                }
-              }
-
-              return chunkedMsgs.map(([user, chatMsgs], index) => {
-                const isActiveUser = user?.id === activeUser.id;
-                let seen: string = "";
-                if (index == chunkedMsgs.length - 1) seen = (lastSeen ? "✓✓ " : "✓ ") + `${lastSeenUsers} `;
-                else if (index == earliestSeenMsg) seen = "✓✓ " + `Seen by everyone `;
-
-                return (
-                  <ListItem key={index}>
-                    <Grid container>
-                      <Grid item xs={12}>
-                        <ChatMessage
-                          msgs={chatMsgs}
-                          user={user}
-                          side={isActiveUser ? "right" : "left"}
-                          // :( it does exist they just have bad type script files
-                          onMediaLoad={() => (scrollableRef.current as any).measure()}
-                          onMessageChanged={async (type, msg, modification) => {
-                            const { rowKey, partitionKey } = msg;
-                            if (type == "edited") {
-                              const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/edit/`, {
-                                partitionKey,
-                                rowKey,
-                                message: modification,
-                              });
-                              if (response.data.status === "Edited") {
-                                msg.message = modification;
-                                setChatMsgs([...chatMsgsRef.current]);
-                              }
-                            } else if (type == "deleted") {
-                              const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/delete/`, {
-                                rowKey,
-                                partitionKey,
-                              });
-                              if (response.data.status === "Deleted") {
-                                const i = chatMsgsRef.current.findIndex((obj) => obj.rowKey == rowKey);
-                                chatMsgsRef.current.splice(i, 1);
-                                setChatMsgs([...chatMsgsRef.current]);
-                              }
-                            }
-                          }}
-                        />
-                        <List className={clsx({ [classes.alignSelfRight]: isActiveUser })}>
-                          <Box display="flex">
-                            <ListItem
-                              style={{ padding: 0 }}
-                              className={clsx({ [classes.alignSelfRight]: isActiveUser })}
-                            >
-                              {
-                                <ListItemText
-                                  className={clsx({ [classes.alignSelfRight]: isActiveUser }, classes.name)}
-                                  secondary={seen + format(chatMsgs[chatMsgs.length - 1].createdAt, "h:mm aa")}
-                                />
-                              }
-                            </ListItem>
-                          </Box>
-                        </List>
-                      </Grid>
-                    </Grid>
-                  </ListItem>
-                );
-              });
-            })()}
-          </ScrollableMsgs>
-        </List>
+        <ChatMessages
+          chatMsgs={chatMsgs}
+          currentGroup={currentGroup}
+          currentUsers={currentUsers}
+          activeUser={activeUser}
+          chunkedMsgs={chunkedMsgs}
+          onMsgUpdate={(updateType, { rowKey, partitionKey }, modification) => {
+            chatSocket.send(
+              JSON.stringify({
+                type: MessageType.MESSAGE_UPDATE,
+                updateType,
+                rowKey,
+                partitionKey,
+                modification,
+              })
+            );
+          }}
+        ></ChatMessages>
         <Divider />
         <form
           onSubmit={async (e) => {
