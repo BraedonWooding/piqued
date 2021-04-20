@@ -68,7 +68,6 @@ const TranscriptUpload = () => {
           } catch {
             setLoading(false);
             formikHelper.setStatus({ httpErrorMessage: "Invalid Transcript File" });
-            console.log("HERE");
             return;
           }
           setLoading(false);

@@ -17,15 +17,15 @@ import * as yup from "yup";
 import { green } from '@material-ui/core/colors';
 
 const validationSchema = yup.object({
-  // date_of_birth: yup.date(),
-  // email: yup
-  //   .string()
-  //   .email()
-  //   .matches(
-  //     /^.*\@(?:student.|ad.)?unsw.edu.au$/,
-  //     "Email has to end with @ad.unsw.edu.au, @student.unsw.edu.au, or @unsw.edu.au"
-  //   ),
-  // confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
+  date_of_birth: yup.date(),
+  email: yup
+    .string()
+    .email()
+    .matches(
+      /^.*\@(?:student.|ad.)?unsw.edu.au$/,
+      "Email has to end with @ad.unsw.edu.au, @student.unsw.edu.au, or @unsw.edu.au"
+    ),
+  confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
 });
 
 const Register = () => {
@@ -59,27 +59,37 @@ const Register = () => {
           password: "",
           confirmPassword: "",
         }}
-        onSubmit={async ({ confirmPassword, ...other }) => {
+        onSubmit={async ({ confirmPassword, ...other }, formikHelper) => {
           const { date_of_birth, email: username, } = other;
           setLoading(true);
-          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
-            ...other,
-            date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
-            username: username
-          });
-          await authenticateToken({ password: other.password, username });
-          var usr = await lookupCurrentUser();
-          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
-            interests: FB_interests,
-            userId: usr["id"]
-          });
+          try {
+            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
+              ...other,
+              date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
+              username: username
+            });
+            await authenticateToken({ password: other.password, username });
+            var usr = await lookupCurrentUser();
+            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
+              interests: FB_interests,
+              userId: usr["id"]
+            });
+          } catch (e) {
+            if (e && e.response && e.response.data && e.response.data.username) {
+              formikHelper.setStatus({ other: "Username already taken" });
+            } else {
+              formikHelper.setStatus({ other: "Unknown issue try again" });
+            }
+            setLoading(false);
+            return;
+          }
           var usr = await lookupCurrentUser();
           setLoading(false);
           router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
       >
-        {({ values, isSubmitting, setFieldValue }) => (
+        {({ values, isSubmitting, setFieldValue, status }) => (
           <Form>
             <Container component="main" maxWidth="sm">
               <Box className={classes.card}>
@@ -119,6 +129,11 @@ const Register = () => {
                   type="password"
                 />
                 &nbsp;
+                {status && status.other && (
+                    <div style={{ fontSize: 20 }} className={classes.error}>
+                      {status.other}
+                    </div>
+                )}
                 <div style={{position: "relative"}}>
                   <Button type="submit" color="primary" variant="contained" disabled={loading || isSubmitting}>
                     Sign up

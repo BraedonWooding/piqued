@@ -80,6 +80,7 @@ export const useStyles = makeStyles((theme) => ({
       width: "100%",
     },
   },
+  error: { color: theme.palette.error.main },
   avatar: {
     width: "200px",
     height: "200px",
