@@ -1,16 +1,16 @@
 import { Avatar, Box, Button, Container, Grid, makeStyles, TextField, Theme, Typography } from "@material-ui/core";
-import { ChatBubbleOutline } from "@material-ui/icons";
+import { ChatBubbleOutline, CloseOutlined } from "@material-ui/icons";
 import { Autocomplete } from "@material-ui/lab";
 import axios from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
-import { NavButtonLink } from "components/Common/Link";
+import { MyLink } from "components/Common/Link";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { User } from "types";
 import { lookupCurrentUser } from "util/auth/user";
-import { HOME_PATH, SEARCH_GROUPS_PATH } from "util/constants";
+import { DISCOVER_ROOT_PATH, HOME_PATH } from "util/constants";
 
 const CreateGroup = () => {
   const classes = useStyles();
@@ -45,6 +45,13 @@ const CreateGroup = () => {
           <Form>
             <Container component="main" maxWidth="sm">
               <Box className={classes.card}>
+                <Grid container spacing={5} style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Grid>
+                    <MyLink href={DISCOVER_ROOT_PATH}>
+                      <CloseOutlined />
+                    </MyLink>
+                  </Grid>
+                </Grid>
                 <Avatar>
                   <ChatBubbleOutline />
                 </Avatar>
@@ -89,11 +96,6 @@ const CreateGroup = () => {
                         Create Group
                       </Button>
                     )}
-                  </Grid>
-                  <Grid item xs={12} className={customClasses.interfaceButtons}>
-                    <NavButtonLink href={SEARCH_GROUPS_PATH} color="primary" variant="contained">
-                      Cancel
-                    </NavButtonLink>
                   </Grid>
                 </Grid>
               </Box>
