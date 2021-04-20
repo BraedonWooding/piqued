@@ -64,7 +64,7 @@ export const ShortcutCreator: FC<ShortcutCreatorProps> = ({ id, index, initialUr
                 } else {
                   setImageRequired(false)
                 }
-                onSave(shortcutImage, shortcut, id, extension);
+                onSave(baseUrl, e.target.value, id, extension);
               }
             }
           />

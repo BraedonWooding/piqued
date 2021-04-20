@@ -140,7 +140,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 # Check for user-defined text shortcuts
                 shortcuts = await sync_to_async(self.get_shortcuts)()
                 for shortcut in shortcuts:
-                    if str(message) in shortcut[0]: # shortcut[0] is the shortcut string
+                    if str(message) == shortcut[0]: # shortcut[0] is the shortcut string
                         message = ""
                         files = json.loads(files)
                         file_to_add = shortcut[1] #shortcut[1] is the image url

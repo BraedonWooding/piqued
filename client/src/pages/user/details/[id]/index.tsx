@@ -78,7 +78,7 @@ const UserDetails = () => {
     const index = shortcuts.indexOf(newArr[0]);
     
     var tempArr = [shortcutName, url, shortcuts[index][2], extension];
-    var newArr = [...shortcuts]; // copying the old array
+    newArr = [...shortcuts]; // copying the old array
     newArr[index] = tempArr;
     setShortcuts(newArr);
   }
@@ -87,7 +87,7 @@ const UserDetails = () => {
     const id = uuidv4();
     setShortcuts(prevState => ([
       ...prevState,
-      ["", "", id]
+      ["", "", id, ""]
     ]))
   }
 
