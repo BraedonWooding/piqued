@@ -15,7 +15,7 @@ export const TranscriptPicker: FC<TranscriptPickerProps> = ({ transcriptSelect }
 
   return (
     <div style={{ display: "flex", alignContent: "center" }}>
-      <input type="file" onChange={newTranscript} id="file" ref={inputFile} accept=".pdf" />
+      <input required type="file" onChange={newTranscript} id="file" ref={inputFile} accept=".pdf" />
     </div>
   );
 };

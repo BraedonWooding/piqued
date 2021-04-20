@@ -8,7 +8,7 @@ import { Form, Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Group } from "types";
 import { getUser, lookupCurrentUser, setUser } from "util/auth/user";
-import { CREATE_GROUP_PATH, HOME_PATH } from "util/constants";
+import { CREATE_GROUP_PATH, DISCOVER_GROUPS_PATH } from "util/constants";
 
 const SearchGroup = () => {
 
@@ -41,7 +41,7 @@ const SearchGroup = () => {
               <Box className={formikClasses.card}>
                 <Grid container spacing={5} className={searchClasses.closeButton}>
                   <Grid>
-                    <MyLink href={HOME_PATH}>
+                    <MyLink href={DISCOVER_GROUPS_PATH}>
                       <CloseOutlined />
                     </MyLink>
                   </Grid>
