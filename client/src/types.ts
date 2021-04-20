@@ -43,4 +43,5 @@ export enum MessageType {
   CHAT_MESSAGE = "chat_message",
   SEEN_MESSAGE = "seen_message",
   STATUS_UPDATE = "status_update",
+  MESSAGE_UPDATE = "message_update"
 }

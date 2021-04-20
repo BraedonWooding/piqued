@@ -27,9 +27,9 @@ def createPiquedGroupHelper(groupname, interest, userCreated, expiry=None):
 
 def format_course_names(courseList, year, term):
     sanitisedList = []
-    for course in courseList:
-        course = course.replace(' ', '')
-        sanitisedList.append(course)
+    for obj in courseList:
+        course = obj[0].replace(' ', '')
+        sanitisedList.append([course, obj[1]])
     
     courseSuffix = year[2:] + 'T' + term
     return sanitisedList, courseSuffix
@@ -40,17 +40,20 @@ def find_enrolment_info(pageText, termNum, termYear):
     chunkExpression = r"Term ([0-9] [0-9]{4})"
     programExpression = r"(?i:Program:([0-9]{4}) (.*?)Plan)"
     majorExpression = r"Plan:[A-Z]{5,6}[0-9]{4,5} (.*? Major)"
-    courseExpression = r"[A-Z]{4} [0-9]{4}"
+    courseExpression = r"([A-Z]{4} [0-9]{4})(.*?)\d"
     termsOnPage = re.findall(chunkExpression, pageText)
     
     chunks = re.split(chunkExpression, pageText)
     for i in range(len(chunks)):
         if chunks[i][0] == termNum:
             chunkIndex = i+1
+    print(pageText)
 
     programList = re.findall(programExpression, chunks[chunkIndex])
     majorList = re.findall(majorExpression, chunks[chunkIndex])
     courseList = re.findall(courseExpression, chunks[chunkIndex])
+
+    print(courseList)
     courseListFormatted, courseSuffix = format_course_names(courseList, termYear, termNum)
     return programList, majorList, courseListFormatted, courseSuffix
 
@@ -76,26 +79,29 @@ class TranscriptViewSet(ViewSet):
 
         # filter program objects for relevant stream
         programObj = Program.objects.filter(program_code=programList[0][0]) 
-        if not programObj:
-            print("invalid program")
+        if not programObj or len(programObj) == 0:
+            programObj = [Program.objects.create(name=programList[0][1], program_code=programList[0][0])]
 
         # query generic admin user
-        adminUser = PiquedUser.objects.get(user__id=93)
+        adminUser = PiquedUser.objects.get(user__id=request.user.id)
         programResponse = list(programObj)[0]
 
         interestsToReturn = []
 
         # query program interest to check if it needs creation
         programInterest = Interest.objects.filter(name=programObj[0].name)
-        if not programInterest:
+        if not programInterest or len(programInterest) == 0:
             programInterest = [Interest.objects.create(name=programObj[0].name, is_course=False)]
 
         interestsToReturn += programInterest
 
-        # query course object reference data
-        courseObj = Course.objects.filter(course_code__in=courseList)
-        if not courseObj:
-            print("invalid course set")
+        print(courseList)
+        courseObj = list(Course.objects.filter(course_code__in=[x[0] for x in courseList]))
+        print(courseObj)
+        for obj in [x for x in courseList if not any([y.course_code == x[0] for y in courseObj])]:
+            Course.objects.create(course_code=obj[0], course_name=obj[1])
+        if len(courseObj) != len(courseList):
+            courseObj = list(Course.objects.filter(course_code__in=[x[0] for x in courseList]))
 
         coursesResponse = list(courseObj)
 
@@ -122,7 +128,7 @@ class TranscriptViewSet(ViewSet):
         # refactor for interest filtering here as well
         ####
         # query course Piqued groups for return to front end
-        courseGroupNameList = [c + ' ' + courseSuffix for c in courseList]
+        courseGroupNameList = [c[0] + ' ' + courseSuffix for c in courseList]
         courseGroups = PiquedGroup.objects.filter(group__name__in=courseGroupNameList)
         groupsToReturn += list(courseGroups)
         
