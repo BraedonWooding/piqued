@@ -1,5 +1,6 @@
 import mimetypes
 import os
+import urllib.parse
 from datetime import datetime
 
 from django.conf import settings
@@ -42,6 +43,9 @@ class AzureStorage(Storage):
         content.open(mode="rb")
         data = content.read()
         if content_type == None: content_type = mimetypes.guess_type(name)[0]
+
+        nice_name = urllib.parse.quote_plus(nice_name)
+        name = urllib.parse.quote_plus(name)
         self.blob_service.upload_blob(name, data, overwrite=True, blob_type='BlockBlob', content_settings=ContentSettings(content_type=content_type, content_disposition=f'attachment; filename="{nice_name}"'))
         return self.blob_service.get_blob_client(name).url
 

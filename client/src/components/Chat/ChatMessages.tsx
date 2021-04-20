@@ -41,7 +41,7 @@ export const ChatMessages: FC<ChatProps> = React.memo(
       )
         .slice(0, 3)
         .join(", ");
-      if (lastSeenSetUsers.length == 1) {
+      if (lastSeenSetUsers.length == 1 && lastSeenSetUsers[0].id == activeUser.id) {
         lastSeenUsers = "Sent";
       } else if (lastSeenSetUsers.length == currentGroup.user_set.length) {
         lastSeenUsers = "Seen by everyone";

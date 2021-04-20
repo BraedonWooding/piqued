@@ -14,6 +14,7 @@ import {
   makeStyles,
   Paper,
   TextField,
+  Typography,
 } from "@material-ui/core";
 import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
@@ -363,6 +364,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                   {groupHover === index ? <MuteButton userId={activeUser.id} groupId={group.id} /> : null}
                 </ListItem>
               )
+          )}
+          {(!userGroups || userGroups.length == 0) && (
+            <Typography style={{ marginLeft: 15 }}>
+              You aren't in any groups!  You can search for some through the "Search" button
+            </Typography>
           )}
         </List>
       </Grid>

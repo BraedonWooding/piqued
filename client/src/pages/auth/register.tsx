@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Container, Grid, Typography } from "@material-ui/core";
+import { Avatar, Box, Button, CircularProgress, Container, Grid, Typography } from "@material-ui/core";
 import { LockOutlined } from "@material-ui/icons";
 import { KeyboardDatePicker } from "@material-ui/pickers";
 import axios from "axios";
@@ -14,22 +14,24 @@ import { authenticateToken } from "util/auth/token";
 import { lookupCurrentUser } from "util/auth/user";
 import { LOGIN_PATH, UPLOAD_TRANSCRIPT_PATH } from "util/constants";
 import * as yup from "yup";
+import { green } from '@material-ui/core/colors';
 
 const validationSchema = yup.object({
-  date_of_birth: yup.date(),
-  email: yup
-    .string()
-    .email()
-    .matches(
-      /^.*\@(?:student.|ad.)?unsw.edu.au$/,
-      "Email has to end with @ad.unsw.edu.au, @student.unsw.edu.au, or @unsw.edu.au"
-    ),
-  confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
+  // date_of_birth: yup.date(),
+  // email: yup
+  //   .string()
+  //   .email()
+  //   .matches(
+  //     /^.*\@(?:student.|ad.)?unsw.edu.au$/,
+  //     "Email has to end with @ad.unsw.edu.au, @student.unsw.edu.au, or @unsw.edu.au"
+  //   ),
+  // confirmPassword: yup.string().oneOf([yup.ref("password")], "Passwords must match"),
 });
 
 const Register = () => {
   const classes = useStyles();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [FB_interests, setFBInterests] = useState<String[]>([]);
 
   const responseFacebook = (response, setFieldValue) => {
@@ -59,6 +61,7 @@ const Register = () => {
         }}
         onSubmit={async ({ confirmPassword, ...other }) => {
           const { date_of_birth, email: username, } = other;
+          setLoading(true);
           await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
             ...other,
             date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
@@ -71,6 +74,7 @@ const Register = () => {
             userId: usr["id"]
           });
           var usr = await lookupCurrentUser();
+          setLoading(false);
           router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
@@ -115,9 +119,12 @@ const Register = () => {
                   type="password"
                 />
                 &nbsp;
-                <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
-                  Sign up
-                </Button>
+                <div style={{position: "relative"}}>
+                  <Button type="submit" color="primary" variant="contained" disabled={loading || isSubmitting}>
+                    Sign up
+                  </Button>
+                  {loading && <CircularProgress size={24} style={{ color: green[500], position: "absolute", top: "50%", left: "50%", marginTop: -12, marginLeft: -12, zIndex: 1 }} />}
+                </div>
                 &nbsp;
                 <Typography variant="subtitle1">
                   <MyLink href={LOGIN_PATH}>Already have an account? Login</MyLink>
