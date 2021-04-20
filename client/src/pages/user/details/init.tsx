@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Group } from "types";
 import { getUser } from "util/auth/user";
-import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS as SCRAPED_PROGRAMS } from "util/constants";
+import { HOME_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAM } from "util/constants";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -41,8 +41,8 @@ const InitDetails = () => {
       setSelectedCourses(JSON.parse(localStorage.getItem(SCRAPED_COURSES)));
     }
 
-    if (localStorage.getItem(SCRAPED_PROGRAMS)) {
-      setSelectedProgram(JSON.parse(localStorage.getItem(SCRAPED_PROGRAMS)));
+    if (localStorage.getItem(SCRAPED_PROGRAM)) {
+      setSelectedProgram(JSON.parse(localStorage.getItem(SCRAPED_PROGRAM)));
     }
   }, []);
 
@@ -81,7 +81,7 @@ const InitDetails = () => {
           values.courses?.map((x) => x.id);
           await axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + getUser().id + "/", {
             year: values.year,
-            program_id: [selectedProgram?.id],
+            program_id: selectedProgram?.id,
             courses_id: selectedCourses.map((x) => x.id),
             interests_id: userInterests.map((x) => x.id),
           });

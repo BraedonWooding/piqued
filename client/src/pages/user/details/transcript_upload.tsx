@@ -9,7 +9,7 @@ import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { User } from "types";
 import { lookupCurrentUser } from "util/auth/user";
-import { MANUAL_DETAIL_INPUT_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAMS } from "util/constants";
+import { MANUAL_DETAIL_INPUT_PATH, SCRAPED_COURSES, SCRAPED_GROUPS, SCRAPED_PROGRAM } from "util/constants";
 
 // add props for return link
 
@@ -22,14 +22,14 @@ const TranscriptUpload = () => {
   const [user, setUser] = useState<User | null>(null);
 
   const skipTranscript = () => {
-    localStorage.removeItem(SCRAPED_PROGRAMS)
+    localStorage.removeItem(SCRAPED_PROGRAM)
     localStorage.removeItem(SCRAPED_COURSES);
     localStorage.removeItem(SCRAPED_GROUPS);
   }
 
 
   useEffect(() => {
-    localStorage.setItem(SCRAPED_PROGRAMS, JSON.stringify([]));
+    localStorage.setItem(SCRAPED_PROGRAM, JSON.stringify(null));
     localStorage.setItem(SCRAPED_COURSES, JSON.stringify([]));
     localStorage.setItem(SCRAPED_GROUPS, JSON.stringify([]))
     lookupCurrentUser()
@@ -44,7 +44,7 @@ const TranscriptUpload = () => {
           const formData = new FormData();
           formData.append("transcript", selectedTranscript);
           var resp = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/transcript/upload/", formData);
-          localStorage.setItem(SCRAPED_PROGRAMS, JSON.stringify(resp.data.programs));
+          localStorage.setItem(SCRAPED_PROGRAM, JSON.stringify(resp.data.program));
           localStorage.setItem(SCRAPED_COURSES, JSON.stringify(resp.data.courses));
           localStorage.setItem(SCRAPED_GROUPS, JSON.stringify(resp.data.groups))
           router.push(MANUAL_DETAIL_INPUT_PATH);
