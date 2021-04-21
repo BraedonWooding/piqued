@@ -22,7 +22,6 @@ class PiquedGroupViewSet(ModelViewSet):
 
     @AsyncToSync
     async def send_update(self, group_id, user_id, status):
-        print("Sending to " + f"chat_{group_id}")
         await get_channel_layer().group_send(f"chat_{group_id}", {
             'type': 'user_update',
             'groupId': group_id,
@@ -46,8 +45,6 @@ class PiquedGroupViewSet(ModelViewSet):
         userToAdd = self.request.user
         userToAdd.groups.add(piquedGroup.group.id)
         userToAdd.save()
-
-        print('adding user..')
 
         self.send_update(piquedGroup.group.id, userToAdd.id, 'added')
 
