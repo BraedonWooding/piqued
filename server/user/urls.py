@@ -7,7 +7,7 @@ from .views import UserViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
-router.register(r'users', UserViewSet, basename="PiquedUser")
+router.register('', UserViewSet, basename="PiquedUser")
 
 urlpatterns = [
     path('', include(router.urls))

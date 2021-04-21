@@ -9,7 +9,7 @@ export const DocxReader: FC<TypeAdapterProps> = ({ url, type, onLoad }: TypeAdap
       <iframe
         height="100%"
         width="100%"
-        src={"https://view.officeapps.live.com/op/embed.aspx?wdDownloadButton=True&src=" + url}
+        src={"https://view.officeapps.live.com/op/embed.aspx?wdDownloadButton=True&src=" + encodeURIComponent(url)}
         frameBorder="0"
         onLoad={() => onLoad(url, type)}
       ></iframe>

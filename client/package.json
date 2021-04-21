@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "@date-io/date-fns": "^1.3.13",
-    "@giphy/js-fetch-api": "^2.4.0",
-    "@giphy/react-components": "^2.3.6-alpha.0",
     "@material-ui/core": "^4.11.3",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
@@ -23,6 +21,7 @@
     "clsx": "^1.1.1",
     "date-fns": "^2.19.0",
     "emoji-mart": "^3.0.1",
+    "f-giphy-pfft-react-components": "^2.4.5",
     "firebase": "^8.3.1",
     "formik": "^2.2.6",
     "next": "^10.1.3",

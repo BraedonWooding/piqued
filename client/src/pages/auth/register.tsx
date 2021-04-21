@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Container, Grid, Typography } from "@material-ui/core";
+import { Avatar, Box, Button, CircularProgress, Container, Grid, Typography } from "@material-ui/core";
 import { LockOutlined } from "@material-ui/icons";
 import { KeyboardDatePicker } from "@material-ui/pickers";
 import axios from "axios";
@@ -14,6 +14,7 @@ import { authenticateToken } from "util/auth/token";
 import { lookupCurrentUser } from "util/auth/user";
 import { LOGIN_PATH, UPLOAD_TRANSCRIPT_PATH } from "util/constants";
 import * as yup from "yup";
+import { green } from '@material-ui/core/colors';
 
 const validationSchema = yup.object({
   date_of_birth: yup.date(),
@@ -30,6 +31,7 @@ const validationSchema = yup.object({
 const Register = () => {
   const classes = useStyles();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [FB_interests, setFBInterests] = useState<String[]>([]);
 
   const responseFacebook = (response, setFieldValue) => {
@@ -57,25 +59,37 @@ const Register = () => {
           password: "",
           confirmPassword: "",
         }}
-        onSubmit={async ({ confirmPassword, ...other }) => {
+        onSubmit={async ({ confirmPassword, ...other }, formikHelper) => {
           const { date_of_birth, email: username, } = other;
-          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
-            ...other,
-            date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
-            username: username
-          });
-          await authenticateToken({ password: other.password, username });
+          setLoading(true);
+          try {
+            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/users/", {
+              ...other,
+              date_of_birth: format(date_of_birth, "yyyy-MM-dd"),
+              username: username
+            });
+            await authenticateToken({ password: other.password, username });
+            var usr = await lookupCurrentUser();
+            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
+              interests: FB_interests,
+              userId: usr["id"]
+            });
+          } catch (e) {
+            if (e && e.response && e.response.data && e.response.data.username) {
+              formikHelper.setStatus({ other: "Username already taken" });
+            } else {
+              formikHelper.setStatus({ other: "Unknown issue try again" });
+            }
+            setLoading(false);
+            return;
+          }
           var usr = await lookupCurrentUser();
-          await axios.post(process.env.NEXT_PUBLIC_API_URL + "/addInterests/", {
-            interests: FB_interests,
-            userId: usr["id"]
-          });
-          var usr = await lookupCurrentUser();
+          setLoading(false);
           router.push(UPLOAD_TRANSCRIPT_PATH);
         }}
         validationSchema={validationSchema}
       >
-        {({ values, isSubmitting, setFieldValue }) => (
+        {({ values, isSubmitting, setFieldValue, status }) => (
           <Form>
             <Container component="main" maxWidth="sm">
               <Box className={classes.card}>
@@ -115,9 +129,17 @@ const Register = () => {
                   type="password"
                 />
                 &nbsp;
-                <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
-                  Sign up
-                </Button>
+                {status && status.other && (
+                    <div style={{ fontSize: 20 }} className={classes.error}>
+                      {status.other}
+                    </div>
+                )}
+                <div style={{position: "relative"}}>
+                  <Button type="submit" color="primary" variant="contained" disabled={loading || isSubmitting}>
+                    Sign up
+                  </Button>
+                  {loading && <CircularProgress size={24} style={{ color: green[500], position: "absolute", top: "50%", left: "50%", marginTop: -12, marginLeft: -12, zIndex: 1 }} />}
+                </div>
                 &nbsp;
                 <Typography variant="subtitle1">
                   <MyLink href={LOGIN_PATH}>Already have an account? Login</MyLink>
