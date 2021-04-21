@@ -161,7 +161,7 @@ def recommendGroups(request):
     out = createPopularGroups(request.user)
     for s in similarity:
         e = {
-            "id": s[0].id,
+            "id": s[0].group_id,
             "name": str(s[0]),
             "existing": True
         }
