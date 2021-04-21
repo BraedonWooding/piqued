@@ -20,11 +20,12 @@ from django.views.generic.base import RedirectView
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt import views as jwt_views
 
-from src import settings
+from src import feeds, settings
 
 urlpatterns = [
-    path('admin', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/admin')),
+    path('rss/query', feeds.query_feed),
     path('', include('user.urls')),
     path('', include('filesend.urls')),
     path('', include('transcript.urls')),

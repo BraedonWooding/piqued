@@ -29,8 +29,8 @@ import Measure from "react-measure";
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
-import { popUser } from "util/auth/user";
-import { DISCOVER_ROOT_PATH, LOGIN_PATH } from "util/constants";
+import { lookupUser, popUser } from "util/auth/user";
+import { DISCOVER_ROOT_PATH, LOGIN_PATH, RSS_FEEDS } from "util/constants";
 import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
 import { ChatMessages } from "./ChatMessages";
@@ -70,38 +70,41 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     message = message.trim();
     // Image/gif text shortcuts only valid if they are the only thing in the message
     // An image/gif interspersed with a sentence doesn't really make sense
-    var file: { url: string, type: string};
+    var file: { url: string; type: string };
     var isShortcut: boolean = false;
     if (message == "/piqued") {
       isShortcut = true;
       file = {
         url: "/favicon.ico",
-        type: "image/png"
-      }
+        type: "image/png",
+      };
     } else if (message.startsWith("/gif-")) {
       isShortcut = true;
       message = message.slice(5);
-      if (message == "") { // If message is just "/gif-", return false
+      if (message == "") {
+        // If message is just "/gif-", return false
         return false;
       }
-      const gifArray = await giphy.search(message, {limit: 1});
+      const gifArray = await giphy.search(message, { limit: 1 });
       if (gifArray.data.length <= 0) {
         return false;
       }
       const gif = gifArray.data[0];
       file = {
         url: `https://i.giphy.com/media/${gif.id}/200w.gif`,
-        type: "image/gif"
-      }
-    } else if (message == "/adam" ||
+        type: "image/gif",
+      };
+    } else if (
+      message == "/adam" ||
       message == "/braedon" ||
       message == "/jimmy" ||
       message == "/matthew" ||
-      message == "/nicholas") {
+      message == "/nicholas"
+    ) {
       isShortcut = true;
       file = {
         url: message.concat(".jpg"),
-        type: "image/jpg"
+        type: "image/jpg",
       };
     }
     if (isShortcut) {
@@ -115,10 +118,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           userId: activeUser.id,
           seen: activeUser.id.toString(),
           createdAt: new Date(),
-        }));
+        })
+      );
     }
     return isShortcut ? true : false;
-  }
+  };
 
   const handleGroupHover = (index) => {
     setGroupHover(index);
@@ -177,7 +181,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         );
       };
 
-      newChatSocket.onmessage = (e) => {
+      newChatSocket.onmessage = async (e) => {
         const parsedData = JSON.parse(e.data);
 
         // Update seen status after history messages have been loaded
@@ -255,6 +259,23 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               user.status = status;
               setUserGroups([...userGroupsRef.current]);
             }
+          }
+        } else if (parsedData.type === MessageType.USER_UPDATE) {
+          let { userId, groupId, user, status } = parsedData;
+          if (!user && userId) {
+            user = await lookupUser(userId);
+          }
+          if (user) {
+            userGroupsRef.current.forEach((group) => {
+              if (group && group.id == groupId) {
+                if (status == "added" && group.user_set.every((x) => x.id != userId)) {
+                  group.user_set.push(user);
+                } else if (status == "deleted") {
+                  group.user_set = group.user_set.filter((x) => x.id != userId);
+                }
+              }
+            });
+            setUserGroups([...userGroupsRef.current]);
           }
         } else if (parsedData.type === MessageType.MESSAGE_UPDATE) {
           const { partitionKey, rowKey, modification, update_type } = parsedData;
@@ -351,7 +372,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <Grid container alignItems="center">
           <Grid item xs={6}>
             <List>
-              <ListItem button key={'user'} onClick={() => router.push("/user/details/" + activeUser.id)}>
+              <ListItem button key={"user"} onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
                   <Badge
                     overlap="circle"
@@ -433,7 +454,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
           {(!userGroups || userGroups.length == 0) && (
             <Typography style={{ marginLeft: 15 }}>
-              You aren't in any groups!  You can search for some through the "Search" button
+              You aren't in any groups! You can search for some through the "Search" button
             </Typography>
           )}
         </List>
@@ -552,6 +573,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         >
           Logout
         </Button>
+        {currentGroup && (
+          <Button
+            onClick={async () => {
+              router.push(RSS_FEEDS + "/" + currentGroup.id);
+            }}
+            style={{ marginTop: "20px", marginLeft: "20px" }}
+            color="primary"
+            variant="outlined"
+          >
+            Manage Feeds
+          </Button>
+        )}
         <List className={classes.userList}>
           {currentGroup &&
             currentGroup.user_set.map((user, index) => (

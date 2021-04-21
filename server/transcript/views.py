@@ -91,8 +91,8 @@ class TranscriptViewSet(ViewSet):
             programInterest = [Interest.objects.create(name=programObj[0].name, is_course=False)]
 
         interestsToReturn += programInterest
-
         courseObj = list(Course.objects.filter(course_code__in=[x[0] for x in courseList]))
+
         for obj in [x for x in courseList if not any([y.course_code == x[0] for y in courseObj])]:
             Course.objects.create(course_code=obj[0], course_name=obj[1])
         if len(courseObj) != len(courseList):
