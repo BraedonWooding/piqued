@@ -3,6 +3,7 @@ import { KeyboardDatePicker } from "@material-ui/pickers";
 import { default as axios } from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { AvatarPicker } from "components/Elements/AvatarPicker";
+import { ShortcutCreator } from "components/Elements/ShortcutCreator";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
@@ -10,7 +11,6 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { User } from "types";
 import { getUser } from "util/auth/user";
-import { ShortcutCreator } from "components/Elements/ShortcutCreator";
 import { v4 as uuidv4 } from 'uuid';
 
 const fetchUser = async (id: string) => {
@@ -72,7 +72,7 @@ const UserDetails = () => {
     var newArr = [...shortcuts];
     newArr = newArr.filter(entry => entry[2] == id); // Get the item with the matching id
     const index = shortcuts.indexOf(newArr[0]);
-    
+
     var tempArr = [shortcutName, url, shortcuts[index][2], extension];
     newArr = [...shortcuts]; // copying the old array
     newArr[index] = tempArr;
@@ -196,12 +196,12 @@ const UserDetails = () => {
                 {isActiveUser ? (
                   <div>
                     {
-                      shortcuts.map((array, index) => ( 
-                        <ShortcutCreator key={array[2]} id={array[2]} initialUrl={array[1]} initialShortcut={array[0]} index={index} onSave={ handleShortcutSave } onDelete={ handleDeleteShortcut }/>
+                      shortcuts.map((array, index) => (
+                        <ShortcutCreator key={array[2]} id={array[2]} initialUrl={array[1]} initialShortcut={array[0]} index={index} onSave={handleShortcutSave} onDelete={handleDeleteShortcut} />
                       ))
                     }
-                    <Button onClick={ handleAddShortcut }>Add shortcut</Button>
-                    <br/>
+                    <Button onClick={handleAddShortcut}>Add shortcut</Button>
+                    <br />
                     <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
                       Save
                     </Button>
