@@ -20,3 +20,4 @@ nltk
 gunicorn
 daphne
 uvicorn
+wonderwords
