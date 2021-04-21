@@ -3,7 +3,7 @@ from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from user.models import PiquedUser
+from user.models import Combos, PiquedUser
 
 from .models import Group, PiquedGroup
 
@@ -70,8 +70,15 @@ class PiquedGroupSerializer(serializers.Serializer):
 
         piquedGroup.interests.set(interests)
         piquedGroup.save()
+
+        interests.sort(key=lambda x : x.id)
+        if len(interests) == 1:
+            combo = Combos.objects.create(interest1=interests[0], group=piquedGroup)
+        elif len(interests) == 2:
+            combo = Combos.objects.create(interest1=interests[0], interest2=interests[1], group=piquedGroup)
+        elif len(interests) == 3:
+            combo = Combos.objects.create(interest1=interests[0], interest2=interests[1], interest3=interests[2], group=piquedGroup)
         
-        piquedUser.user.groups.add(piquedGroup.group)
         return piquedGroup
 
     def get_user_set(self, obj: PiquedGroup):
