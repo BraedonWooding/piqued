@@ -80,7 +80,6 @@ def createPopularGroups(usr):
     # Get all the popular user interests
     numRequiredUsers = 3
     a = Combos.objects.all().values('interest1', 'interest2', 'interest3').annotate(total=Count('user')).annotate(totalGroups=Count('group')).filter(total__gt=numRequiredUsers - 1, totalGroups=0)
-    print(a)
 
     # For each group that needs making, determine if the group already exists
     out = []
@@ -147,7 +146,6 @@ def recommendGroups(request):
     # Determine similarity
     similarity = set()
     for g in grps:
-        print(g)
         grp_interest = g.interests.all()
         c = grp_interest.intersection(interests).count()
         total = grp_interest.count()
@@ -166,7 +164,6 @@ def recommendGroups(request):
             "existing": True
         }
         out.append(e)
-    print(out)
     return Response(out)
 
 @api_view(['POST'])

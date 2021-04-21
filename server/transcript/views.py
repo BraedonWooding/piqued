@@ -18,7 +18,6 @@ from user.models import PiquedUser
 
 def createPiquedGroupHelper(groupname, interest, userCreated, expiry=None):
     group = Group.objects.create(name=groupname)
-    print(expiry)
     piquedGroup = PiquedGroup.objects.create(
         group=group, created_by=userCreated, expired_at=expiry)
     piquedGroup.interests.add(interest)
@@ -47,13 +46,11 @@ def find_enrolment_info(pageText, termNum, termYear):
     for i in range(len(chunks)):
         if chunks[i][0] == termNum:
             chunkIndex = i+1
-    print(pageText)
 
     programList = re.findall(programExpression, chunks[chunkIndex])
     majorList = re.findall(majorExpression, chunks[chunkIndex])
     courseList = re.findall(courseExpression, chunks[chunkIndex])
 
-    print(courseList)
     courseListFormatted, courseSuffix = format_course_names(courseList, termYear, termNum)
     return programList, majorList, courseListFormatted, courseSuffix
 
@@ -95,9 +92,7 @@ class TranscriptViewSet(ViewSet):
 
         interestsToReturn += programInterest
 
-        print(courseList)
         courseObj = list(Course.objects.filter(course_code__in=[x[0] for x in courseList]))
-        print(courseObj)
         for obj in [x for x in courseList if not any([y.course_code == x[0] for y in courseObj])]:
             Course.objects.create(course_code=obj[0], course_name=obj[1])
         if len(courseObj) != len(courseList):
