@@ -7,6 +7,7 @@ from django.db.models.fields.related import (ForeignKey, ManyToManyField,
 from info.models import Course, Program
 from interests.models import Interest
 from src.azure import AzureStorage
+import json
 
 
 class PiquedUser(models.Model):
@@ -21,6 +22,7 @@ class PiquedUser(models.Model):
     program: ForeignKey = models.ForeignKey(
         Program, related_name='users', on_delete=models.CASCADE, null=True, default=None, blank=True)
     fcm_tokens = models.CharField(max_length=2000, default="", blank=True)
+    shortcuts = models.CharField(max_length=2000, default=json.dumps([]), blank=True) # will be stored as array of arrays [shortcut, url, uuid]
 
     def __str__(self):
         return self.user.__str__()
