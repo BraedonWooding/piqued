@@ -16,7 +16,6 @@ from user.models import Combos, PiquedUser
 from wonderwords import RandomWord
 
 from .graph_serializer import InterestGraphSerializer
-from .graphSerializer import InterestGraphSerializer
 from .models import Interest
 from .serializers import InterestSerializer
 
