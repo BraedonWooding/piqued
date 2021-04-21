@@ -56,7 +56,7 @@ export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopu
       <Typography variant="h6">
         Recommended Groups
       </Typography>
-      <Grid item xs={6} style={{ display: "flex", alignItems: "center" }}>
+      <Grid item xs={12} style={{ display: "flex", alignItems: "center" }}>
         <Grid container >
           {recommendedGroups.slice(0, 4).map((x, index) => (
             <Grid container spacing={1} key={index} >
