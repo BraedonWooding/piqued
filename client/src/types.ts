@@ -28,7 +28,7 @@ export interface ChatMsg {
   partitionKey: string;
   rowKey: string;
   message: string;
-  files: {url: string, type: string}[];
+  files: { url: string; type: string }[];
   userId: number;
   createdAt: Date;
   seen: string;
@@ -44,5 +44,6 @@ export enum MessageType {
   CHAT_MESSAGE = "chat_message",
   SEEN_MESSAGE = "seen_message",
   STATUS_UPDATE = "status_update",
-  MESSAGE_UPDATE = "message_update"
+  MESSAGE_UPDATE = "message_update",
+  USER_UPDATE = "user_update",
 }

@@ -28,7 +28,8 @@ class MessageType(str, Enum):
     CHAT_MESSAGE = "chat_message",
     SEEN_MESSAGE = "seen_message",
     STATUS_UPDATE = "status_update",
-    MESSAGE_UPDATE = "message_update"
+    MESSAGE_UPDATE = "message_update",
+    USER_UPDATE = "user_update",
 
 class GroupConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -44,6 +45,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
             # Join channel group for each group user is in
             for group in await database_sync_to_async(lambda: list(Group.objects.filter(user__id__exact=self.userId).all()))():
                 self.groupIds.append(group.id)
+                print("Joining " + f'chat_{group.id}')
                 await self.channel_layer.group_add(
                     f'chat_{group.id}',
                     self.channel_name
@@ -249,6 +251,20 @@ class GroupConsumer(AsyncWebsocketConsumer):
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'history_messages' from socket_group (channel layer).")
+
+    async def user_update(self, event):
+        try:
+            print("got update")
+            await self.send(text_data=json.dumps({
+                'type': event['type'],
+                'groupId': event['groupId'],
+                'userId': event['userId'],
+                'user': event['user'] if 'user' in event else None,
+                'status': event['status']
+            }))
+        except Exception:
+            handleException(
+                sys.exc_info(), "socket receiving message type 'chat_message' from socket_group (channel layer).")
 
     async def chat_message(self, event):
         try:

@@ -111,7 +111,7 @@ const SearchGroup = () => {
   );
 };
 
-const searchStyles = makeStyles(() => ({
+export const searchStyles = makeStyles(() => ({
   searchButton: { display: "flex", alignItems: "center", justifyContent: "center" },
   searchAvatar: { display: "flex", justifyContent: "center" },
   closeButton: { display: "flex", justifyContent: "flex-end" },

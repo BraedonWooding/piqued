@@ -1,8 +1,9 @@
+from channels.layers import get_channel_layer
+from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from user.models import PiquedUser
-from interests.models import Interest
 
 from .models import Group, PiquedGroup
 
@@ -64,6 +65,8 @@ class PiquedGroupSerializer(serializers.Serializer):
         group = Group.objects.create(name=groupname)
         piquedGroup = PiquedGroup.objects.create(
             group=group, created_by=piquedUser)
+
+        # we don't need to trigger the channel event here.
 
         piquedGroup.interests.set(interests)
         piquedGroup.save()
