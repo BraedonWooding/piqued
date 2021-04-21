@@ -32,6 +32,7 @@ class PiquedUserSerializer(serializers.Serializer):
     id = serializers.IntegerField(source='user.id', read_only=True)
     date_of_birth = serializers.DateField()
     fcm_tokens = serializers.CharField(required=False)
+    shortcuts = serializers.CharField(required=False)
     interests = InterestSerializer(many=True, required=False)
     program = ProgramSerializer(required=False)
     courses = CourseSerializer(many=True, required=False)

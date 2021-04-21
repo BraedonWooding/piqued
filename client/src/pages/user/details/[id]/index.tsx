@@ -3,6 +3,7 @@ import { KeyboardDatePicker } from "@material-ui/pickers";
 import { default as axios } from "axios";
 import { MyTextField, useStyles } from "components/Common/FormikUI";
 import { AvatarPicker } from "components/Elements/AvatarPicker";
+import { ShortcutCreator } from "components/Elements/ShortcutCreator";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { format } from "date-fns";
 import { Field, Form, Formik } from "formik";
@@ -10,6 +11,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { User } from "types";
 import { getUser } from "util/auth/user";
+import { v4 as uuidv4 } from 'uuid';
 
 const fetchUser = async (id: string) => {
   try {
@@ -28,11 +30,14 @@ const UserDetails = () => {
   const [loading, setLoading] = useState(true);
   const [activeUser, setActiveUser] = useState<User | null>();
   const [isActiveUser, setIsActiveUser] = useState<boolean>(false);
+  const [shortcuts, setShortcuts] = useState([["", "", uuidv4(), ""]]);
 
   useEffect(() => {
     if (Number.isInteger(Number(id)) && !user) {
       const user = getUser();
       setActiveUser(user);
+      const shortcutObject = JSON.parse(user.shortcuts);
+      setShortcuts(shortcutObject);
       setImg(user.profile_picture);
       setIsActiveUser(user.id == Number(id));
       fetchUser(id as string).then((u: User) => {
@@ -58,6 +63,40 @@ const UserDetails = () => {
     setUser({ ...user });
     return img;
   };
+
+  const handleShortcutSave = async (url: string, shortcutName: string, id: string, extension: string) => {
+    if (url == null) {
+      url = "";
+    }
+
+    var newArr = [...shortcuts];
+    newArr = newArr.filter(entry => entry[2] == id); // Get the item with the matching id
+    const index = shortcuts.indexOf(newArr[0]);
+
+    var tempArr = [shortcutName, url, shortcuts[index][2], extension];
+    newArr = [...shortcuts]; // copying the old array
+    newArr[index] = tempArr;
+    setShortcuts(newArr);
+  }
+
+  const handleAddShortcut = () => {
+    const id = uuidv4();
+    setShortcuts(prevState => ([
+      ...prevState,
+      ["", "", id, ""]
+    ]))
+  }
+
+  const handleDeleteShortcut = (id: string) => {
+    var newArr = [...shortcuts]; // copying the old array
+    setShortcuts(newArr.filter(entry => entry[2] != id));
+  }
+
+  const updateShortcuts = (index, url) => {
+    var newArr = [...shortcuts]; // copying the old array
+    newArr[index][1] = url;
+    setShortcuts(newArr);
+  }
 
   return (
     <HorizontallyCenteredLayout>
@@ -87,6 +126,22 @@ const UserDetails = () => {
           );
           formData.append("id", String(id));
           formData.append("email", user.username);
+
+          // Handle shortcut uploads
+          let shortcutBlob: File | null;
+          for (var i = 0; i < shortcuts.length; i++) {
+            if (shortcuts[i][0] != "" && shortcuts[i][1] != "") {
+              const extension = shortcuts[i][3];
+              shortcutBlob = new File([await (await (await fetch(shortcuts[i][1])).blob()).arrayBuffer()], `shortcut-${shortcuts[i][0]}-${user.id}.${extension}`, {
+                type: "image/" + extension,
+              });
+              const request = new FormData();
+              request.append("file", shortcutBlob);
+              const response = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/shortcutUpload/", request);
+              updateShortcuts(i, response.data['url']);
+            }
+          }
+          formData.append("shortcuts", JSON.stringify(shortcuts));
 
           axios.patch(process.env.NEXT_PUBLIC_API_URL + "/users/" + id + "/", formData).then((resp) => {
             const user = resp.data as User;
@@ -139,9 +194,18 @@ const UserDetails = () => {
                 />
                 &nbsp;
                 {isActiveUser ? (
-                  <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
-                    Save
-                  </Button>
+                  <div>
+                    {
+                      shortcuts.map((array, index) => (
+                        <ShortcutCreator key={array[2]} id={array[2]} initialUrl={array[1]} initialShortcut={array[0]} index={index} onSave={handleShortcutSave} onDelete={handleDeleteShortcut} />
+                      ))
+                    }
+                    <Button onClick={handleAddShortcut}>Add shortcut</Button>
+                    <br />
+                    <Button type="submit" color="primary" variant="contained" disabled={isSubmitting}>
+                      Save
+                    </Button>
+                  </div>
                 ) : (
                   <Button onClick={() => router.push("/home")} color="primary" variant="contained">
                     Go back to Home
