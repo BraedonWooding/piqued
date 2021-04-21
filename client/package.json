@@ -36,6 +36,7 @@
     "react-infinite-scroll-component": "^6.0.0",
     "react-measure": "^2.5.2",
     "react-resizable": "^1.11.1",
+    "uuid": "^8.3.2",
     "yup": "^0.32.9"
   },
   "devDependencies": {
