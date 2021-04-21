@@ -7,10 +7,9 @@ import { MyLink } from "components/Common/Link";
 import { HorizontallyCenteredLayout } from "components/Layout/Layout";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/router";
-import { searchStyles } from "pages/groups/search";
 import React, { useEffect, useState } from "react";
 import { lookupCurrentUser, setUser } from "util/auth/user";
-import { DISCOVER_GROUPS_PATH, DISCOVER_INTERESTS_PATH, HOME_PATH } from "util/constants";
+import { HOME_PATH } from "util/constants";
 
 const LOOKUP_FEEDS_BASE_URL = "/rss/query?query=";
 
@@ -157,5 +156,13 @@ const RssManager = () => {
     </HorizontallyCenteredLayout>
   );
 };
+
+const searchStyles = makeStyles(() => ({
+  searchButton: { display: "flex", alignItems: "center", justifyContent: "center" },
+  searchAvatar: { display: "flex", justifyContent: "center" },
+  closeButton: { display: "flex", justifyContent: "flex-end" },
+  resultsArea: { display: "flex", alignItems: "center" },
+  joinGroupArea: { display: "flex", justifyContent: "flex-end" },
+}));
 
 export default RssManager;
