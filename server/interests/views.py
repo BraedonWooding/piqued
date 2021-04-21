@@ -1,11 +1,19 @@
+import random
+from functools import reduce
+from itertools import combinations
+
 import nltk
+from django.db import models
 from django.db.models import Count
 from fuzzywuzzy import fuzz, process
+from groups.models import Group, PiquedGroup
+from groups.serializers import PiquedGroupSerializer
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from textblob import TextBlob
-from user.models import PiquedUser
+from user.models import Combos, PiquedUser
+from wonderwords import RandomWord
 
 from .graph_serializer import InterestGraphSerializer
 from .models import Interest
@@ -62,3 +70,138 @@ def addInterests(request):
         print("NLP Failure: " + str(e))
 
     return Response({"status": "success"})
+
+def createPopularGroups(usr):
+
+    # Get user interests
+    user = PiquedUser.objects.get(user=usr)
+    interests = user.interests.all()
+
+    # Get all the popular user interests
+    numRequiredUsers = 3
+    a = Combos.objects.all().values('interest1', 'interest2', 'interest3').annotate(total=Count('user')).annotate(totalGroups=Count('group')).filter(total__gt=numRequiredUsers - 1, totalGroups=0)
+
+    # For each group that needs making, determine if the group already exists
+    out = []
+    for group_to_make in list(a):
+
+        g = []
+        g.append(Interest.objects.get(id=int(group_to_make['interest1'])))
+        if group_to_make['interest2'] != None:
+            g.append(Interest.objects.get(id=int(group_to_make['interest2'])))
+        if group_to_make['interest3'] != None:
+            g.append(Interest.objects.get(id=int(group_to_make['interest3'])))
+
+        # Generate a creative name
+        r = RandomWord()
+        name = ""
+        first = True
+        for intrst in g:
+            if not first: 
+                name = name + "and "
+            for _ in range(random.randint(1,2)):
+                name = name + r.word(include_parts_of_speech=["adjectives"]) + " "
+            name += str(intrst) + " "
+            first = False
+
+        # Avoid any weird issues
+        if name == "":
+            continue
+        
+        e = {
+            "id": 0,
+            "name": name.title(),
+            "existing": False,
+            "interests": InterestSerializer(list(g), many=True).data
+        }
+        out.append(e)
+        # Create the group
+        #group = Group.objects.create(name=name.title())
+        #piquedGroup = PiquedGroup.objects.create(
+        #    group=group, created_by=user)
+        #piquedGroup.interests.set(g)
+        #user.user.groups.add(piquedGroup.group)
+
+        # Add it to the master list
+        #if len(g) == 1:
+        #    combo = Combos.objects.create(interest1=g[0], group=piquedGroup)
+        #elif len(g) == 2:
+        #    combo = Combos.objects.create(interest1=g[0], interest2=g[1], group=piquedGroup)
+        #elif len(g) == 3:
+        #    combo = Combos.objects.create(interest1=g[0], interest2=g[1], interest3=g[2], group=piquedGroup)
+
+    return out
+
+
+@api_view(['POST'])
+def recommendGroups(request):
+
+    # Get user interests
+    user = PiquedUser.objects.get(user=request.user)
+    interests = user.interests.all()
+
+    # Get all groups with physics as an interest
+    grps = list(PiquedGroup.objects.filter(interests__in=interests))
+
+    # Determine similarity
+    similarity = set()
+    for g in grps:
+        grp_interest = g.interests.all()
+        c = grp_interest.intersection(interests).count()
+        total = grp_interest.count()
+        sim = float(c/total)
+        similarity.add((g, sim))
+
+    # Sort and return the recommended groups
+    similarity = list(similarity)
+    similarity.sort(key = lambda x:x[1], reverse=True)
+
+    out = createPopularGroups(request.user)
+    for s in similarity:
+        e = {
+            "id": s[0].group_id,
+            "name": str(s[0]),
+            "existing": True
+        }
+        out.append(e)
+    return Response(out)
+
+@api_view(['POST'])
+def createGroup(request):
+    #await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + response.data + "/add_user/");
+    #recommendedGroups.splice(index, 1);
+    #setRecommendedGroups([...recommendedGroups]);
+    
+    # Get the ineterests
+    print(request.data)
+    g = []
+    for i in request.data["group"]["interests"]:
+        g.append(i["id"])
+
+    # Create the group
+    user = PiquedUser.objects.get(user=request.user)
+    group = Group.objects.create(name=request.data["group"]["name"])
+    piquedGroup = PiquedGroup.objects.create(
+        group=group, created_by=user)
+    piquedGroup.interests.set(g)
+    user.user.groups.add(piquedGroup.group)
+
+    # Add it to the master list
+    if len(g) == 1:
+        i1 = list(Interest.objects.filter(id=g[0]))[0]
+        combo = Combos.objects.create(interest1=i1, group=piquedGroup)
+    elif len(g) == 2:
+        i1 = list(Interest.objects.filter(id=g[0]))[0]
+        i2 = list(Interest.objects.filter(id=g[1]))[0]
+        combo = Combos.objects.create(interest1=i1, interest2=i2, group=piquedGroup)
+    elif len(g) == 3:
+        i1 = list(Interest.objects.filter(id=g[0]))[0]
+        i2 = list(Interest.objects.filter(id=g[1]))[0]
+        i3 = list(Interest.objects.filter(id=g[2]))[0]
+        combo = Combos.objects.create(interest1=i1, interest2=i2, interest3=i3, group=piquedGroup)
+
+    return Response({"id": piquedGroup.group_id})
+
+@api_view(['GET'])
+def getChessEngine(request):
+    return Response({"status": "Checkmate"})

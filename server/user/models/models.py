@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.fields import DateField
@@ -7,7 +9,6 @@ from django.db.models.fields.related import (ForeignKey, ManyToManyField,
 from info.models import Course, Program
 from interests.models import Interest
 from src.azure import AzureStorage
-import json
 
 
 class PiquedUser(models.Model):

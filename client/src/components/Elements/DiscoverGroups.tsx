@@ -8,16 +8,13 @@ import { SearchGroups } from "./SearchGroups";
 interface DiscoverGroupsProps {
   popularGroups: Group[],
   setPopularGroups: (groups: Group[]) => void,
-  recommendedGroups: Group[],
-  setRecommendedGroups: (list: Group[]) => void
+  recommendedGroups: any[],
+  setRecommendedGroups: (list: any[]) => void
 }
 
 export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopularGroups, recommendedGroups, setRecommendedGroups }) => {
   const itemClasses = itemStyles();
   const [addedGroups, setAddedGroups] = useState<Group[]>([]);
-  const [searchResults, setGroupResults] = useState<Group[]>([]);
-  const searchClasses = searchStyles();
-  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const updateGroupLists = () => {
     setPopularGroups(popularGroups.filter(p => addedGroups.filter(a => a.id == p.id).length == 0));
@@ -42,6 +39,7 @@ export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopu
           <Grid item xs={3} className={itemClasses.joinGroupArea}>
             <Button
               onClick={async () => {
+                console.log("Existing group " + x.id)
                 await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
                 addedGroups.push(popularGroups.splice(index, 1)[0]);
                 setAddedGroups([...addedGroups]);
@@ -68,9 +66,25 @@ export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopu
               <Grid item xs={3} className={itemClasses.joinGroupArea}>
                 <Button
                   onClick={async () => {
-                    await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
-                    addedGroups.push(recommendedGroups.splice(index, 1)[0]);
-                    updateGroupLists();
+                    if (x.existing === true) {
+                      console.log("Existing group " + x.id)
+                      await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + x.id + "/add_user/");
+                      addedGroups.push(recommendedGroups.splice(index, 1)[0]);
+                      setAddedGroups([...addedGroups]);
+                      updateGroupLists();
+                    } else {
+                      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/createGroup/`, {
+                        group: x
+                      });
+                      console.log("New group " + x.id)
+                      console.log(response.data.id)
+                      await axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + response.data.id + "/add_user/");
+                      var rem = recommendedGroups.splice(index, 1)[0];
+                      rem.id = response.data.id;
+                      addedGroups.push(rem);
+                      setAddedGroups([...addedGroups]);
+                      updateGroupLists();
+                    }
                   }}
                 >
                   <Add />

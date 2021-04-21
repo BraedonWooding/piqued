@@ -37,7 +37,11 @@ const Discover = () => {
       )
     });
 
-    // TODO: Nick's stuff here
+    axios.post(process.env.NEXT_PUBLIC_API_URL + "/recommendGroups/").then((resp) => {
+      setRecommendedGroups(resp.data.filter(p =>
+        getUser().groups.filter(g => g.id == p.id).length == 0)
+      )
+    });
 
     setUserInterests(getUser().interests);
 
