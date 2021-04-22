@@ -373,7 +373,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <Grid container alignItems="center">
           <Grid item xs={6}>
             <List>
-              <ListItem button key={"user"} onClick={() => router.push("/user/details/" + activeUser.id)}>
+              <ListItem button key={"user"} onClick={() => router.push("/user/details/")}>
                 <ListItemIcon>
                   <Badge
                     overlap="circle"
@@ -577,7 +577,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         {currentGroup && (
           <Button
             onClick={async () => {
-              router.push(RSS_FEEDS + "/" + currentGroup.id);
+              router.push(RSS_FEEDS + "/?id=" + currentGroup.id);
             }}
             style={{ marginTop: "20px", marginLeft: "20px" }}
             color="primary"

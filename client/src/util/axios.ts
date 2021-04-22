@@ -28,6 +28,7 @@ axios.interceptors.response.use(
         if (!res) {
           console.log("Token deletion unsuccessful")
         }
+        if (typeof window === 'undefined') return;
         if (window.location.pathname !== LOGIN_PATH) window.location.replace(LOGIN_PATH);
       }
     } else {
