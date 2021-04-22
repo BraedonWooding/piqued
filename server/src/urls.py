@@ -27,6 +27,7 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/admin')),
     path('', include('user.urls')),
     path('', include('filesend.urls')),
+    path('', include('password.urls')),
     path('', include('transcript.urls')),
     path('', include('interests.urls')),
     path('', include('info.urls')),
