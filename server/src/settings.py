@@ -24,8 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'SECRET_KEY'
-REFRESH_TOKEN_SECRET = 'SECRET_KEY'
-ACCESS_TOKEN_SECRET = 'SECRET_KEY'
+FORGET_PASSWORD_TOKEN_SECRET = 'SECRET_KEY'
+SENDGRID_API_KEY = "SEND_ENGINE_API_KEY"
 
 TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;AccountKey=TODO: ACCOUNT_KEY;EndpointSuffix=core.windows.net'
 
