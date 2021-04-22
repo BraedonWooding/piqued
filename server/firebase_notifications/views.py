@@ -43,6 +43,7 @@ def remove_fcm_tokens(request):
             tokens_arr.remove(fcm_token)
         new_tokens_string = ' '.join(tokens_arr) # Create new FCM tokens string
         piquedUser.fcm_tokens = new_tokens_string
+        piquedUser.save()
         return Response("Token successfully removed")
     except:
         return Response(status=500)
