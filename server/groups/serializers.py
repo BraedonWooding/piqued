@@ -65,6 +65,7 @@ class PiquedGroupSerializer(serializers.Serializer):
         piquedGroup = PiquedGroup.objects.create(
             group=group, created_by=piquedUser)
 
+        user.groups.add(group)
         piquedGroup.interests.set(interests)
         piquedGroup.save()
 
