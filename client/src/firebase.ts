@@ -76,3 +76,12 @@ export const removeToken = () => {
       console.log("An error occurred while retrieving token. ", err);
     });
 };
+
+/*
+Delete the token associated with the instance of firebase.messaging() associated with this app
+*/
+export const deleteToken = async () => {
+  const messaging = firebase.messaging();
+  const res = await messaging.deleteToken();
+  return res;
+}

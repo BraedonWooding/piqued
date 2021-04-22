@@ -84,6 +84,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
         group = piquedGroup.group
         users = PiquedUser.objects.filter(user__groups__id__exact=groupId)
+        sender = PiquedUser.objects.filter(user_id=self.userId).first()
+        senderName = sender.user.first_name
 
         for user in users:
             # Do not send to self
@@ -95,8 +97,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
                 or (mutedUsers[str(user.user.id)] >= 0 \
                     and datetime.now(timezone.utc) >= datetime.fromtimestamp(mutedUsers[str(user.user.id)], tz=timezone.utc)\
                 ):
-                send_to_all_user_devices(user, group.name, message)
-
+                send_to_all_user_devices(senderName, user, group.name, message)
+    
     def get_shortcuts(self):
         user = PiquedUser.objects.filter(user__id__exact=self.userId)[0]
         shortcuts = json.loads(user.shortcuts)
