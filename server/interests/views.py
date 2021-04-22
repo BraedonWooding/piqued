@@ -3,16 +3,15 @@ from functools import reduce
 from itertools import combinations
 
 import nltk
-from django.db import models
 from django.db.models import Count
-from fuzzywuzzy import fuzz, process
+from fuzzywuzzy import fuzz
 from groups.models import Group, PiquedGroup
-from groups.serializers import PiquedGroupSerializer
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from textblob import TextBlob
-from user.models import Combos, PiquedUser
+from user.models.combos import Combos
+from user.models.models import PiquedUser
 from wonderwords import RandomWord
 
 from .graph_serializer import InterestGraphSerializer

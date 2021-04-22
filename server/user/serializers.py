@@ -12,7 +12,8 @@ from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Combos, PiquedUser
+from .models.combos import Combos
+from .models.models import PiquedUser
 
 
 class PiquedUserSerializer(serializers.Serializer):

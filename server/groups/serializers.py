@@ -3,7 +3,8 @@ from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from user.models import Combos, PiquedUser
+from user.models.combos import Combos
+from user.models.models import PiquedUser
 
 from .models import Group, PiquedGroup
 

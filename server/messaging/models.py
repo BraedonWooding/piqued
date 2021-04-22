@@ -7,9 +7,6 @@ from django.db.models.fields.files import ImageField
 from django.db.models.fields.related import (ForeignKey, ManyToManyField,
                                              OneToOneField)
 from groups.models import PiquedGroup
-from info.models import Course, Program
-from interests.models import Interest
-from src.azure import AzureStorage
 
 
 class Feed(models.Model):

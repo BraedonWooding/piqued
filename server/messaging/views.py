@@ -54,7 +54,7 @@ class FeedViewSet(ModelViewSet):
                 "RowKey": str(msg['published']),
                 "createdAt": datetime.fromtimestamp(float(msg['published']) / 1000),
                 "overrideRowKey": msg['published'],
-                "files": f'[{{ "url": "{urllib.parse.quote_plus(msg["canonicalUrl"])}", "type": "feed/{msg["title"]}" }}]',
+                "files": f'[{{ "url": "{urllib.parse.quote_plus(msg["canonicalUrl"] if "canonicalUrl" in msg else (msg["originId"] if "originId" in msg else ""))}", "type": "feed/{msg["title"]}" }}]',
                 "userId": "feed/" + str(feed.id),
                 "isHtml": True,
                 "deleted": 0,

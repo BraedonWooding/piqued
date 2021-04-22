@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from firebase_notifications.notification_send import send_to_all_user_devices
 from groups.models import PiquedGroup
-from user.models import PiquedUser
+from user.models.models import PiquedUser
 
 
 def handleException(e, loc):

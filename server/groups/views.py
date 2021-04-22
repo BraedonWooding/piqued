@@ -38,7 +38,7 @@ class PiquedGroupViewSet(ModelViewSet):
         table_service = TableService(
             account_name=settings.AZURE_STORAGE_ACCOUNT_NAME, account_key=settings.AZURE_STORAGE_ACCOUNT_KEY
         )
-        messages = self.table_service.query_entities('RSS', filter=f"PartitionKey eq '{feed_id}' and deleted eq 0")
+        messages = table_service.query_entities('RSS', filter=f"PartitionKey eq '{feed_id}' and deleted eq 0")
         for msg in messages:
             msg['type'] = 'chat_message'
             await get_channel_layer().group_send(f"chat_{group_id}", msg)

@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from .models import PiquedUser
+from .models.models import PiquedUser
 from .serializers import PiquedUserSerializer
 
 

@@ -13,7 +13,7 @@ from interests.serializers import InterestSerializer
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from user.models import PiquedUser
+from user.models.models import PiquedUser
 
 
 def createPiquedGroupHelper(groupname, interest, userCreated, expiry=None):
