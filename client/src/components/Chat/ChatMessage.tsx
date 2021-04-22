@@ -5,13 +5,13 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import cx from "clsx";
 import { FC } from "react";
-import { ChatMsg as ChatMsgType, User } from "types";
+import { ChatMsg as ChatMsgType, Feed, User } from "types";
 import { EditDeleteChatMsgButton } from "./EditDeleteChatMsgButton";
 import { MediaRender } from "./MediaRender";
 
 interface ChatProps {
   msgs: ChatMsgType[];
-  user: User;
+  user: User | Feed;
   side: "left" | "right";
   onMediaLoad: () => void;
   onMessageChanged: (type: "edited" | "deleted", msg: ChatMsgType, modification?: string) => void;
@@ -48,16 +48,16 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
   };
 
   return (
-    <Grid style={{paddingTop: 30}} container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"}>
+    <Grid style={{paddingTop: 30}} container spacing={1} justify={side === "right" ? "flex-end" : "flex-start"}>
       {side === "left" && (
         <Typography className={classes.name}>
-          {user?.first_name} {user?.last_name}
+          {((user as User)?.first_name || (user as Feed)?.name)} {((user as User)?.first_name || "")}
         </Typography>
       )}
-      <Grid container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"}>
+      <Grid container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"} alignItems="center" >
         {side === "left" && (
           <Grid item>
-            <Avatar src={user?.profile_picture || ""} className={classes.avatar} />
+            <Avatar src={((user as User)?.profile_picture || (user as Feed)?.image_url || "")} className={classes.avatar} />
           </Grid>
         )}
         <Grid item xs={8}>
@@ -121,7 +121,7 @@ const chatStyle = makeStyles(({ palette, spacing }) => {
       height: size,
     },
     name: {
-      marginLeft: size * 2,
+      marginLeft: size,
       marginBottom: 2,
       fontSize: 12,
       color: "#7A7B7F",

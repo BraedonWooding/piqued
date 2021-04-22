@@ -31,6 +31,7 @@ urlpatterns = [
     path('', include('transcript.urls')),
     path('', include('interests.urls')),
     path('', include('info.urls')),
+    path('', include('messaging.urls')),
     path('', include('groups.urls')),
     path('', include('firebase_notifications.urls')),
     path('token/', jwt_views.TokenObtainPairView.as_view(),

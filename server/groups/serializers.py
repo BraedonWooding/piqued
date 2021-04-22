@@ -3,10 +3,18 @@ from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from user.models import Combos, PiquedUser
+from user.models.combos import Combos
+from user.models.models import PiquedUser
 
 from .models import Group, PiquedGroup
 
+
+class SimplifiedFeedSerializer(serializers.Serializer):
+    feed_id = serializers.CharField()
+    id = serializers.IntegerField()
+    last_updated_at = serializers.DateTimeField()
+    image_url = serializers.CharField()
+    name = serializers.CharField()
 
 class SimplifiedUserSerializer(serializers.Serializer):
     username = serializers.CharField(source='user.username')
@@ -42,6 +50,7 @@ class PiquedGroupSerializer(serializers.Serializer):
     interests = InterestSerializer(many=True, required=False)
     created_by = SimplifiedUserSerializer(required=False)
     expired_at = serializers.DateField(required=False)
+    feeds = SimplifiedFeedSerializer(many=True, read_only=True)
 
     def update(self, instance: PiquedGroup, validated_data):
         name = validated_data["group"]["name"]

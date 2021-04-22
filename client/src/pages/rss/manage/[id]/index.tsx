@@ -19,7 +19,7 @@ interface FeedType {
   lastUpdated: number;
   title: string;
   iconUrl: string;
-  tagCounts: {[key: string]: number};
+  tagCounts: { [key: string]: number };
   totalTagCount: number;
   id: string;
 }
@@ -31,6 +31,7 @@ const RssManager = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const router = useRouter();
   const { id } = router.query;
+  const [feeds, setFeeds] = useState<string[]>([]);
 
   const colorMaps = {
     0: blue[50],
@@ -46,9 +47,18 @@ const RssManager = () => {
     100: green[400],
   };
   const mapTagToColor = (item: FeedType, tag: string) => {
-    const section = Math.floor(item.tagCounts[tag] / item.totalTagCount * 100 / 10) * 10;
+    const section = Math.floor(((item.tagCounts[tag] / item.totalTagCount) * 100) / 10) * 10;
     return colorMaps[section];
   };
+
+  useEffect(() => {
+    axios
+      .get(process.env.NEXT_PUBLIC_API_URL + "/groups/" + id + "/")
+      .then((resp) => {
+        setFeeds(((resp.data && resp.data.feeds) || []).map(x => x.feed_id));
+      })
+      .catch(() => setFeeds([]));
+  }, [searchResults]);
 
   useEffect(() => {
     lookupCurrentUser().then((u) => setUser(u));
@@ -59,11 +69,12 @@ const RssManager = () => {
       <Formik
         initialValues={{ query_term: "" }}
         onSubmit={async (values) => {
-          setHasSubmitted(true);
           try {
             const resp = await axios.get(process.env.NEXT_PUBLIC_API_URL + LOOKUP_FEEDS_BASE_URL + values.query_term);
-            setSearchResults((resp.data && resp.data.results && resp.data.results) || []);
+            setHasSubmitted(true);
+            setSearchResults((resp.data && resp.data.results && resp.data.results.filter((f: FeedType) => !feeds.includes(f.id))) || []);
           } catch {
+            setHasSubmitted(true);
             setSearchResults([]);
           }
         }}
@@ -100,22 +111,31 @@ const RssManager = () => {
                     </Grid>
                   </Grid>
                   {searchResults.map((result, index) => (
-                    <Grid container key={index}>
+                    <Grid container key={result.id}>
                       <Grid container>
                         <Grid item xs={10} className={searchClasses.resultsArea}>
                           <Grid container alignItems="center" direction="row" spacing={1}>
                             <Grid item>
                               <Typography>{result.title}</Typography>
                             </Grid>
-                            {result.iconUrl && (<Grid item>
-                              <img width="25" height="25" src={result.iconUrl} />
-                            </Grid>)}
+                            {result.iconUrl && (
+                              <Grid item>
+                                <img width="25" height="25" src={result.iconUrl} />
+                              </Grid>
+                            )}
                           </Grid>
                         </Grid>
                         <Grid item xs={2} className={searchClasses.joinGroupArea}>
                           <Button
                             onClick={async () => {
                               setHasSubmitted(true);
+                              axios.put(process.env.NEXT_PUBLIC_API_URL + "/groups/" + id + "/add_feed/", {
+                                feed_id: result.id,
+                                image_url: result.iconUrl,
+                                name: result.title
+                              });
+                              searchResults.splice(index, 1);
+                              setSearchResults([...searchResults]);
                             }}
                           >
                             <Add />
@@ -125,7 +145,7 @@ const RssManager = () => {
                         <Grid container spacing={1}>
                           {result.deliciousTags.slice(0, 5).map((tag) => (
                             <Grid item>
-                              <Chip style={{backgroundColor: mapTagToColor(result, tag)}} size="small" label={tag} />
+                              <Chip style={{ backgroundColor: mapTagToColor(result, tag) }} size="small" label={tag} />
                             </Grid>
                           ))}
                         </Grid>
@@ -136,17 +156,10 @@ const RssManager = () => {
                   {searchResults.length == 0 && hasSubmitted ? (
                     <Grid container spacing={2}>
                       <Grid xs={12} className={searchClasses.searchAvatar}>
-                        <Typography>No interests found</Typography>
+                        <Typography>No feeds found</Typography>
                       </Grid>
                     </Grid>
                   ) : null}
-                  {/* {searchResults.length == 0 && hasSubmitted ? (
-                    <Grid container spacing={2}>
-                      <Grid xs={12} className={searchClasses.searchAvatar}>
-                        <Typography>No groups found</Typography>
-                      </Grid>
-                    </Grid>
-                  ) : null} */}
                 </Grid>
               </Box>
             </Container>
