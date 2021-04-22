@@ -1,3 +1,4 @@
+from channels.layers import get_channel_layer
 from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
