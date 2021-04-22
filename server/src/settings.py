@@ -70,7 +70,6 @@ MIDDLEWARE = [
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=120),
-    #'REFRESH_TOKEN_LIFETIME': datetime.timedelta(minutes=2),
 }
 
 REST_FRAMEWORK = {
