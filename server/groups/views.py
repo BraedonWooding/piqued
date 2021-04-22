@@ -41,6 +41,8 @@ class PiquedGroupViewSet(ModelViewSet):
         messages = table_service.query_entities('RSS', filter=f"PartitionKey eq '{feed_id}' and deleted eq 0")
         for msg in messages:
             msg['type'] = 'chat_message'
+            msg['PartitionKey'] = str(group_id)
+            table_service.insert_or_replace_entity('Messages', msg)
             await get_channel_layer().group_send(f"chat_{group_id}", msg)
 
     @action(detail=True, methods=['put'])
