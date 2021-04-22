@@ -51,7 +51,7 @@ class PiquedGroupViewSet(ModelViewSet):
         feed = Feed.objects.filter(feed_id = request.data['feed_id']).first()
         if not feed:
             feed = Feed.objects.create(feed_id = request.data['feed_id'], name=request.data['name'], image_url = request.data['image_url'] if 'image_url' in request.data else None, last_updated_at = datetime.now(timezone.utc))
-        feed.groups.add(piquedGroup.group.id)
+        feed.groups.add(piquedGroup.id)
         feed.save()
         # go through the entire feed and send all their messages
         self.send_feed(feed.id, piquedGroup.group.id)
@@ -63,7 +63,7 @@ class PiquedGroupViewSet(ModelViewSet):
         piquedGroup = self.get_object()
         feed = Feed.objects.filter(feed_id = request.data['feed_id']).first()
         if feed:
-            feed.groups.remove(piquedGroup.group.id)
+            feed.groups.remove(piquedGroup.id)
             feed.save()
         return HttpResponse("{} removed group".format(request.data['feed_id']))
 

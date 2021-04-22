@@ -51,7 +51,7 @@ class AzureStorage(Storage):
 
     def upload_content(self, name, content, content_type=None, nice_name=None):
         self._save(name, content, content_type, nice_name)
-        return self.url(name)
+        return self.url(urllib.parse.quote_plus(name))
 
     def download_as_text(self, name, encoding="UTF-8"):
         data = self.blob_service.get_blob_client(name)

@@ -14,14 +14,14 @@ PDF='application/pdf'
 WORD='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 XSLX='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-TOK='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjE5MDc1Mzc3LCJqdGkiOiI4NThiY2I4NzQxZmY0NGVhYTY5ZjliM2E2NmEwMTM5NiIsInVzZXJfaWQiOjF9.rWCejj2hhUJgfpFlDEEwe4Cv-17vVfXpN8ffve6VGA8'
+TOK='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjE5MDgyMDcwLCJqdGkiOiI0Y2UxMmVlNmZhYjQ0Y2Q4YTdjZWQ1MjIwNDY2OGY5YSIsInVzZXJfaWQiOjIyMH0.f6jVD7d6WKRXIPLOEigp6EX5rqhu3feRKiLSvfjbGW0'
 
 table_service = TableService(
     account_name="piqued", account_key="TODO: ACCOUNT_KEY"
 )
 
-for e in table_service.query_entities('Messages', filter=f"PartitionKey eq '{206}' and deleted eq 0"):
-    table_service.delete_entity('Messages', str(206), e['RowKey'])
+for e in table_service.query_entities('Messages', filter=f"PartitionKey eq '{208}' and deleted eq 0"):
+    table_service.delete_entity('Messages', str(208), e['RowKey'])
 
 def send_msg(user_id, group_id, msg, file, fileType):
     message = {
@@ -39,8 +39,12 @@ def send_msg(user_id, group_id, msg, file, fileType):
     print(requests.post(PATH, message, headers = { "Authorization": "Bearer " + TOK, "x-App-Key": "TODO: APP KEY" }).content)
     table_service.insert_or_replace_entity("Messages", message)
 
-send_msg(220, 206, "Hey Nicholas wake up??", None, None)
-send_msg(220, 206, "We are going to miss the demo :O", None, None)
-send_msg(207, 206, "I think it's started!", "DOMAIN/assets/demo/51012908.png", "image/png")
-send_msg(228, 206, "", None, None)
-send_msg(227, 206, "I'm coming!!", "DOMAIN/assets/demo/giphy.gif", None)
+# send_msg(220, 208, "Hey!", None, None)
+send_msg(220, 208, "We are going to miss the demo :O", None, None)
+send_msg(207, 208, "I think it's started!", "DOMAIN/assets/demo/51012908.png", "image/png")
+send_msg(228, 208, "Have a look at this!", "DOMAIN/assets/demo/file-sample_100kB.docx", WORD)
+send_msg(228, 208, "Or this!", "DOMAIN/assets/demo/file_example_XLSX_50.xlsx", XSLX)
+send_msg(227, 208, "I'm coming!!", "DOMAIN/assets/demo/giphy.gif", "image/gif")
+send_msg(227, 208, "Even pdfs", "DOMAIN/assets/demo/Vibe.pdf", "application/pdf")
+send_msg(227, 208, "The code is done!  It's all nice now", "DOMAIN/assets/demo/serializers.py", "code")
+send_msg(227, 208, "We are going to take this to the moon", "DOMAIN/assets/demo/file_example_MP4_1280_10MG.mp4", "video/mp4")
