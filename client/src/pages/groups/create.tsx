@@ -24,7 +24,6 @@ const CreateGroup = () => {
       .then(u => setUser(u));
 
     axios.get(process.env.NEXT_PUBLIC_API_URL + "/interests/").then((resp) => {
-      console.log(resp);
       setInterests(resp.data);
     });
   }, []);

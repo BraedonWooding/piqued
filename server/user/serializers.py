@@ -1,5 +1,8 @@
+from itertools import combinations
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.db import connection
 from groups.models import PiquedGroup
 from groups.serializers import PiquedGroupSerializer
 from info.models import Course, Program
@@ -10,7 +13,8 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from util.email import send_welcome_email
 
-from .models import PiquedUser
+from .models.combos import Combos
+from .models.models import PiquedUser
 
 
 class PiquedUserSerializer(serializers.Serializer):
@@ -60,6 +64,41 @@ class PiquedUserSerializer(serializers.Serializer):
         if 'interests' in validated_data:
             user_interests = validated_data['interests']
             instance.interests.set(user_interests)
+            usr = instance.id
+            
+            # Delete any rows for the user
+            Combos.objects.filter(user_id=usr).delete()
+
+            # Turn list of interests into list of Ids
+            user_interests_ids = [ui.id for ui in user_interests]
+            user_interests_ids.sort()
+
+            # For all single interest combos
+            comb = combinations(list(user_interests_ids), 1)
+            query1 = ""
+            for c in comb:
+                query1 += f"insert into dbo.user_combos (interest1_id, user_id) values ({c[0]}, {usr})\n"
+            
+            # For all dual interest combos:
+            comb = combinations(list(user_interests_ids), 2)
+            query2 = ""
+            for c in comb:
+                query2 += f"insert into dbo.user_combos (interest1_id, interest2_id, user_id) values ({c[0]}, {c[1]}, {usr})\n"
+
+            # For all dual interest combos:
+            comb = combinations(list(user_interests_ids), 3)
+            query3 = ""
+            for c in comb:
+                query3 += f"insert into dbo.user_combos (interest1_id, interest2_id, interest3_id, user_id) values ({c[0]}, {c[1]}, {c[2]}, {usr})\n"
+            
+            with connection.cursor() as cursor:
+                if query1 != "": 
+                    cursor.execute(query1)
+                if query2 != "": 
+                    cursor.execute(query2)
+                if query3 != "": 
+                    cursor.execute(query3)
+
             del validated_data['interests']
         if 'programs' in validated_data:
             user_program = validated_data['programs']

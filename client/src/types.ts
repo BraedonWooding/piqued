@@ -5,6 +5,14 @@ export interface Group {
   user_set: User[];
   expired_at: Date | null;
   has_unseen_messages: boolean;
+  feeds: Feed[];
+}
+
+export interface Feed {
+  id: number;
+  feed_id: string;
+  image_url: string;
+  name: string;
 }
 
 export interface User {
@@ -28,8 +36,8 @@ export interface ChatMsg {
   partitionKey: string;
   rowKey: string;
   message: string;
-  files: {url: string, type: string}[];
-  userId: number;
+  files: { url: string; type: string }[];
+  userId: number | string;
   createdAt: Date;
   seen: string;
 }
@@ -44,5 +52,6 @@ export enum MessageType {
   CHAT_MESSAGE = "chat_message",
   SEEN_MESSAGE = "seen_message",
   STATUS_UPDATE = "status_update",
-  MESSAGE_UPDATE = "message_update"
+  MESSAGE_UPDATE = "message_update",
+  USER_UPDATE = "user_update",
 }

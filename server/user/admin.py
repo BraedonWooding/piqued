@@ -5,7 +5,8 @@ from django.contrib.auth.admin import GroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
 
-from .models import PiquedUser
+from .models.combos import Combos
+from .models.models import PiquedUser
 
 
 # Define an inline admin descriptor for User model
@@ -31,6 +32,7 @@ class PiquedUserAdmin(BaseUserAdmin):
 # Re-register UserAdmin
 admin.site.unregister(User)
 admin.site.register(User, PiquedUserAdmin)
+admin.site.register(Combos)
 
 admin.site.site_header = "Piqued Admin"
 admin.site.site_title = "Piqued Admin Portal"

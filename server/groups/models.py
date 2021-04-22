@@ -4,7 +4,7 @@ from django.db.models.fields import DateField
 from django.db.models.fields.related import (ForeignKey, ManyToManyField,
                                              OneToOneField)
 from interests.models import Interest
-from user.models import PiquedUser
+from user.models.models import PiquedUser
 
 
 class PiquedGroup(models.Model):
@@ -20,4 +20,4 @@ class PiquedGroup(models.Model):
     muted_users = models.CharField(max_length=2000, default="", blank=True)
 
     def __str__(self):
-        return self.group.__str__()
+        return str(self.group.name)

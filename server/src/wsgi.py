@@ -22,7 +22,7 @@ application = ProtocolTypeRouter({
     "http": get_wsgi_application(),
     "websocket": AuthMiddlewareStack(
             URLRouter(
-                messaging.urls.urlpatterns
+                messaging.urls.ws_urlpatterns
             )
         ),
 })

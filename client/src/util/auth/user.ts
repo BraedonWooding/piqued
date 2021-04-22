@@ -13,15 +13,23 @@ export const popUser = () => {
 
 export const setUser = (user: User) => {
   localStorage.setItem(USER, JSON.stringify(user));
-}
+};
 
-export const lookupCurrentUser = async () => {
+export const lookupUser = async (user: "self" | number) => {
   try {
-    const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/users/self/");
-    setUser(res.data);
+    const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + `/users/${user}/`);
     return res.data as User;
   } catch {
-    const router = useRouter();
-    if (router.pathname !== LOGIN_PATH) router.push(LOGIN_PATH);
+    return null;
+  }
+};
+
+export const lookupCurrentUser = async () => {
+  const user = await lookupUser("self");
+  if (user) {
+    setUser(user);
+    return user;
+  } else {
+    window.location.href = LOGIN_PATH;
   }
 };

@@ -25,8 +25,6 @@ export const SearchGroups: FC<SearchGroupsProps> = ({ addedGroups, setAddedGroup
     setGroupResults(searchResults.filter((x: Group) =>
       getUser().groups.filter(y => y.id == x.id).length == 0
       && addedGroups.filter(y => y.id == x.id).length == 0));
-
-    console.log("layout effect");
   }, [addedGroups])
 
   return (

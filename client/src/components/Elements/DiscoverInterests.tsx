@@ -120,7 +120,7 @@ export const DiscoverInterests: FC<DiscoverInterestsProps> = ({ userInterests, p
 const itemStyles = makeStyles(() => ({
   centered: { display: "flex", alignItems: "center" },
   joinGroupArea: { display: "flex", justifyContent: "flex-end" },
-  titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", wordBreak: "break-all", overflowWrap: 'break-word', wordWrap: "break-word", },
+  titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", overflowWrap: 'anywhere' },
   boxArea: {
     display: "flex",
     paddingTop: "20px",

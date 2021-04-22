@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
-import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
+import { Delete, ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
 import clsx from "clsx";
 import { EmojiPicker } from "components/Elements/EmojiPicker";
@@ -29,8 +29,8 @@ import Measure from "react-measure";
 import SendLogo from "react-svg-loader!assets/icons/send.svg";
 import { ChatMsg as ChatMsgType, Group, MessageType, Status, User } from "types";
 import { popToken } from "util/auth/token";
-import { popUser } from "util/auth/user";
-import { DISCOVER_ROOT_PATH, LOGIN_PATH } from "util/constants";
+import { lookupUser, popUser } from "util/auth/user";
+import { DISCOVER_ROOT_PATH, LOGIN_PATH, RSS_FEEDS } from "util/constants";
 import { removeToken } from "../../firebase";
 import { ChatMessage } from "./ChatMessage";
 import { ChatMessages } from "./ChatMessages";
@@ -70,38 +70,41 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     message = message.trim();
     // Image/gif text shortcuts only valid if they are the only thing in the message
     // An image/gif interspersed with a sentence doesn't really make sense
-    var file: { url: string, type: string};
+    var file: { url: string; type: string };
     var isShortcut: boolean = false;
     if (message == "/piqued") {
       isShortcut = true;
       file = {
         url: "/favicon.ico",
-        type: "image/png"
-      }
+        type: "image/png",
+      };
     } else if (message.startsWith("/gif-")) {
       isShortcut = true;
       message = message.slice(5);
-      if (message == "") { // If message is just "/gif-", return false
+      if (message == "") {
+        // If message is just "/gif-", return false
         return false;
       }
-      const gifArray = await giphy.search(message, {limit: 1});
+      const gifArray = await giphy.search(message, { limit: 1 });
       if (gifArray.data.length <= 0) {
         return false;
       }
       const gif = gifArray.data[0];
       file = {
         url: `https://i.giphy.com/media/${gif.id}/200w.gif`,
-        type: "image/gif"
-      }
-    } else if (message == "/adam" ||
+        type: "image/gif",
+      };
+    } else if (
+      message == "/adam" ||
       message == "/braedon" ||
       message == "/jimmy" ||
       message == "/matthew" ||
-      message == "/nicholas") {
+      message == "/nicholas"
+    ) {
       isShortcut = true;
       file = {
         url: message.concat(".jpg"),
-        type: "image/jpg"
+        type: "image/jpg",
       };
     }
     if (isShortcut) {
@@ -115,10 +118,11 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           userId: activeUser.id,
           seen: activeUser.id.toString(),
           createdAt: new Date(),
-        }));
+        })
+      );
     }
     return isShortcut ? true : false;
-  }
+  };
 
   const handleGroupHover = (index) => {
     setGroupHover(index);
@@ -153,8 +157,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
     if (!currentGroupRef.current) return;
-    else if (!chatSocket) {
+    else if (!chatSocket || retry) {
       setRetry(false);
+      if (timer) clearInterval(timer);
       const newChatSocket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
       newChatSocket.onopen = () => {
@@ -177,7 +182,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         );
       };
 
-      newChatSocket.onmessage = (e) => {
+      newChatSocket.onmessage = async (e) => {
         const parsedData = JSON.parse(e.data);
 
         // Update seen status after history messages have been loaded
@@ -256,21 +261,38 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
               setUserGroups([...userGroupsRef.current]);
             }
           }
+        } else if (parsedData.type === MessageType.USER_UPDATE) {
+          let { userId, groupId, user, status } = parsedData;
+          if (!user && userId) {
+            user = await lookupUser(userId);
+          }
+          if (user) {
+            userGroupsRef.current.forEach((group) => {
+              if (group && group.id == groupId) {
+                if (status == "added" && group.user_set.every((x) => x.id != userId)) {
+                  group.user_set.push(user);
+                } else if (status == "deleted") {
+                  group.user_set = group.user_set.filter((x) => x.id != userId);
+                }
+              }
+            });
+            setUserGroups([...userGroupsRef.current]);
+          }
         } else if (parsedData.type === MessageType.MESSAGE_UPDATE) {
-          const { partitionKey, rowKey, modification, update_type } = parsedData;
+          const { partitionKey, rowKey, modification, updateType } = parsedData;
           if (partitionKey == currentGroup.id) {
-            if (update_type === "edited") {
+            if (updateType === "edited") {
               const msg = chatMsgsRef.current.find((x) => x.rowKey == rowKey);
               msg.message = modification;
               setChatMsgs([...chatMsgsRef.current]);
-            } else if (update_type === "deleted") {
+            } else if (updateType === "deleted") {
               const index = chatMsgsRef.current.findIndex((x) => x.rowKey == rowKey);
               if (index >= 0 && index < chatMsgsRef.current.length) {
                 chatMsgsRef.current.splice(index, 1);
                 setChatMsgs([...chatMsgsRef.current]);
               }
             } else {
-              console.error("invalid update type: " + update_type);
+              console.error("invalid update type: " + updateType);
             }
           }
         }
@@ -322,6 +344,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (currentGroup) {
       const user_map = {};
       currentGroup.user_set.map((u) => (user_map[u.id] = u));
+      const feed_map = {};
+      currentGroup.feeds.map((f) => (user_map["feed/" + f.id] = f));
       var current_msg_set: ChatMsgType[] = [];
       var newest_msg: null | ChatMsgType = null;
       var all_msgs: [User, ChatMsgType[]][] = [];
@@ -334,12 +358,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           current_msg_set.push(m);
           newest_msg = m;
         } else {
-          all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+          all_msgs.push([user_map[newest_msg.userId] || feed_map[newest_msg.userId] || null, [...current_msg_set]]);
           current_msg_set = [m];
           newest_msg = m;
         }
       });
-      if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+      if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || feed_map[newest_msg.userId] || null, [...current_msg_set]]);
 
       setChunkedMsgs(all_msgs);
     }
@@ -351,7 +375,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         <Grid container alignItems="center">
           <Grid item xs={6}>
             <List>
-              <ListItem button key={'user'} onClick={() => router.push("/user/details/" + activeUser.id)}>
+              <ListItem button key={"user"} onClick={() => router.push("/user/details/" + activeUser.id)}>
                 <ListItemIcon>
                   <Badge
                     overlap="circle"
@@ -433,7 +457,7 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           )}
           {(!userGroups || userGroups.length == 0) && (
             <Typography style={{ marginLeft: 15 }}>
-              You aren't in any groups!  You can search for some through the "Search" button
+              You aren't in any groups! You can search for some through the "Search" button
             </Typography>
           )}
         </List>
@@ -552,6 +576,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
         >
           Logout
         </Button>
+        {currentGroup && (
+          <Button
+            onClick={async () => {
+              router.push(RSS_FEEDS + "/" + currentGroup.id);
+            }}
+            style={{ marginTop: "20px", marginLeft: "20px" }}
+            color="primary"
+            variant="outlined"
+          >
+            Manage Feeds
+          </Button>
+        )}
         <List className={classes.userList}>
           {currentGroup &&
             currentGroup.user_set.map((user, index) => (
@@ -569,6 +605,40 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 <ListItemText
                   primary={`${user.first_name} ${user.last_name}${user.id === activeUser.id ? " (you)" : ""}`}
                 />
+              </ListItem>
+            ))}
+          <Divider />
+          {currentGroup &&
+            currentGroup.feeds.map((feed, index) => (
+              <ListItem key={feed.id}>
+                <ListItemIcon>
+                  <Badge
+                    overlap="circle"
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    color={"primary"}
+                    variant="dot"
+                  >
+                    <Avatar alt={feed.name} src={feed.image_url} />
+                  </Badge>
+                </ListItemIcon>
+                <ListItemText primary={`${feed.name} (RSS)`} />
+                <Button
+                  className={classes.slimButton}
+                  onClick={async () => {
+                    try {
+                      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/groups/${currentGroup.id}/remove_feed/`, {
+                        data: {
+                          feed_id: feed.feed_id,
+                        },
+                      });
+                      currentGroup.feeds.splice(index, 1);
+                      setCurrentGroup({ ...currentGroupRef.current });
+                    } catch {}
+                  }}
+                >
+                  <Delete />
+                  Remove
+                </Button>
               </ListItem>
             ))}
         </List>

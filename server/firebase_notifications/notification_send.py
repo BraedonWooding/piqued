@@ -1,6 +1,6 @@
 import firebase_admin
 from firebase_admin import credentials, messaging
-from user.models import PiquedUser
+from user.models.models import PiquedUser
 from user.serializers import PiquedUserSerializer
 
 cred = credentials.Certificate("firebase_notifications/serviceAccountKey.json")
