@@ -51,7 +51,7 @@ export const ChatMessage: FC<ChatProps> = ({ msgs, user, side, onMediaLoad, onMe
     <Grid style={{paddingTop: 30}} container spacing={1} justify={side === "right" ? "flex-end" : "flex-start"}>
       {side === "left" && (
         <Typography className={classes.name}>
-          {((user as User)?.first_name || (user as Feed)?.name)} {((user as User)?.first_name || "")}
+          {((user as User)?.first_name || (user as Feed)?.name)} {((user as User)?.last_name || "")}
         </Typography>
       )}
       <Grid container spacing={2} justify={side === "right" ? "flex-end" : "flex-start"} alignItems="center" >
