@@ -5,6 +5,14 @@ export interface Group {
   user_set: User[];
   expired_at: Date | null;
   has_unseen_messages: boolean;
+  feeds: Feed[];
+}
+
+export interface Feed {
+  id: number;
+  feed_id: string;
+  image_url: string;
+  name: string;
 }
 
 export interface User {
@@ -29,7 +37,7 @@ export interface ChatMsg {
   rowKey: string;
   message: string;
   files: { url: string; type: string }[];
-  userId: number;
+  userId: number | string;
   createdAt: Date;
   seen: string;
 }

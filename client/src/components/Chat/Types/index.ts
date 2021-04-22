@@ -3,6 +3,7 @@ import { AudioRenderer } from "./AudioRenderer";
 import { CodeRenderer } from "./CodeRenderer";
 import { DefaultRenderer } from "./DefaultRenderer";
 import { DocxReader } from "./DocxReader";
+import { FeedRenderer } from "./FeedRenderer";
 import { ImageRenderer } from "./ImageRenderer";
 import { PdfRenderer } from "./PdfRenderer";
 import { VideoRenderer } from "./VideoRenderer";
@@ -19,6 +20,7 @@ export const TypeMap: { [type: string]: TypeAdapter } = {
   image: ImageRenderer,
   video: VideoRenderer,
   audio: AudioRenderer,
+  "feed": FeedRenderer,
   "application/pdf": PdfRenderer,
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": DocxReader,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": DocxReader,

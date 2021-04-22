@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from firebase_notifications.notification_send import send_to_all_user_devices
 from groups.models import PiquedGroup
-from user.models import PiquedUser
+from user.models.models import PiquedUser
 
 
 def handleException(e, loc):
@@ -103,7 +103,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
         user = PiquedUser.objects.filter(user__id__exact=self.userId)[0]
         shortcuts = json.loads(user.shortcuts)
         return shortcuts
-            
+
     def get_groups(self):
         groups = Group.objects.filter(user__id__exact=self.userId)
         return list(groups.all())
@@ -137,11 +137,15 @@ class GroupConsumer(AsyncWebsocketConsumer):
             elif message_type == MessageType.CHAT_MESSAGE:
                 createdAt = datetime.now(timezone.utc)
                 partitionKey = text_data_json['partitionKey']
-                rowKey = str(int(createdAt.timestamp() * 10000000))
+                if 'overrideRowKey' in text_data_json:
+                    rowKey = str(int(datetime.fromtimestamp(text_data_json['overrideRowKey']) * 10000000))
+                else:
+                    rowKey = str(int(createdAt.timestamp() * 10000000))
                 message = text_data_json['message']
                 files = text_data_json['files']  # Files are urls
                 userId = text_data_json['userId']
                 seen = text_data_json["seen"]
+                is_html = text_data_json['isHtml'] if 'isHtml' in text_data_json else False
 
                 # Check for user-defined text shortcuts
                 shortcuts = await sync_to_async(self.get_shortcuts)()
@@ -162,10 +166,11 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     'deleted': 0,
                     'userId': userId,
                     'seen': seen,
-                    'createdAt': createdAt
+                    'createdAt': createdAt,
+                    'isHtml': is_html
                 }
 
-                self.table_service.insert_entity('Messages', msg)
+                self.table_service.insert_or_replace_entity('Messages', msg)
 
                 await self.channel_layer.group_send(
                     f"chat_{partitionKey}",
@@ -196,7 +201,8 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     })
             elif message_type == MessageType.MESSAGE_UPDATE:
                 entity = self.table_service.get_entity('Messages', text_data_json['partitionKey'], text_data_json['rowKey'])
-                if entity is not None and entity and entity["userId"] != self.userId:
+                if entity is not None and entity and str(entity["userId"]) != str(self.userId):
+                    print("Ignoring")
                     # trying to update a message they didn't send (bad human)
                     # just ignore
                     return
@@ -205,6 +211,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
                     entity["message"] = text_data_json["modification"]
                     self.table_service.merge_entity('Messages', entity)
                 elif text_data_json['updateType'] == 'deleted':
+                    print("Deleted")
                     self.table_service.delete_entity('Messages', text_data_json['partitionKey'], text_data_json['rowKey'])
                 else:
                     handleException(
@@ -302,7 +309,7 @@ class GroupConsumer(AsyncWebsocketConsumer):
 
     async def message_update(self, event):
         try:
-            self.send(text_data=json.dumps(event))
+            await self.send(text_data=json.dumps(event))
         except Exception:
             handleException(
                 sys.exc_info(), "socket receiving message type 'status_update' from socket_group (channel layer).")

@@ -2,10 +2,8 @@ from django.db import models
 from django.db.models.fields import BooleanField, CharField
 from django.db.models.fields.related import ManyToManyField
 from groups.models import PiquedGroup
-from src.azure import AzureStorage
-from user.models import PiquedUser
-
-from .models import Interest
+from interests.models import Interest
+from user.models.models import PiquedUser
 
 
 class Combos(models.Model):

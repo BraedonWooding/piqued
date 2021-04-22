@@ -30,7 +30,6 @@ export const lookupCurrentUser = async () => {
     setUser(user);
     return user;
   } else {
-    const router = useRouter();
-    if (router.pathname !== LOGIN_PATH) router.push(LOGIN_PATH);
+    window.location.href = LOGIN_PATH;
   }
 };

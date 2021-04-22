@@ -28,7 +28,6 @@ export const ChatMessages: FC<ChatProps> = React.memo(
   ({ activeUser, chatMsgs, currentUsers, currentGroup, chunkedMsgs, onMsgUpdate }) => {
     const classes = useStyles();
     const scrollableRef = useRef<Measure>();
-    console.log(chatMsgs);
     const lastSeenSet = chatMsgs[chatMsgs.length - 1]?.seen.split(" ") || [];
     const lastSeen = currentUsers.every((i) => lastSeenSet.includes(i));
     let earliestSeenMsg: number | null = null;

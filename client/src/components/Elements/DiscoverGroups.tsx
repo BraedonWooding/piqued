@@ -56,7 +56,7 @@ export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopu
       <Typography variant="h6">
         Recommended Groups
       </Typography>
-      <Grid item xs={6} style={{ display: "flex", alignItems: "center" }}>
+      <Grid item xs={12} style={{ display: "flex", alignItems: "center" }}>
         <Grid container >
           {recommendedGroups.slice(0, 4).map((x, index) => (
             <Grid container spacing={1} key={index} >
@@ -108,7 +108,7 @@ export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopu
 const itemStyles = makeStyles(() => ({
   centered: { display: "flex", alignItems: "center" },
   joinGroupArea: { display: "flex", justifyContent: "flex-end" },
-  titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", wordBreak: "break-all", overflowWrap: 'break-word', wordWrap: "break-word", },
+  titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", overflowWrap: 'anywhere' },
   boxArea: {
     display: "flex",
     paddingTop: "20px",
@@ -120,14 +120,6 @@ const itemStyles = makeStyles(() => ({
     alignItems: "center",
     flexDirection: "column",
   }
-}));
-
-const searchStyles = makeStyles(() => ({
-  searchButton: { display: "flex", alignItems: "center", justifyContent: "center" },
-  searchAvatar: { display: "flex", justifyContent: "center" },
-  closeButton: { display: "flex", justifyContent: "flex-end" },
-  resultsArea: { display: "flex", alignItems: "center" },
-  joinGroupArea: { display: "flex", justifyContent: "flex-end" },
 }));
 
 export default DiscoverGroups;
