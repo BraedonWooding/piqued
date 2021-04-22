@@ -2,15 +2,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from groups.models import PiquedGroup
 from groups.serializers import PiquedGroupSerializer
-from info.serializers import CourseSerializer, ProgramSerializer
 from info.models import Course, Program
+from info.serializers import CourseSerializer, ProgramSerializer
+from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from interests.serializers import InterestSerializer
+from util.email import send_welcome_email
 
 from .models import PiquedUser
-from interests.models import Interest
 
 
 class PiquedUserSerializer(serializers.Serializer):
@@ -79,4 +79,7 @@ class PiquedUserSerializer(serializers.Serializer):
         password = make_password(user['password'])
         del validated_data['user']
         del user['password']
-        return PiquedUser.objects.create(**validated_data, user=get_user_model().objects.create(**user, password=password))
+        piqued_user = PiquedUser.objects.create(
+            **validated_data, user=get_user_model().objects.create(**user, password=password))
+        send_welcome_email(user['email'])
+        return piqued_user
