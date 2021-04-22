@@ -11,6 +11,7 @@ from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from util.email import send_welcome_email
 
 from .models.combos import Combos
 from .models.models import PiquedUser
@@ -117,4 +118,7 @@ class PiquedUserSerializer(serializers.Serializer):
         password = make_password(user['password'])
         del validated_data['user']
         del user['password']
-        return PiquedUser.objects.create(**validated_data, user=get_user_model().objects.create(**user, password=password))
+        piqued_user = PiquedUser.objects.create(
+            **validated_data, user=get_user_model().objects.create(**user, password=password))
+        send_welcome_email(user['email'])
+        return piqued_user
