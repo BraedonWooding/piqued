@@ -67,6 +67,7 @@ class PiquedGroupSerializer(serializers.Serializer):
             group=group, created_by=piquedUser)
 
         # we don't need to trigger the channel event here.
+        user.groups.add(group)
 
         piquedGroup.interests.set(interests)
         piquedGroup.save()
