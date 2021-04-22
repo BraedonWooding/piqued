@@ -280,20 +280,18 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           }
         } else if (parsedData.type === MessageType.MESSAGE_UPDATE) {
           const { partitionKey, rowKey, modification, updateType } = parsedData;
-          if (partitionKey == currentGroup.id) {
-            if (updateType === "edited") {
-              const msg = chatMsgsRef.current.find((x) => x.rowKey == rowKey);
-              msg.message = modification;
+          if (updateType === "edited") {
+            const msg = chatMsgsRef.current.find((x) => x.rowKey == rowKey);
+            msg.message = modification;
+            setChatMsgs([...chatMsgsRef.current]);
+          } else if (updateType === "deleted") {
+            const index = chatMsgsRef.current.findIndex((x) => x.rowKey == rowKey);
+            if (index >= 0 && index < chatMsgsRef.current.length) {
+              chatMsgsRef.current.splice(index, 1);
               setChatMsgs([...chatMsgsRef.current]);
-            } else if (updateType === "deleted") {
-              const index = chatMsgsRef.current.findIndex((x) => x.rowKey == rowKey);
-              if (index >= 0 && index < chatMsgsRef.current.length) {
-                chatMsgsRef.current.splice(index, 1);
-                setChatMsgs([...chatMsgsRef.current]);
-              }
-            } else {
-              console.error("invalid update type: " + updateType);
             }
+          } else {
+            console.error("invalid update type: " + updateType);
           }
         }
       };
