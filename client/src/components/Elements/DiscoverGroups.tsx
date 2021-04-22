@@ -108,7 +108,7 @@ export const DiscoverGroups: FC<DiscoverGroupsProps> = ({ popularGroups, setPopu
 const itemStyles = makeStyles(() => ({
   centered: { display: "flex", alignItems: "center" },
   joinGroupArea: { display: "flex", justifyContent: "flex-end" },
-  titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", wordBreak: "break-all", overflowWrap: 'break-word', wordWrap: "break-word", },
+  titleContainer: { display: "flex", alignItems: "center", maxWidth: "100%", overflowWrap: 'anywhere' },
   boxArea: {
     display: "flex",
     paddingTop: "20px",
@@ -120,14 +120,6 @@ const itemStyles = makeStyles(() => ({
     alignItems: "center",
     flexDirection: "column",
   }
-}));
-
-const searchStyles = makeStyles(() => ({
-  searchButton: { display: "flex", alignItems: "center", justifyContent: "center" },
-  searchAvatar: { display: "flex", justifyContent: "center" },
-  closeButton: { display: "flex", justifyContent: "flex-end" },
-  resultsArea: { display: "flex", alignItems: "center" },
-  joinGroupArea: { display: "flex", justifyContent: "flex-end" },
 }));
 
 export default DiscoverGroups;

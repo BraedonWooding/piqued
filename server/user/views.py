@@ -1,12 +1,9 @@
 
 from django.http import HttpResponseForbidden
-from groups.serializers import SimplifiedUserSerializer
-from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from .models import PiquedUser
-from .permissions import IsCreatable
+from .models.models import PiquedUser
 from .serializers import PiquedUserSerializer
 
 

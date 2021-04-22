@@ -27,6 +27,7 @@ RUN python3.8 -m pip install websockets
 RUN python3.8 -m pip install cffi
 RUN python3.8 -m pip install firebase-admin
 RUN python3.8 -m pip install python-Levenshtein
+RUN python3.8 -m pip install sendgrid
 ADD . /code/
 CMD python3.8 manage.py collectstatic --no-input
 

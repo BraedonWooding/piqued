@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
-import { ExitToAppSharp, SearchRounded } from "@material-ui/icons";
+import { Delete, ExitToAppSharp, SearchRounded } from "@material-ui/icons";
 import axios from "axios";
 import clsx from "clsx";
 import { EmojiPicker } from "components/Elements/EmojiPicker";
@@ -157,8 +157,9 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
   // Connects to the websocket and refreshes content on first render only
   useEffect(() => {
     if (!currentGroupRef.current) return;
-    else if (!chatSocket) {
+    else if (!chatSocket || retry) {
       setRetry(false);
+      if (timer) clearInterval(timer);
       const newChatSocket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}/ws/messaging/${activeUser.id}/`);
 
       newChatSocket.onopen = () => {
@@ -278,21 +279,19 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
             setUserGroups([...userGroupsRef.current]);
           }
         } else if (parsedData.type === MessageType.MESSAGE_UPDATE) {
-          const { partitionKey, rowKey, modification, update_type } = parsedData;
-          if (partitionKey == currentGroup.id) {
-            if (update_type === "edited") {
-              const msg = chatMsgsRef.current.find((x) => x.rowKey == rowKey);
-              msg.message = modification;
+          const { partitionKey, rowKey, modification, updateType } = parsedData;
+          if (updateType === "edited") {
+            const msg = chatMsgsRef.current.find((x) => x.rowKey == rowKey);
+            msg.message = modification;
+            setChatMsgs([...chatMsgsRef.current]);
+          } else if (updateType === "deleted") {
+            const index = chatMsgsRef.current.findIndex((x) => x.rowKey == rowKey);
+            if (index >= 0 && index < chatMsgsRef.current.length) {
+              chatMsgsRef.current.splice(index, 1);
               setChatMsgs([...chatMsgsRef.current]);
-            } else if (update_type === "deleted") {
-              const index = chatMsgsRef.current.findIndex((x) => x.rowKey == rowKey);
-              if (index >= 0 && index < chatMsgsRef.current.length) {
-                chatMsgsRef.current.splice(index, 1);
-                setChatMsgs([...chatMsgsRef.current]);
-              }
-            } else {
-              console.error("invalid update type: " + update_type);
             }
+          } else {
+            console.error("invalid update type: " + updateType);
           }
         }
       };
@@ -343,6 +342,8 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
     if (currentGroup) {
       const user_map = {};
       currentGroup.user_set.map((u) => (user_map[u.id] = u));
+      const feed_map = {};
+      currentGroup.feeds.map((f) => (user_map["feed/" + f.id] = f));
       var current_msg_set: ChatMsgType[] = [];
       var newest_msg: null | ChatMsgType = null;
       var all_msgs: [User, ChatMsgType[]][] = [];
@@ -355,12 +356,12 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
           current_msg_set.push(m);
           newest_msg = m;
         } else {
-          all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+          all_msgs.push([user_map[newest_msg.userId] || feed_map[newest_msg.userId] || null, [...current_msg_set]]);
           current_msg_set = [m];
           newest_msg = m;
         }
       });
-      if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || null, [...current_msg_set]]);
+      if (current_msg_set.length > 0) all_msgs.push([user_map[newest_msg.userId] || feed_map[newest_msg.userId] || null, [...current_msg_set]]);
 
       setChunkedMsgs(all_msgs);
     }
@@ -602,6 +603,40 @@ export const Chat: FC<ChatProps> = ({ activeUser }) => {
                 <ListItemText
                   primary={`${user.first_name} ${user.last_name}${user.id === activeUser.id ? " (you)" : ""}`}
                 />
+              </ListItem>
+            ))}
+          <Divider />
+          {currentGroup &&
+            currentGroup.feeds.map((feed, index) => (
+              <ListItem key={feed.id}>
+                <ListItemIcon>
+                  <Badge
+                    overlap="circle"
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    color={"primary"}
+                    variant="dot"
+                  >
+                    <Avatar alt={feed.name} src={feed.image_url} />
+                  </Badge>
+                </ListItemIcon>
+                <ListItemText primary={`${feed.name} (RSS)`} />
+                <Button
+                  className={classes.slimButton}
+                  onClick={async () => {
+                    try {
+                      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/groups/${currentGroup.id}/remove_feed/`, {
+                        data: {
+                          feed_id: feed.feed_id,
+                        },
+                      });
+                      currentGroup.feeds.splice(index, 1);
+                      setCurrentGroup({ ...currentGroupRef.current });
+                    } catch {}
+                  }}
+                >
+                  <Delete />
+                  Remove
+                </Button>
               </ListItem>
             ))}
         </List>

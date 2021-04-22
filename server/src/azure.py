@@ -47,10 +47,11 @@ class AzureStorage(Storage):
         nice_name = urllib.parse.quote_plus(nice_name)
         name = urllib.parse.quote_plus(name)
         self.blob_service.upload_blob(name, data, overwrite=True, blob_type='BlockBlob', content_settings=ContentSettings(content_type=content_type, content_disposition=f'attachment; filename="{nice_name}"'))
-        return self.blob_service.get_blob_client(name).url
+        return name
 
     def upload_content(self, name, content, content_type=None, nice_name=None):
-        return self._save(name, content, content_type, nice_name)
+        self._save(name, content, content_type, nice_name)
+        return self.url(name)
 
     def download_as_text(self, name, encoding="UTF-8"):
         data = self.blob_service.get_blob_client(name)

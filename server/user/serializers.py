@@ -11,8 +11,10 @@ from interests.models import Interest
 from interests.serializers import InterestSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from util.email import send_welcome_email
 
-from .models import Combos, PiquedUser
+from .models.combos import Combos
+from .models.models import PiquedUser
 
 
 class PiquedUserSerializer(serializers.Serializer):
@@ -90,10 +92,12 @@ class PiquedUserSerializer(serializers.Serializer):
                 query3 += f"insert into dbo.user_combos (interest1_id, interest2_id, interest3_id, user_id) values ({c[0]}, {c[1]}, {c[2]}, {usr})\n"
             
             with connection.cursor() as cursor:
-                print(query1)
-                cursor.execute(query1)
-                cursor.execute(query2)
-                cursor.execute(query3)
+                if query1 != "": 
+                    cursor.execute(query1)
+                if query2 != "": 
+                    cursor.execute(query2)
+                if query3 != "": 
+                    cursor.execute(query3)
 
             del validated_data['interests']
         if 'programs' in validated_data:
@@ -114,4 +118,7 @@ class PiquedUserSerializer(serializers.Serializer):
         password = make_password(user['password'])
         del validated_data['user']
         del user['password']
-        return PiquedUser.objects.create(**validated_data, user=get_user_model().objects.create(**user, password=password))
+        piqued_user = PiquedUser.objects.create(
+            **validated_data, user=get_user_model().objects.create(**user, password=password))
+        send_welcome_email(user['email'])
+        return piqued_user
