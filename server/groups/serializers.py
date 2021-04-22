@@ -8,6 +8,13 @@ from user.models import PiquedUser
 from .models import Group, PiquedGroup
 
 
+class SimplifiedFeedSerializer(serializers.Serializer):
+    feed_id = serializers.CharField()
+    id = serializers.IntegerField()
+    last_updated_at = serializers.DateTimeField()
+    image_url = serializers.CharField()
+    name = serializers.CharField()
+
 class SimplifiedUserSerializer(serializers.Serializer):
     username = serializers.CharField(source='user.username')
     first_name = serializers.CharField(source='user.first_name')
@@ -42,6 +49,7 @@ class PiquedGroupSerializer(serializers.Serializer):
     interests = InterestSerializer(many=True, required=False)
     created_by = SimplifiedUserSerializer(required=False)
     expired_at = serializers.DateField(required=False)
+    feeds = SimplifiedFeedSerializer(many=True, read_only=True)
 
     def update(self, instance: PiquedGroup, validated_data):
         name = validated_data["group"]["name"]
