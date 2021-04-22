@@ -90,10 +90,12 @@ class PiquedUserSerializer(serializers.Serializer):
                 query3 += f"insert into dbo.user_combos (interest1_id, interest2_id, interest3_id, user_id) values ({c[0]}, {c[1]}, {c[2]}, {usr})\n"
             
             with connection.cursor() as cursor:
-                print(query1)
-                cursor.execute(query1)
-                cursor.execute(query2)
-                cursor.execute(query3)
+                if query1 != "": 
+                    cursor.execute(query1)
+                if query2 != "": 
+                    cursor.execute(query2)
+                if query3 != "": 
+                    cursor.execute(query3)
 
             del validated_data['interests']
         if 'programs' in validated_data:
