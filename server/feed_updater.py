@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# This is to be run on a VM or just locally is fine too :)
+
 import getopt
 import json
 import sys
