@@ -30,6 +30,6 @@ export const lookupCurrentUser = async () => {
     setUser(user);
     return user;
   } else {
-    window.location = LOGIN_PATH;
+    window.location.href = LOGIN_PATH;
   }
 };
