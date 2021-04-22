@@ -1,4 +1,5 @@
 import axios from "axios";
+import { deleteToken } from "../firebase";
 import { getToken, refreshAccessToken } from "./auth/token";
 import { LOGIN_PATH } from "./constants";
 
@@ -22,6 +23,11 @@ axios.interceptors.response.use(
         return axios(originalRequest);
       } catch {
         // any failure we go back to login
+        // We need to handle rudimentary logout behaviour such as removing FCM tokens
+        const res = await deleteToken();
+        if (!res) {
+          console.log("Token deletion unsuccessful")
+        }
         if (window.location.pathname !== LOGIN_PATH) window.location.replace(LOGIN_PATH);
       }
     } else {
