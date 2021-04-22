@@ -33,7 +33,7 @@ TABLE_STORAGE_CON_STRING = 'DefaultEndpointsProtocol=https;AccountName=piqued;Ac
 DEBUG = True
 
 ALLOWED_HOSTS = ***REMOVED***
-                 "localhost", "127.0.0.1", "admin.DOMAIN"]
+["localhost", "127.0.0.1"]
 
 mimetypes.add_type("text/css", ".css", True)
 mimetypes.add_type("text/html", ".html", True)
@@ -189,6 +189,7 @@ CHANNEL_LAYERS = {
 
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
+    'DOMAIN',
     'DOMAIN',
     'DOMAIN',
     'DOMAIN',
