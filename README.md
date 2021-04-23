@@ -2,4 +2,81 @@
 
 ## Help! How do I run this?
 
-- Follow the user guide in the pdf document, that details the system very well.
+> PDF user manual has guides on how to run this as well as much more.  It's just reproduced here for the sake of it.
+
+Piqued is setup so it can work in both development and production, to make marking easier we've already deployed it as [DOMAIN](DOMAIN), you can access the API/Admin page via [DOMAIN](DOMAIN).
+
+There are multiple logins created, all passwords are `123` for simplicity.  The following usernames will login to the system.
+
+- Elsa.Green@unsw.edu.au
+- Sylvia.Hampton@unsw.edu.au
+- Albert.Reid@unsw.edu.au
+- Billy.Ingersoll@unsw.edu.au
+- Louise.Mack@unsw.edu.au
+
+NOTE: These are randomized users.
+
+Furthermore the following Facebook users have been created that is usable with both Production and Test.  Please use these over any private account since we've yet to apply for proper production use (due to us not being a 'real' application sadly).  This user have liked 'test' Facebook pages (which were created by us) and will fully interface with our system.
+
+- `Test User` with password `piqued` (sorry but it may be `Piqued`, FB had a small outage meaning I couldn't check).
+
+NOTE: When using this FB user to create accounts you'll probably find the username is already taken so you may want to just add some extra numbers to the username to make it unique.  You can login to FB if you want with this user and like some pages to find interests.
+
+There currently is just one admin user with login username `bw@admin.piqued` and password `piqued`.  This is setup using a custom domain (that we also use for email alerts) and we have a fully setup DNS to give us those nice sub-domains.
+
+For transcripts there are 2 supplied transcripts (marks and grades set to N/A for privacy reasons) in the main repository (submitted), these can be imported to get a preset number of courses and a program.  The year isn't auto-filled.
+
+## Running Locally for Development
+
+Running this locally has a few steps, and depends massively on how you want to run it, i.e. do you want to use a MSSQL server?  Do you want to use another kind of SQL server (i.e. MySQL, Oracle, and so on).  Do you want to simulate it via sqlite and so on.
+
+Let's begin with the easiest steps first, we are going to set it up so that we have a locally running front end which is connected to our back end.  This way we ensure that your front-end is all working fine before we run a local back-end.
+
+- Git Clone the repository or download the zip
+- Make sure you have `npm` installed, you can install it by following the given instructions here [https://www.npmjs.com/get-npm](https://www.npmjs.com/get-npm)
+- `cd` into the client directory and run the following command (this will build the client and run it against a production back-end).
+
+Unix: `npm install && npm run prod`
+
+Windows: `npm install` followed by `npm run prod`
+- Verify the app is working by going to the address [http://localhost:3000](http://localhost:3000), note it'll state this address as one of the final lines of output as shown in the image below [Figure \ref{fig:LocalApp_Addr}.] so if you have other stuff running it may be running on a different port.
+
+![](addr_run_manual.png)
+
+Pat yourself on the back this is half the setup to get it fully running locally.  Feel free to play around with the application it should work fully do note however that you are using a production back-end.  Normally this wouldn't be recommended and you would add CORS restrictions to prevent this from happening (or require a cert or some app key) however, for an application intended for a uni project it simplifies installation.
+
+Next step will be getting a back-end running!
+
+- Open up a new terminal and go to the server directory (not the client one).  I highly recommend a new terminal here.
+- Make sure you have `python3` installed, while we technically only support python3.8 and above lower versions *should* work (you need ATLEAST python3.4) but if you are having issues I recommend installing python 3.8 or above as per these instructions [https://www.python.org/downloads/](https://www.python.org/downloads/).
+- Setup a python virtual environment via the commands `python3 -m venv .venv` (make sure you are in the server folder)
+- Activate the virtual environment
+    - Windows: `.venv\Scripts\activate.bat`
+    - UNIX: `source .venv/bin/activate`
+- Install all requirements for running the backend this is as simple as running (this can take quite a while, especially on rarer platforms) `python3 -m pip install -r requirements.txt`
+- Run the back-end via the command
+    - UNIX: `ENV_USE_SQLITE=1 python3 manage.py runserver`
+    - WIN: `$env:ENV_USE_SQLITE=1; python3 manage.py runserver`
+    note ANYTIME you want to run this you have to make sure you've activated the virtual environment.  We'll begin by running it using sqlite and a DB we've already prepped with some nice beginning data.
+- Once that's succeeded you just need to run the front-end in local mode which is as simple as running `npm run dev`.  note: you need to run this from the client app and should use the other terminal (both have to be running).
+- Verify the app is working by going to the address [http://localhost:3000](http://localhost:3000), note it'll state this address as one of the final lines of output as shown in the image below [Figure \ref{fig:LocalApp_Addr}.] so if you have other stuff running it may be running on a different port.  The admin page will be at [http://localhost:8000](http://localhost:8000) (it'll state it after running python run server).
+
+This however, won't cause rss feeds to update.  To have this happen you'll have to run the rss feed updater manually.
+
+`python3 feed_updater.py -u http://localhost:8000`
+
+We typically have a job setup on a VM to run this every minute (as discussed in detail in the overview).
+
+Running the non sqlite isn't recommended due to requiring installation of ODBC driver, [https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15), however once installed just run the same command to start backend but use `ENV_USE_SQLITE=0` rather than 1.
+
+However, note that you can ONLY run this if using the fully isolated sqlite setup, if you want to use SQL Server you'll have to disable the job that is setup on an Azure VM, the certificate is supplied in the repository (under server/PiquedVM_key.cer) and connecting to the VM is as simple as running
+
+`ssh -i <path to cert> superadmin@20.188.209.63`
+
+Then you'll have to just disable the cronjob by running
+
+`sudo crontab -e`
+
+And then by adding a # infront of the first line (the only cron job)
+
+Note: there are many other ways to run/deploy this, such as the docker file in the main repository (under server).  This can just be run as is and will act as a back-end (you'll have to build the image of course but is fully self enclosed).
