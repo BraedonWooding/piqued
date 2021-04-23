@@ -14,7 +14,7 @@ PDF='application/pdf'
 WORD='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 XSLX='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-TOK='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjE5MDgyMDcwLCJqdGkiOiI0Y2UxMmVlNmZhYjQ0Y2Q4YTdjZWQ1MjIwNDY2OGY5YSIsInVzZXJfaWQiOjIyMH0.f6jVD7d6WKRXIPLOEigp6EX5rqhu3feRKiLSvfjbGW0'
+TOK='TODO: TOK'
 
 table_service = TableService(
     account_name="piqued", account_key="TODO: ACCOUNT_KEY"

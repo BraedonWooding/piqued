@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 # This is to be run on a VM or just locally is fine too :)
+# what I did was just scp it to an azure VM, and then just
+# set up a cron job, nothing crazy!
 
 import getopt
 import json

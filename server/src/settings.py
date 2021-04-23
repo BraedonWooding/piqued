@@ -124,6 +124,14 @@ DATABASES = {
     },
 }
 
+if 'ENV_USE_SQLITE' in os.environ and str(os.environ['ENV_USE_SQLITE']) == "1":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 # Azure
 
 # AzureStorage Settings
