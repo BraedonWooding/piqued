@@ -21,3 +21,4 @@ gunicorn
 daphne
 uvicorn
 wonderwords
+sendgrid
