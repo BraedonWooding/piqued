@@ -4,16 +4,6 @@
 
 I've kept most of the original repos with a few exceptions, I've removed numerous app keys/certificates/initialisations
 
-## Using
-
-You can view a purely readonly version of the application here; [TODO](TODO).
-
-> I've not yet setup a readonly version and may not, purely is based on my current time.
-
-The login is; `readonly-user: "readonly-password"`
-
-It's readonly because I don't trust the internet to not abuse this application (sadly). You can run a very easy version of this locally with very few dependencies (it supports sql-lite).
-
 ## Running Locally for Development
 
 > No promise that this will work perfectly smooth, some scripts such as the scraper require an updated api key.
